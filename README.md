@@ -27,7 +27,7 @@ A comprehensive web-based Albanian bank statement converter that transforms bank
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/bank-select-converter.git
+   git clone https://github.com/Xhelo-hub/bank-select-converter.git
    cd bank-select-converter
    ```
 
