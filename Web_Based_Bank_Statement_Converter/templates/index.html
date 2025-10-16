@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Bank Statement - Albanian Bank Converter{% endblock %}
+
+{% block content %}
+<div class="upload-section">
+    <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+        <div class="file-input-wrapper">
+            <input type="file" 
+                   name="file" 
+                   id="file" 
+                   class="file-input" 
+                   accept=".pdf,.csv,.txt" 
+                   required
+                   onchange="updateFileName(this.files[0] ? this.files[0].name : '')">
+            
+            <label for="file" class="file-input-label">
+                <div class="upload-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <h4>Choose Bank Statement File</h4>
+                <p class="text-muted mb-3">
+                    Drag and drop your file here, or click to browse
+                </p>
+                <div class="supported-formats">
+                    <small class="text-info">
+                        <i class="fas fa-file-pdf text-danger"></i> PDF • 
+                        <i class="fas fa-file-csv text-success"></i> CSV • 
+                        <i class="fas fa-file-alt text-primary"></i> TXT
+                    </small>
+                </div>
+                <div class="filename-display mt-2" style="display: none;"></div>
+            </label>
+        </div>
+        
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary btn-lg pulse" id="convertBtn">
+                <i class="fas fa-magic me-2"></i>
+                Convert to QuickBooks Format
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Features Section -->
+<div class="features-grid mt-5">
+    <div class="feature-card fade-in-up">
+        <div class="feature-icon text-primary">
+            <i class="fas fa-robot"></i>
+        </div>
+        <h5>Auto Detection</h5>
+        <p class="text-muted">Automatically detects your bank type and applies the correct conversion rules.</p>
+    </div>
+    
+    <div class="feature-card fade-in-up">
+        <div class="feature-icon text-success">
+            <i class="fas fa-coins"></i>
+        </div>
+        <h5>Multi-Currency</h5>
+        <p class="text-muted">Supports Albanian Lek (ALL), US Dollar (USD), and Euro (EUR) transactions.</p>
+    </div>
+    
+    <div class="feature-card fade-in-up">
+        <div class="feature-icon text-warning">
+            <i class="fas fa-calculator"></i>
+        </div>
+        <h5>Tax Calculation</h5>
+        <p class="text-muted">Automatically calculates 15% withholding tax according to Albanian regulations.</p>
+    </div>
+    
+    <div class="feature-card fade-in-up">
+        <div class="feature-icon text-info">
+            <i class="fas fa-download"></i>
+        </div>
+        <h5>QuickBooks Ready</h5>
+        <p class="text-muted">Generates CSV files that can be directly imported into QuickBooks.</p>
+    </div>
+</div>
+
+<!-- Instructions Section -->
+<div class="mt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">
+                        <i class="fas fa-info-circle me-2"></i>How It Works
+                    </h5>
+                    <ol class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-upload text-primary me-2"></i>
+                            <strong>1. Upload</strong> your bank statement (PDF or CSV)
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-cogs text-info me-2"></i>
+                            <strong>2. Convert</strong> automatically with smart detection
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-download text-success me-2"></i>
+                            <strong>3. Download</strong> your QuickBooks-ready CSV file
+                        </li>
+                        <li>
+                            <i class="fas fa-chart-line text-warning me-2"></i>
+                            <strong>4. Import</strong> directly to QuickBooks
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-success">
+                        <i class="fas fa-check-circle me-2"></i>Supported Banks
+                    </h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-university text-primary me-2"></i>
+                            <strong>OTP Bank</strong> - PDF statements & CSV exports
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-building text-success me-2"></i>
+                            <strong>BKT Bank</strong> - PDF with balance verification
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-landmark text-warning me-2"></i>
+                            <strong>Raiffeisen</strong> - Multi-currency CSV support
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-coins text-info me-2"></i>
+                            <strong>TI Bank</strong> - Albanian date formats
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-handshake text-purple me-2"></i>
+                            <strong>Union Bank</strong> - Multi-line descriptions
+                        </li>
+                        <li>
+                            <i class="fas fa-receipt text-secondary me-2"></i>
+                            <strong>E-Bills</strong> - Electronic bill processing
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Security Notice -->
+<div class="alert alert-info mt-4" role="alert">
+    <i class="fas fa-shield-alt me-2"></i>
+    <strong>Privacy & Security:</strong> Your files are processed locally on our server and automatically deleted after 1 hour. 
+    We never store or share your financial data.
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateFileName(filename) {
+    const filenameDisplay = document.querySelector('.filename-display');
+    const uploadIcon = document.querySelector('.upload-icon i');
+    const convertBtn = document.getElementById('convertBtn');
+    
+    if (filename) {
+        filenameDisplay.innerHTML = `
+            <div class="alert alert-success p-2 mb-0">
+                <i class="fas fa-file-check me-2"></i>
+                <strong>Selected:</strong> ${filename}
+            </div>
+        `;
+        filenameDisplay.style.display = 'block';
+        uploadIcon.className = 'fas fa-file-check';
+        convertBtn.disabled = false;
+        convertBtn.classList.add('pulse');
+    } else {
+        filenameDisplay.style.display = 'none';
+        uploadIcon.className = 'fas fa-cloud-upload-alt';
+        convertBtn.disabled = true;
+        convertBtn.classList.remove('pulse');
+    }
+}
+
+// Form submission handling
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    const fileInput = document.getElementById('file');
+    const convertBtn = document.getElementById('convertBtn');
+    
+    if (!fileInput.files || fileInput.files.length === 0) {
+        e.preventDefault();
+        alert('Please select a file first.');
+        return false;
+    }
+    
+    // Check file size (50MB limit)
+    const file = fileInput.files[0];
+    if (file.size > 50 * 1024 * 1024) {
+        e.preventDefault();
+        alert('File size must be less than 50MB.');
+        return false;
+    }
+    
+    // Show loading state
+    convertBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    convertBtn.disabled = true;
+    convertBtn.classList.remove('pulse');
+});
+
+// Initialize filename display
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('file');
+    updateFileName('');
+});
+</script>
+{% endblock %}

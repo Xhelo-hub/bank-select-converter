@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block title %}Conversion Status - Albanian Bank Converter{% endblock %}
+
+{% block content %}
+<div class="status-card text-center">
+    <h2 class="mb-4">
+        <i class="fas fa-cogs text-primary me-2"></i>
+        Processing Your Bank Statement
+    </h2>
+    
+    <!-- Status Display -->
+    <div id="statusContainer">
+        <div class="progress-circle" id="progressCircle">
+            <div class="progress-text" id="progressText">
+                <i class="fas fa-spinner fa-spin"></i>
+            </div>
+        </div>
+        
+        <h4 id="statusMessage" class="mt-3 text-muted">{{ job.message }}</h4>
+        
+        <div class="file-info mt-4">
+            <div class="card border-0 bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-file me-2"></i>File Information
+                    </h6>
+                    <p class="card-text">
+                        <strong>Filename:</strong> {{ job.filename }}<br>
+                        <strong>Upload Time:</strong> {{ job.upload_time.strftime('%H:%M:%S') }}<br>
+                        <strong>Status:</strong> <span id="currentStatus" class="badge bg-info">{{ job.status.title() }}</span>
+                        {% if job.bank_type %}
+                        <br><strong>Bank Type:</strong> <span class="badge bg-success">{{ job.bank_type }}</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Download Section (Hidden initially) -->
+    <div id="downloadSection" class="mt-4" style="display: none;">
+        <div class="alert alert-success" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <strong>Conversion Completed Successfully!</strong>
+        </div>
+        
+        <div class="d-grid gap-2 d-md-block">
+            <a href="{{ url_for('download_file', job_id=job_id) }}" 
+               class="btn btn-success btn-lg me-2" id="downloadBtn">
+                <i class="fas fa-download me-2"></i>
+                Download Converted File
+            </a>
+            
+            <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-plus me-2"></i>
+                Convert Another File
+            </a>
+        </div>
+        
+        <div class="mt-3">
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                Your file will be automatically deleted after 1 hour for security.
+            </small>
+        </div>
+    </div>
+    
+    <!-- Error Section (Hidden initially) -->
+    <div id="errorSection" class="mt-4" style="display: none;">
+        <div class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Conversion Failed</strong>
+        </div>
+        
+        <div class="error-details">
+            <p id="errorMessage" class="text-danger"></p>
+        </div>
+        
+        <div class="d-grid gap-2 d-md-block">
+            <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-redo me-2"></i>
+                Try Again
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Processing Steps -->
+<div class="mt-5">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title text-center mb-4">
+                <i class="fas fa-list-ol me-2"></i>Processing Steps
+            </h5>
+            
+            <div class="row">
+                <div class="col-md-3 text-center mb-3">
+                    <div class="step-circle bg-success text-white" id="step1">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <h6 class="mt-2">Upload Complete</h6>
+                    <small class="text-muted">File received and validated</small>
+                </div>
+                
+                <div class="col-md-3 text-center mb-3">
+                    <div class="step-circle bg-secondary" id="step2">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h6 class="mt-2">Bank Detection</h6>
+                    <small class="text-muted">Identifying bank type</small>
+                </div>
+                
+                <div class="col-md-3 text-center mb-3">
+                    <div class="step-circle bg-secondary" id="step3">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h6 class="mt-2">Processing</h6>
+                    <small class="text-muted">Converting to QuickBooks format</small>
+                </div>
+                
+                <div class="col-md-3 text-center mb-3">
+                    <div class="step-circle bg-secondary" id="step4">
+                        <i class="fas fa-download"></i>
+                    </div>
+                    <h6 class="mt-2">Ready</h6>
+                    <small class="text-muted">File ready for download</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tips Section -->
+<div class="mt-4">
+    <div class="card border-0 bg-light">
+        <div class="card-body">
+            <h6 class="card-title">
+                <i class="fas fa-lightbulb text-warning me-2"></i>
+                QuickBooks Import Tips
+            </h6>
+            <ul class="list-unstyled mb-0">
+                <li class="mb-1">
+                    <i class="fas fa-arrow-right text-primary me-2"></i>
+                    Import the CSV file through Banking > Bank Deposit
+                </li>
+                <li class="mb-1">
+                    <i class="fas fa-arrow-right text-primary me-2"></i>
+                    Map Date, Description, and Amount columns correctly
+                </li>
+                <li class="mb-1">
+                    <i class="fas fa-arrow-right text-primary me-2"></i>
+                    Review transactions before finalizing the import
+                </li>
+                <li>
+                    <i class="fas fa-arrow-right text-primary me-2"></i>
+                    Check withholding tax calculations for accuracy
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.step-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.step-circle.active {
+    background-color: var(--info-color) !important;
+    animation: pulse 2s infinite;
+}
+
+.step-circle.completed {
+    background-color: var(--success-color) !important;
+}
+
+.step-circle.error {
+    background-color: var(--secondary-color) !important;
+}
+</style>
+
+<script>
+const jobId = '{{ job_id }}';
+let checkInterval;
+
+function updateStatus() {
+    fetch(`/api/status/${jobId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showError(data.error);
+                return;
+            }
+            
+            // Update status message
+            document.getElementById('statusMessage').textContent = data.message;
+            document.getElementById('currentStatus').textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+            
+            // Update status badge color
+            const statusBadge = document.getElementById('currentStatus');
+            statusBadge.className = 'badge ';
+            switch(data.status) {
+                case 'uploaded':
+                    statusBadge.className += 'bg-info';
+                    break;
+                case 'processing':
+                    statusBadge.className += 'bg-warning';
+                    updateStep(2);
+                    break;
+                case 'completed':
+                    statusBadge.className += 'bg-success';
+                    showSuccess();
+                    clearInterval(checkInterval);
+                    break;
+                case 'error':
+                    statusBadge.className += 'bg-danger';
+                    showError(data.message);
+                    clearInterval(checkInterval);
+                    break;
+            }
+            
+            // Update bank type if available
+            if (data.bank_type && !document.querySelector('.badge.bg-success')) {
+                const fileInfo = document.querySelector('.card-text');
+                fileInfo.innerHTML += `<br><strong>Bank Type:</strong> <span class="badge bg-success">${data.bank_type}</span>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error checking status:', error);
+            showError('Failed to check conversion status');
+        });
+}
+
+function updateStep(stepNumber) {
+    // Reset all steps
+    for (let i = 1; i <= 4; i++) {
+        const step = document.getElementById(`step${i}`);
+        if (i < stepNumber) {
+            step.className = 'step-circle completed';
+            step.innerHTML = '<i class="fas fa-check"></i>';
+        } else if (i === stepNumber) {
+            step.className = 'step-circle active bg-info text-white';
+            step.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        } else {
+            step.className = 'step-circle bg-secondary';
+        }
+    }
+}
+
+function showSuccess() {
+    // Update progress circle
+    document.getElementById('progressText').innerHTML = '<i class="fas fa-check text-success"></i>';
+    document.getElementById('progressCircle').style.background = 'conic-gradient(var(--success-color) 360deg, #e9ecef 0deg)';
+    
+    // Show download section
+    document.getElementById('downloadSection').style.display = 'block';
+    
+    // Update all steps as completed
+    updateStep(5); // Will mark all as completed
+    
+    // Add celebration animation
+    document.getElementById('statusMessage').innerHTML = '<i class="fas fa-party-horn me-2"></i>Conversion Completed Successfully!';
+    document.getElementById('statusMessage').className = 'mt-3 text-success';
+}
+
+function showError(message) {
+    // Update progress circle
+    document.getElementById('progressText').innerHTML = '<i class="fas fa-times text-danger"></i>';
+    document.getElementById('progressCircle').style.background = 'conic-gradient(var(--secondary-color) 360deg, #e9ecef 0deg)';
+    
+    // Show error section
+    document.getElementById('errorSection').style.display = 'block';
+    document.getElementById('errorMessage').textContent = message;
+    
+    // Update status message
+    document.getElementById('statusMessage').innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Conversion Failed';
+    document.getElementById('statusMessage').className = 'mt-3 text-danger';
+    
+    // Mark current step as error
+    const activeStep = document.querySelector('.step-circle.active');
+    if (activeStep) {
+        activeStep.className = 'step-circle error';
+        activeStep.innerHTML = '<i class="fas fa-times"></i>';
+    }
+}
+
+// Start checking status every 2 seconds
+checkInterval = setInterval(updateStatus, 2000);
+
+// Initial status check
+updateStatus();
+
+// Update initial step
+updateStep(1);
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (checkInterval) {
+        clearInterval(checkInterval);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,10 @@
+# Development dependencies (optional)
+pytest>=6.0
+pytest-flask>=1.2.0
+black>=22.0
+flake8>=4.0
+mypy>=0.950
+
+# Production dependencies (optional)
+gunicorn>=20.1.0
+supervisor>=4.2.0
