@@ -173,3 +173,15 @@ echo "1. Configure Nginx reverse proxy in HestiaCP"
 echo "2. Test the application"
 echo "3. Monitor logs for any issues"
 echo ""
+
+location / {
+    proxy_pass http://127.0.0.1:5002;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_connect_timeout 300;
+    proxy_send_timeout 300;
+    proxy_read_timeout 300;
+    client_max_body_size 50M;
+}
