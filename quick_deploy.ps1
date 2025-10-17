@@ -1,8 +1,8 @@
 # Quick Deploy Script - Run all commands on server
 # This connects to the server and runs all deployment commands
 
-$SERVER = "admin@converter.konsulence.al"
-$DEPLOY_DIR = "/home/admin/web/c.konsulence.al/public_html"
+$SERVER = "converter@c.konsulence.al"
+$DEPLOY_DIR = "/home/converter/web/c.konsulence.al/public_html"
 
 Write-Host "Connecting to server and deploying..." -ForegroundColor Green
 
@@ -12,7 +12,7 @@ echo "=========================================="
 echo "Bank Statement Converter - Quick Deploy"
 echo "=========================================="
 
-cd /home/admin/web/c.konsulence.al/public_html
+cd /home/converter/web/c.konsulence.al/public_html
 
 echo ""
 echo "[1/10] Pulling latest code from GitHub..."
@@ -78,7 +78,7 @@ echo "✓ Deployment Complete!"
 echo "=========================================="
 echo ""
 echo "To run the web interface:"
-echo "  cd /home/admin/web/c.konsulence.al/public_html/Bank_Specific_Converter"
+echo "  cd /home/converter/web/c.konsulence.al/public_html/Bank_Specific_Converter"
 echo "  source ../.venv/bin/activate"
 echo "  python app.py"
 echo ""
@@ -91,7 +91,7 @@ Write-Host ""
 Write-Host "Deployment finished!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next: Connect to server and start the app:"
-Write-Host "  ssh admin@converter.konsulence.al" -ForegroundColor Yellow
-Write-Host "  cd /home/admin/web/c.konsulence.al/public_html/Bank_Specific_Converter" -ForegroundColor Yellow
+Write-Host "  ssh converter@c.konsulence.al" -ForegroundColor Yellow
+Write-Host "  cd /home/converter/web/c.konsulence.al/public_html/Bank_Specific_Converter" -ForegroundColor Yellow
 Write-Host "  source ../.venv/bin/activate" -ForegroundColor Yellow
 Write-Host "  python app.py" -ForegroundColor Yellow

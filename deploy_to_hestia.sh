@@ -10,9 +10,9 @@ echo "Bank Statement Converter - Server Setup"
 echo "=========================================="
 
 # Configuration
-DEPLOY_USER="admin"
-DEPLOY_HOST="converter.konsulence.al"
-DEPLOY_DIR="/home/admin/web/c.konsulence.al/public_html"
+DEPLOY_USER="converter"
+DEPLOY_HOST="c.konsulence.al"
+DEPLOY_DIR="/home/converter/web/c.konsulence.al/public_html"
 REPO_URL="https://github.com/Xhelo-hub/bank-select-converter.git"
 
 echo ""
@@ -88,11 +88,11 @@ After=network.target
 
 [Service]
 Type=notify
-User=admin
-Group=admin
-WorkingDirectory=/home/admin/web/c.konsulence.al/public_html/Bank_Specific_Converter
-Environment="PATH=/home/admin/web/c.konsulence.al/public_html/.venv/bin"
-ExecStart=/home/admin/web/c.konsulence.al/public_html/.venv/bin/gunicorn --config gunicorn.conf.py wsgi:application
+User=converter
+Group=converter
+WorkingDirectory=/home/converter/web/c.konsulence.al/public_html/Bank_Specific_Converter
+Environment="PATH=/home/converter/web/c.konsulence.al/public_html/.venv/bin"
+ExecStart=/home/converter/web/c.konsulence.al/public_html/.venv/bin/gunicorn --config gunicorn.conf.py wsgi:application
 ExecReload=/bin/kill -s HUP $MAINPID
 KillMode=mixed
 TimeoutStopSec=5
@@ -128,8 +128,8 @@ timeout = 300
 keepalive = 2
 
 # Logging
-accesslog = "/home/admin/web/c.konsulence.al/logs/gunicorn-access.log"
-errorlog = "/home/admin/web/c.konsulence.al/logs/gunicorn-error.log"
+accesslog = "/home/converter/web/c.konsulence.al/logs/gunicorn-access.log"
+errorlog = "/home/converter/web/c.konsulence.al/logs/gunicorn-error.log"
 loglevel = "info"
 
 # Process naming

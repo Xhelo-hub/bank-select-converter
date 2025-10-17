@@ -1,8 +1,8 @@
 # PowerShell script to deploy Bank Converter to HestiaCP server
 # Run this from your local machine
 
-$SERVER = "admin@converter.konsulence.al"
-$DEPLOY_DIR = "/home/admin/web/c.konsulence.al/public_html"
+$SERVER = "converter@c.konsulence.al"
+$DEPLOY_DIR = "/home/converter/web/c.konsulence.al/public_html"
 
 Write-Host "=========================================="
 Write-Host "Bank Statement Converter - Remote Deploy"
