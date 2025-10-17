@@ -10,6 +10,7 @@ import re
 from pathlib import Path
 from datetime import datetime
 import sys
+import argparse
 from collections import defaultdict
 
 
@@ -210,13 +211,13 @@ def create_withholding_report(transactions, date_range, output_path):
         Path to the created CSV file
     """
     if not transactions:
-        print("⚠ No withholding tax transactions found.")
+        print("WARNING: No withholding tax transactions found.", flush=True)
         return None
     
     # Check for versioning
     output_path = get_versioned_filename(output_path)
     
-    print(f"\nFound {len(transactions)} withholding tax transaction(s)")
+    print(f"\nFound {len(transactions)} withholding tax transaction(s)", flush=True)
     
     # Calculate totals
     total_debit = 0.0
@@ -267,11 +268,11 @@ def create_withholding_report(transactions, date_range, output_path):
                     writer.writerow(row)
     
     # Display summary
-    print(f"Total Amount Received (Debit): {total_debit:,.2f} LEK")
-    print(f"Total Gross Amount: {total_gross:,.2f} LEK")
-    print(f"Total Withholding Tax (15%): {total_tax:,.2f} LEK")
+    print(f"Total Amount Received (Debit): {total_debit:,.2f} LEK", flush=True)
+    print(f"Total Gross Amount: {total_gross:,.2f} LEK", flush=True)
+    print(f"Total Withholding Tax (15%): {total_tax:,.2f} LEK", flush=True)
     
-    print(f"\n✓ Withholding tax report created: {output_path}")
+    print(f"\nSuccess! Withholding tax report created: {output_path}", flush=True)
     return output_path
 
 
@@ -315,7 +316,20 @@ def main():
     Main function to process withholding tax from bank statement CSV.
     If no arguments provided, automatically processes all CSV files in export folder.
     """
-    if len(sys.argv) < 2:
+    # Setup argument parser
+    parser = argparse.ArgumentParser(description='Extract withholding tax transactions from bank statements')
+    parser.add_argument('--input', '-i', dest='input_file', help='Input CSV file path')
+    parser.add_argument('--output', '-o', dest='output_dir', help='Output directory for CSV file')
+    parser.add_argument('csv_file', nargs='?', help='CSV file path (positional argument)')
+    parser.add_argument('output_directory', nargs='?', help='Output directory (positional argument)')
+    
+    args = parser.parse_args()
+    
+    # Determine input file and output directory
+    input_file = args.input_file or args.csv_file
+    output_dir = args.output_dir or args.output_directory
+    
+    if not input_file:
         # No arguments - automatically process all CSV files in current directory and import folder
         print("Withholding Tax Processor")
         print("="*60)
@@ -331,55 +345,52 @@ def main():
                                  if not f.name.startswith('Tatim ne Burim')])
         
         if not csv_files:
-            print("✗ No CSV files found in current directory or import folder.")
+            print("Error: No CSV files found in current directory or import folder.", flush=True)
             sys.exit(1)
         
-        print(f"Found {len(csv_files)} CSV file(s):\n")
+        print(f"Found {len(csv_files)} CSV file(s):\n", flush=True)
         for i, csv_file in enumerate(csv_files, 1):
-            print(f"  {i}. {csv_file.name}")
+            print(f"  {i}. {csv_file.name}", flush=True)
         
-        print("\nProcessing all files...\n")
-        print("-" * 60)
+        print("\nProcessing all files...\n", flush=True)
+        print("-" * 60, flush=True)
         
         total_processed = 0
         total_withholding_found = 0
         
         for csv_file in csv_files:
-            print(f"\nProcessing: {csv_file.name}")
+            print(f"\nProcessing: {csv_file.name}", flush=True)
             try:
                 result = process_withholding_from_csv(str(csv_file))
                 if result:
                     total_processed += 1
                     total_withholding_found += 1
             except Exception as e:
-                print(f"⚠ Error processing {csv_file.name}: {e}")
-            print("-" * 60)
+                print(f"WARNING: Error processing {csv_file.name}: {e}", flush=True)
+            print("-" * 60, flush=True)
         
-        print(f"\n✓ Completed! Processed {total_processed} file(s).")
-        print(f"  Found withholding transactions in {total_withholding_found} file(s).")
+        print(f"\nSuccess! Processed {total_processed} file(s).", flush=True)
+        print(f"  Found withholding transactions in {total_withholding_found} file(s).", flush=True)
         return
     
     # Arguments provided - process specific file
-    input_file = sys.argv[1]
-    output_dir = sys.argv[2] if len(sys.argv) > 2 else None
-    
     try:
         result = process_withholding_from_csv(input_file, output_dir)
         
         if result:
-            print(f"\n✓ Success! Withholding tax report created.")
+            print(f"\nSuccess! Withholding tax report created.", flush=True)
         else:
-            print("\n⚠ No withholding tax transactions found in the input file.")
+            print("\nWARNING: No withholding tax transactions found in the input file.", flush=True)
             sys.exit(0)
     
     except FileNotFoundError as e:
-        print(f"\n✗ Error: {e}")
+        print(f"\nError: {e}", flush=True)
         sys.exit(1)
     except ValueError as e:
-        print(f"\n✗ Error: {e}")
+        print(f"\nError: {e}", flush=True)
         sys.exit(1)
     except Exception as e:
-        print(f"\n✗ Unexpected error: {e}")
+        print(f"\nError: Unexpected error: {e}", flush=True)
         import traceback
         traceback.print_exc()
         sys.exit(1)

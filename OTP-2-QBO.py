@@ -12,6 +12,8 @@ Date: October 5, 2025
 
 import csv
 import os
+import sys
+import shutil
 from pathlib import Path
 import re
 from datetime import datetime
@@ -415,19 +417,19 @@ def convert_to_quickbooks():
         csv_transactions.sort(key=lambda x: datetime.strptime(x['Date'], '%d/%m/%Y'))
         # Generate CSV QuickBooks CSV using CSV filename
         csv_output = generate_quickbooks_csv(csv_transactions, csv_filename, "")
-        output_files.append(f"📊 CSV: {csv_output}")
+        output_files.append(f"CSV: {csv_output}")
     
-    print(f"\n✅ SUCCESS!")
+    print(f"\nSUCCESS!")
     if output_files:
-        print("� Created QuickBooks CSV files:")
+        print("Created QuickBooks CSV files:")
         for file_info in output_files:
             print(f"   {file_info}")
     
     # Show summary
     total_transactions = len(pdf_transactions) + len(csv_transactions)
-    print(f"📊 Total transactions: {total_transactions}")
-    print(f"   📄 PDF: {len(pdf_transactions)} transactions")
-    print(f"   📊 CSV: {len(csv_transactions)} transactions")
+    print(f"Total transactions: {total_transactions}")
+    print(f"   PDF: {len(pdf_transactions)} transactions")
+    print(f"   CSV: {len(csv_transactions)} transactions")
 
 def generate_quickbooks_csv(transactions, original_filename, source_type):
     """Generate QuickBooks compatible CSV file."""
@@ -476,6 +478,29 @@ def generate_quickbooks_csv(transactions, original_filename, source_type):
 
 def main():
     """Main function to convert OTP Bank files to QuickBooks format."""
+    import argparse
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Convert OTP Bank statements to QuickBooks CSV format')
+    parser.add_argument('--input', '-i', dest='input_file', help='Input PDF/CSV file path')
+    parser.add_argument('--output', '-o', dest='output_dir', help='Output directory for CSV file')
+    
+    args = parser.parse_args()
+    
+    # If specific input file provided, process it
+    if args.input_file:
+        input_path = Path(args.input_file)
+        if not input_path.exists():
+            print(f"Error: File not found: {input_path}", flush=True)
+            sys.exit(1)
+        
+        # Copy to import folder for processing
+        import_dir = Path('import')
+        import_dir.mkdir(exist_ok=True)
+        import shutil
+        shutil.copy2(input_path, import_dir / input_path.name)
+        print(f"Processing: {input_path.name}", flush=True)
+    
     convert_to_quickbooks()
 
 if __name__ == "__main__":

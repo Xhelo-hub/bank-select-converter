@@ -282,15 +282,30 @@ def process_all_csv_files():
 
 if __name__ == "__main__":
     import sys
+    import argparse
     
-    # Check if a specific CSV path is provided as argument
-    if len(sys.argv) > 1:
-        csv_file = sys.argv[1]
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Convert Raiffeisen bank statements to QuickBooks CSV format')
+    parser.add_argument('--input', '-i', dest='input_file', help='Input CSV file path')
+    parser.add_argument('--output', '-o', dest='output_dir', help='Output directory for CSV file')
+    parser.add_argument('csv_file', nargs='?', help='CSV file path (positional argument)')
+    
+    args = parser.parse_args()
+    
+    # Determine input file (support both --input flag and positional argument)
+    input_csv = None
+    if args.input_file:
+        input_csv = args.input_file
+    elif args.csv_file:
+        input_csv = args.csv_file
+    
+    # Check if a specific CSV path is provided
+    if input_csv:
         try:
-            result_path = convert_raiffeisen_csv(csv_file)
-            print(f"\n[SUCCESS] Conversion completed: {result_path}")
+            result_path = convert_raiffeisen_csv(input_csv)
+            print(f"\n[SUCCESS] Conversion completed: {result_path}", flush=True)
         except Exception as e:
-            print(f"\n[ERROR] Error: {e}")
+            print(f"\n[ERROR] Error: {str(e)}", flush=True)
             import traceback
             traceback.print_exc()
             sys.exit(1)

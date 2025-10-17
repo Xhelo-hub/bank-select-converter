@@ -118,8 +118,8 @@
 <body>
     <div class="login-container">
         <div class="logo">
-            <h1>🏦 Bank Converter</h1>
-            <p>Albanian Statement Converter</p>
+            <h1>Bank Statement Converter</h1>
+            <p>Convert standard Albanian Banks statements ready to import in QuickBooks Online .csv format.</p>
         </div>
         
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -130,10 +130,10 @@
             {% endif %}
         {% endwith %}
         
-        <form method="POST" action="{{ url_for('login') }}">
+        <form method="POST" action="{{ url_for('auth.login') }}">
             <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required autofocus>
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required autofocus>
             </div>
             
             <div class="form-group">
@@ -145,8 +145,20 @@
         </form>
         
         <div class="links">
-            <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+            <p>Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a></p>
         </div>
     </div>
+    
+    <script>
+        // Auto-dismiss success messages after 3 seconds
+        setTimeout(function() {
+            const successAlerts = document.querySelectorAll('.alert-success');
+            successAlerts.forEach(alert => {
+                alert.style.transition = 'opacity 0.5s';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 3000);
+    </script>
 </body>
 </html>

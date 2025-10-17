@@ -286,7 +286,7 @@ def validate_and_fix_transactions(transactions):
                 # Swap debit and credit
                 current['Debit'], current['Credit'] = current['Credit'], current['Debit']
                 corrections_made += 1
-                print(f"  ⚠ Row {i+1}: Swapped debit/credit for '{current['Date']}' - {current['Description'][:30]}...")
+                print(f"  WARNING: Row {i+1}: Swapped debit/credit for '{current['Date']}' - {current['Description'][:30]}...")
     
     return transactions, corrections_made
 
@@ -334,16 +334,16 @@ def pdf_to_csv(pdf_path, output_csv=None):
         print(f"\nValidating transactions...")
         transactions, corrections = validate_and_fix_transactions(transactions)
         if corrections > 0:
-            print(f"✓ Made {corrections} correction(s) by swapping debit/credit columns")
+            print(f"Made {corrections} correction(s) by swapping debit/credit columns")
         else:
-            print(f"✓ All transactions validated successfully")
+            print(f"All transactions validated successfully")
         
         # Remove first row if it has only balance (no debit or credit)
         if transactions and len(transactions) > 0:
             first_row = transactions[0]
             if (not first_row.get('Debit') or first_row['Debit'] == '') and \
                (not first_row.get('Credit') or first_row['Credit'] == ''):
-                print(f"✓ Removed first row (opening balance only)")
+                print(f"Removed first row (opening balance only)")
                 transactions = transactions[1:]
         
         # Format dates to DD/MM/YYYY
@@ -367,22 +367,45 @@ def pdf_to_csv(pdf_path, output_csv=None):
             writer.writerows(transactions)
         
         print(f"CSV file saved: {output_csv}")
-        print(f"✓ Success! {len(transactions)} transactions exported.")
+        print(f"Success! {len(transactions)} transactions exported.")
     else:
-        print("⚠ Warning: No transactions found in the PDF.")
+        print("Warning: No transactions found in the PDF.")
     
     return output_csv
 
 
 if __name__ == "__main__":
-    # Check if a specific PDF path is provided as argument
-    if len(sys.argv) > 1:
+    import argparse
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Convert BKT bank statements to QuickBooks CSV format')
+    parser.add_argument('--input', '-i', dest='input_file', help='Input PDF file path')
+    parser.add_argument('--output', '-o', dest='output_dir', help='Output directory for CSV file')
+    parser.add_argument('pdf_file', nargs='?', help='PDF file path (positional argument)')
+    parser.add_argument('output_file', nargs='?', help='Output file path (positional argument)')
+    
+    args = parser.parse_args()
+    
+    # Determine input file (support both --input flag and positional argument)
+    input_pdf = None
+    if args.input_file:
+        input_pdf = Path(args.input_file)
+    elif args.pdf_file:
+        input_pdf = Path(args.pdf_file)
+    
+    # Check if a specific PDF path is provided
+    if input_pdf:
         # Process single PDF file
-        pdf_file = Path(sys.argv[1])
+        pdf_file = input_pdf
         
-        # Generate output path in export folder with " - 4qbo" suffix if not provided
-        if len(sys.argv) > 2:
-            output_file = sys.argv[2]
+        # Determine output path
+        if args.output_file:
+            output_file = Path(args.output_file)
+        elif args.output_dir:
+            output_dir = Path(args.output_dir)
+            output_dir.mkdir(exist_ok=True)
+            csv_filename = pdf_file.stem + " - 4qbo.csv"
+            output_file = output_dir / csv_filename
         else:
             output_dir = Path('export')
             output_dir.mkdir(exist_ok=True)
@@ -391,9 +414,9 @@ if __name__ == "__main__":
         
         try:
             result_path = pdf_to_csv(pdf_file, output_file)
-            print(f"\n✓ CSV file created at: {result_path}")
+            print(f"\nSuccess! CSV file created at: {result_path}", flush=True)
         except Exception as e:
-            print(f"\n✗ Error: {e}")
+            print(f"\nError: {str(e)}", flush=True)
             import traceback
             traceback.print_exc()
             sys.exit(1)
@@ -432,10 +455,10 @@ if __name__ == "__main__":
                 output_csv = output_dir / csv_filename
                 
                 result_path = pdf_to_csv(pdf_file, output_csv)
-                print(f"\n✓ CSV file created at: {result_path}")
+                print(f"\nSuccess! CSV file created at: {result_path}")
                 success_count += 1
             except Exception as e:
-                print(f"\n✗ Error processing {pdf_file.name}: {e}")
+                print(f"\nError processing {pdf_file.name}: {e}")
                 failed_files.append(pdf_file.name)
                 import traceback
                 traceback.print_exc()
@@ -454,6 +477,6 @@ if __name__ == "__main__":
                 print(f"  - {filename}")
         
         if success_count > 0:
-            print(f"\n✓ All CSV files saved in the 'export' folder")
+            print(f"\nAll CSV files saved in the 'export' folder")
         
         sys.exit(0 if len(failed_files) == 0 else 1)

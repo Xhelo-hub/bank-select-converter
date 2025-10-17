@@ -448,14 +448,37 @@ def pdf_to_csv(pdf_path, output_csv=None):
 
 
 if __name__ == "__main__":
-    # Check if a specific PDF path is provided as argument
-    if len(sys.argv) > 1:
+    import argparse
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Convert Union Bank statements to QuickBooks CSV format')
+    parser.add_argument('--input', '-i', dest='input_file', help='Input PDF file path')
+    parser.add_argument('--output', '-o', dest='output_dir', help='Output directory for CSV file')
+    parser.add_argument('pdf_file', nargs='?', help='PDF file path (positional argument)')
+    parser.add_argument('output_file', nargs='?', help='Output file path (positional argument)')
+    
+    args = parser.parse_args()
+    
+    # Determine input file (support both --input flag and positional argument)
+    input_pdf = None
+    if args.input_file:
+        input_pdf = Path(args.input_file)
+    elif args.pdf_file:
+        input_pdf = Path(args.pdf_file)
+    
+    # Check if a specific PDF path is provided
+    if input_pdf:
         # Process single PDF file
-        pdf_file = Path(sys.argv[1])
+        pdf_file = input_pdf
         
-        # Generate output path in export folder with " - 4qbo" suffix if not provided
-        if len(sys.argv) > 2:
-            output_file = sys.argv[2]
+        # Determine output path
+        if args.output_file:
+            output_file = Path(args.output_file)
+        elif args.output_dir:
+            output_dir = Path(args.output_dir)
+            output_dir.mkdir(exist_ok=True)
+            csv_filename = pdf_file.stem + " - 4qbo.csv"
+            output_file = output_dir / csv_filename
         else:
             output_dir = Path('export')
             output_dir.mkdir(exist_ok=True)
@@ -464,9 +487,9 @@ if __name__ == "__main__":
         
         try:
             result_path = pdf_to_csv(pdf_file, output_file)
-            print(f"\n✓ CSV file created at: {result_path}")
+            print(f"\nSuccess! CSV file created at: {result_path}", flush=True)
         except Exception as e:
-            print(f"\n✗ Error: {e}")
+            print(f"\nError: {str(e)}", flush=True)
             import traceback
             traceback.print_exc()
             sys.exit(1)

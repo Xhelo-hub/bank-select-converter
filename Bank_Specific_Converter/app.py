@@ -1,156 +1,196 @@
 #!/usr/bin/env python3
-"""
-Bank-Specific Converter Web Interface
-=====================================
-Uses individual bank converter scripts for accurate conversion
-"""
-
 from flask import Flask, render_template_string, request, redirect, url_for, flash, send_file, jsonify
 from werkzeug.utils import secure_filename
+from flask_login import LoginManager, login_required, current_user
 import os
 import subprocess
 import tempfile
 import shutil
-from datetime import datetime
+import datetime
 import uuid
+import time
+import threading
+from pathlib import Path
 
+# Import authentication components
+from auth import UserManager
+from auth_routes import auth_bp
+from admin_routes import admin_bp
+
+# App initialization
 app = Flask(__name__)
 
 # Load configuration
 try:
-    from config import config
-    config_name = os.environ.get('FLASK_ENV', 'production')
-    app.config.from_object(config[config_name])
+    from config import Config
+    app.config.from_object(Config)
 except ImportError:
-    # Fallback configuration if config.py is not available
-    app.secret_key = os.environ.get('SECRET_KEY', 'bank-specific-converter-key-change-this')
-    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
+    # Fallback configuration
+    app.config.update(
+        SECRET_KEY=os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production'),
+        MAX_CONTENT_LENGTH=50 * 1024 * 1024,  # 50MB max
+        PERMANENT_SESSION_LIFETIME=3600,
+    )
 
-# Configuration - Use simple import/export folders
-UPLOAD_FOLDER = app.config.get('UPLOAD_FOLDER', 'import')
-CONVERTED_FOLDER = app.config.get('CONVERTED_FOLDER', 'export')
-MAX_FILE_SIZE = app.config.get('MAX_CONTENT_LENGTH', 50 * 1024 * 1024)
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'auth.login'
+login_manager.login_message = 'Please log in to access this page.'
 
-# Create directories
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(CONVERTED_FOLDER, exist_ok=True)
+# Initialize UserManager
+user_manager = UserManager()
 
-# Bank configurations with their corresponding scripts
-# Scripts directory - flexible for both development and production
-SCRIPTS_DIR = app.config.get('SCRIPTS_DIR', os.path.join(os.path.dirname(__file__), '..'))
+@login_manager.user_loader
+def load_user(user_id):
+    """Load user by ID for Flask-Login"""
+    return user_manager.get_user_by_id(user_id)
 
-def get_script_path(script_name):
-    """Get script path, checking multiple possible locations"""
-    possible_paths = [
-        os.path.join(SCRIPTS_DIR, script_name),  # Parent directory
-        os.path.join(os.path.dirname(__file__), script_name),  # Same directory
-        os.path.join(os.path.dirname(__file__), 'converter_scripts', script_name),  # Subdirectory
-        script_name  # Current directory
-    ]
-    
-    for path in possible_paths:
-        if os.path.exists(path):
-            return path
-    return script_name  # Fallback to script name
+# Register authentication blueprint
+app.register_blueprint(auth_bp, url_prefix='/auth')
 
+# Register admin blueprint
+app.register_blueprint(admin_bp, url_prefix='/admin')
+
+# Directory setup
+BASE_DIR = Path(__file__).parent.absolute()
+UPLOAD_FOLDER = BASE_DIR / 'import'
+CONVERTED_FOLDER = BASE_DIR / 'export'
+SCRIPTS_DIR = BASE_DIR.parent
+
+# Create directories if they don't exist
+UPLOAD_FOLDER.mkdir(exist_ok=True)
+CONVERTED_FOLDER.mkdir(exist_ok=True)
+
+# Allowed extensions
+ALLOWED_EXTENSIONS = {'pdf', 'csv', 'txt'}
+
+# Bank configurations
 BANK_CONFIGS = {
     'BKT': {
         'name': 'BKT Bank',
         'script': 'BKT-2-QBO.py',
         'formats': ['PDF', 'CSV'],
-        'description': 'BKT Bank statements (PDF and CSV formats)'
+        'description': 'BKT Bank of Albania statements'
     },
     'OTP': {
         'name': 'OTP Bank',
         'script': 'OTP-2-QBO.py',
         'formats': ['PDF', 'CSV'],
-        'description': 'OTP Bank statements (PDF and CSV formats)'
+        'description': 'OTP Bank Albania statements'
     },
     'RAIFFEISEN': {
         'name': 'Raiffeisen Bank',
         'script': 'RAI-2-QBO.py',
         'formats': ['PDF', 'CSV'],
-        'description': 'Raiffeisen Bank statements (PDF and CSV formats)'
+        'description': 'Raiffeisen Bank Albania statements'
     },
     'TIBANK': {
-        'name': 'TI Bank',
+        'name': 'Tirana Bank',
         'script': 'TIBANK-2-QBO.py',
         'formats': ['PDF', 'CSV'],
-        'description': 'TI Bank statements (PDF and CSV formats)'
+        'description': 'Tirana Bank statements'
     },
     'UNION': {
         'name': 'Union Bank',
         'script': 'UNION-2-QBO.py',
         'formats': ['PDF', 'CSV'],
-        'description': 'Union Bank statements (PDF and CSV formats)'
+        'description': 'Union Bank Albania statements'
     },
     'EBILL': {
-        'name': 'E-Bills',
+        'name': 'E-Bill',
         'script': 'Withholding.py',
         'formats': ['PDF'],
-        'description': 'E-Bills (PDF format only)'
+        'description': 'E-Bill withholding tax statements (PDF only)'
     }
 }
 
-# Store conversion jobs
-conversion_jobs = {}
+# Job status tracking
+jobs = {}
+jobs_lock = threading.Lock()
+
+def allowed_file(filename):
+    """Check if file extension is allowed"""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def get_script_path(script_name):
+    """Get the absolute path to a converter script"""
+    # Try multiple locations
+    locations = [
+        SCRIPTS_DIR / script_name,  # Parent directory
+        BASE_DIR / script_name,     # Current directory
+        Path.cwd() / script_name,   # Working directory
+    ]
+    
+    for path in locations:
+        if path.exists():
+            return str(path)
+    
+    return None
 
 def cleanup_old_files():
-    """Clean up old files and directories periodically"""
-    try:
-        current_time = datetime.now().timestamp()
-        
-        # Clean up import folder - remove files older than 1 hour
-        for file_path in os.listdir(UPLOAD_FOLDER):
-            full_path = os.path.join(UPLOAD_FOLDER, file_path)
-            if os.path.isfile(full_path):
-                file_age = current_time - os.path.getctime(full_path)
-                if file_age > 3600:  # 1 hour
-                    os.remove(full_path)
-                    print(f"🧹 Cleaned up old import file: {file_path}")
-        
-        # Clean up export folder - remove files older than 1 hour
-        for file_path in os.listdir(CONVERTED_FOLDER):
-            full_path = os.path.join(CONVERTED_FOLDER, file_path)
-            if os.path.isfile(full_path):
-                file_age = current_time - os.path.getctime(full_path)
-                if file_age > 3600:  # 1 hour
-                    os.remove(full_path)
-                    print(f"🧹 Cleaned up old export file: {file_path}")
-        
-        # Clean up expired jobs from memory (older than 2 hours)
-        expired_jobs = []
-        for job_id, job in conversion_jobs.items():
-            job_time = datetime.fromisoformat(job['created_at']).timestamp()
-            if current_time - job_time > 7200:  # 2 hours
-                expired_jobs.append(job_id)
-        
-        for job_id in expired_jobs:
-            conversion_jobs.pop(job_id, None)
-            print(f"🧹 Cleaned up expired job: {job_id}")
-            
-    except Exception as e:
-        print(f"⚠️ Cleanup error: {e}")
-
-# Initialize cleanup on startup
-import atexit
-import threading
-import time
-
-def periodic_cleanup():
-    """Run cleanup every 30 minutes"""
+    """Background task to cleanup old files"""
     while True:
-        time.sleep(1800)  # 30 minutes
-        cleanup_old_files()
+        try:
+            time.sleep(1800)  # Run every 30 minutes
+            current_time = time.time()
+            cutoff_time = current_time - 3600  # 1 hour
+            
+            # Clean upload folder (now contains job subdirectories)
+            for item in UPLOAD_FOLDER.glob('*'):
+                if item.is_dir():
+                    # Check if directory is old
+                    try:
+                        dir_mtime = max(f.stat().st_mtime for f in item.rglob('*') if f.is_file())
+                        if dir_mtime < cutoff_time:
+                            import shutil
+                            shutil.rmtree(item)
+                            print(f"Cleaned up old upload directory: {item.name}")
+                    except Exception as e:
+                        print(f"Error deleting directory {item}: {e}")
+                elif item.is_file() and item.stat().st_mtime < cutoff_time:
+                    try:
+                        item.unlink()
+                        print(f"Cleaned up old upload file: {item.name}")
+                    except Exception as e:
+                        print(f"Error deleting file {item}: {e}")
+            
+            # Clean converted folder (now contains job subdirectories)
+            for item in CONVERTED_FOLDER.glob('*'):
+                if item.is_dir():
+                    # Check if directory is old
+                    try:
+                        dir_mtime = max(f.stat().st_mtime for f in item.rglob('*') if f.is_file())
+                        if dir_mtime < cutoff_time:
+                            import shutil
+                            shutil.rmtree(item)
+                            print(f"Cleaned up old converted directory: {item.name}")
+                    except Exception as e:
+                        print(f"Error deleting directory {item}: {e}")
+                elif item.is_file() and item.stat().st_mtime < cutoff_time:
+                    try:
+                        item.unlink()
+                        print(f"Cleaned up old converted file: {item.name}")
+                    except Exception as e:
+                        print(f"Error deleting file {item}: {e}")
+            
+            # Clean old jobs from memory
+            with jobs_lock:
+                old_jobs = [job_id for job_id, job in jobs.items() 
+                           if current_time - job.get('timestamp', current_time) > 7200]  # 2 hours
+                for job_id in old_jobs:
+                    del jobs[job_id]
+                    print(f"Cleaned up old job: {job_id}")
+                    
+        except Exception as e:
+            print(f"Error in cleanup task: {e}")
 
-# Start background cleanup thread
-cleanup_thread = threading.Thread(target=periodic_cleanup, daemon=True)
+# Start cleanup thread
+cleanup_thread = threading.Thread(target=cleanup_old_files, daemon=True)
 cleanup_thread.start()
 
-# Clean up on app exit
-atexit.register(cleanup_old_files)
-
 @app.route('/')
+@login_required
 def index():
     """Main converter page"""
     html_content = """
@@ -188,6 +228,7 @@ def index():
                 color: white;
                 padding: 30px;
                 text-align: center;
+                position: relative;
             }
             
             .header h1 {
@@ -198,6 +239,53 @@ def index():
             .header p {
                 font-size: 1.2em;
                 opacity: 0.9;
+                margin-bottom: 20px;
+            }
+            
+            .header-divider {
+                border: none;
+                border-top: 1px solid rgba(255,255,255,0.2);
+                margin: 20px 0;
+            }
+            
+            .user-info {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 15px;
+            }
+            
+            .user-email {
+                font-size: 0.9em;
+                opacity: 0.9;
+                font-weight: 500;
+            }
+            
+            .button-group {
+                display: flex;
+                gap: 8px;
+            }
+            
+            .admin-btn,
+            .logout-btn {
+                background: rgba(255,255,255,0.2);
+                color: white;
+                padding: 6px 14px;
+                border: 1px solid rgba(255,255,255,0.3);
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 0.85em;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                transition: all 0.3s;
+            }
+            
+            .admin-btn:hover,
+            .logout-btn:hover {
+                background: rgba(255,255,255,0.3);
+                transform: translateY(-1px);
             }
             
             .converter-section {
@@ -399,28 +487,12 @@ def index():
                 border-left: 4px solid #27ae60;
             }
             
-            .progress-bar {
-                width: 100%;
-                height: 10px;
-                background: #ecf0f1;
-                border-radius: 5px;
-                overflow: hidden;
-                margin: 15px 0;
-            }
-            
-            .progress-fill {
-                height: 100%;
-                background: #27ae60;
-                width: 0%;
-                transition: width 0.3s;
-            }
-            
             .spinner {
                 border: 4px solid #f3f3f3;
                 border-top: 4px solid #3498db;
                 border-radius: 50%;
-                width: 30px;
-                height: 30px;
+                width: 40px;
+                height: 40px;
                 animation: spin 1s linear infinite;
                 margin: 20px auto;
             }
@@ -430,610 +502,434 @@ def index():
                 100% { transform: rotate(360deg); }
             }
             
-            .alert {
-                padding: 15px;
-                margin: 15px 0;
-                border-radius: 5px;
-                font-weight: bold;
-            }
-            
-            .alert.warning {
-                background: #fff3cd;
-                border: 1px solid #ffeaa7;
-                color: #856404;
+            .footer {
+                background: #ecf0f1;
+                padding: 20px;
+                text-align: center;
+                color: #7f8c8d;
             }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="header">
-                <h1>🏦 Albanian Bank Statement Converter</h1>
-                <p>Convert your bank statements to QuickBooks format using bank-specific converters</p>
-                <div style="background: #e8f5e8; padding: 10px; border-radius: 5px; margin-top: 10px; font-size: 14px; color: #2d5a2d;">
-                    🔒 <strong>Privacy:</strong> All files are automatically deleted after download. No data is permanently stored on our servers.
+                <h1>Bank Statement Converter</h1>
+                <p>Convert Albanian bank statements to QuickBooks .csv format</p>
+                
+                <hr class="header-divider">
+                
+                <div class="user-info">
+                    <div class="user-email">{{ current_user.email }}</div>
+                    <div class="button-group">
+                        {% if current_user.is_admin %}
+                        <a href="{{ url_for('admin.dashboard') }}" class="admin-btn">👤 User Management</a>
+                        {% endif %}
+                        <a href="{{ url_for('auth.logout') }}" class="logout-btn">🚪 Logout</a>
+                    </div>
                 </div>
             </div>
             
             <div class="converter-section">
-                <form id="converterForm" method="POST" action="/convert" enctype="multipart/form-data">
-                    
+                <form id="converterForm" enctype="multipart/form-data">
                     <!-- Step 1: Select Bank -->
                     <div class="step active" id="step1">
                         <div class="step-title">
-                            <span class="step-number">1</span>
+                            <div class="step-number">1</div>
                             Select Your Bank
                         </div>
-                        <div class="bank-grid">
-                            {% for bank_id, bank_info in banks.items() %}
-                            <div class="bank-card" onclick="selectBank('{{ bank_id }}')">
-                                <div class="bank-name">{{ bank_info.name }}</div>
-                                <div class="bank-formats">Formats: {{ ', '.join(bank_info.formats) }}</div>
-                                <div class="bank-description">{{ bank_info.description }}</div>
+                        <div class="bank-grid" id="bankGrid">
+                            {% for bank_id, config in banks.items() %}
+                            <div class="bank-card" data-bank="{{ bank_id }}" onclick="selectBank('{{ bank_id }}')">
+                                <div class="bank-name">{{ config.name }}</div>
+                                <div class="bank-formats">Formats: {{ config.formats|join(', ') }}</div>
+                                <div class="bank-description">{{ config.description }}</div>
                             </div>
                             {% endfor %}
                         </div>
-                        <input type="hidden" id="selectedBank" name="bank" value="">
                     </div>
                     
                     <!-- Step 2: Upload File -->
                     <div class="step" id="step2">
                         <div class="step-title">
-                            <span class="step-number">2</span>
+                            <div class="step-number">2</div>
                             Upload Bank Statement
                         </div>
-                        
-                        <div class="alert warning" id="bankAlert" style="display: none;">
-                            Please select a bank first before uploading your statement.
+                        <div class="upload-area disabled" id="uploadArea">
+                            <input type="file" id="fileInput" name="file" class="file-input" onchange="handleFileSelect(event)" accept=".pdf,.csv,.txt">
+                            <p style="font-size: 1.2em; color: #7f8c8d; margin-bottom: 15px;">📄 Drag & Drop or Click to Upload</p>
+                            <button type="button" class="upload-btn" onclick="document.getElementById('fileInput').click()" disabled id="uploadBtn">
+                                Choose File
+                            </button>
+                            <p style="margin-top: 15px; color: #95a5a6; font-size: 0.9em;">Supported: PDF, CSV, TXT (Max 50MB)</p>
                         </div>
-                        
-                        <div class="upload-area disabled" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-                            <div id="uploadContent">
-                                <h3>📄 Drag & Drop or Click to Upload</h3>
-                                <p>Supported formats: <span id="supportedFormats">Select a bank first</span></p>
-                                <p>Maximum file size: 50MB</p>
-                                <button type="button" class="upload-btn" id="uploadBtn" disabled>Choose File</button>
-                            </div>
-                        </div>
-                        
-                        <input type="file" id="fileInput" name="file" class="file-input" accept=".pdf,.csv" onchange="handleFileSelect(this)">
-                        
-                        <div id="selectedFileInfo" class="selected-file" style="display: none;">
-                            <strong>Selected File:</strong> <span id="fileName"></span><br>
-                            <strong>Size:</strong> <span id="fileSize"></span><br>
-                            <strong>Bank:</strong> <span id="selectedBankName"></span>
+                        <div id="selectedFile" class="selected-file" style="display: none;">
+                            <strong>📎 Selected:</strong> <span id="fileName"></span>
                         </div>
                     </div>
                     
                     <!-- Step 3: Convert -->
                     <div class="step" id="step3">
                         <div class="step-title">
-                            <span class="step-number">3</span>
-                            Convert Statement
+                            <div class="step-number">3</div>
+                            Convert to QuickBooks Format
                         </div>
-                        
-                        <button type="submit" class="convert-btn" id="convertBtn" disabled>
-                            🔄 Convert to QuickBooks Format
+                        <button type="submit" class="convert-btn" disabled id="convertBtn">
+                            🔄 Convert Statement
                         </button>
                     </div>
                 </form>
                 
                 <!-- Results Section -->
-                <div id="resultSection" class="result-section">
+                <div class="result-section" id="resultSection">
                     <div id="resultContent"></div>
                 </div>
+            </div>
+            
+            <div class="footer">
+                <p>Albanian Bank Statement Converter | QuickBooks Compatible</p>
+                <p style="margin-top: 5px; font-size: 0.9em;">Supports: BKT, OTP, Raiffeisen, Tirana Bank, Union Bank, E-Bill</p>
             </div>
         </div>
         
         <script>
-            let selectedBankId = null;
+            let selectedBank = null;
             let selectedFile = null;
             
             function selectBank(bankId) {
-                // Remove previous selection
+                selectedBank = bankId;
+                
+                // Update UI
                 document.querySelectorAll('.bank-card').forEach(card => {
                     card.classList.remove('selected');
                 });
+                document.querySelector(`[data-bank="${bankId}"]`).classList.add('selected');
                 
-                // Select new bank
-                document.querySelector(`[onclick="selectBank('${bankId}')"]`).classList.add('selected');
-                selectedBankId = bankId;
-                document.getElementById('selectedBank').value = bankId;
-                
-                // Get bank info
-                const banks = {{ banks|tojson }};
-                const bankInfo = banks[bankId];
-                
-                // Update upload area
+                // Enable upload
+                document.getElementById('step2').classList.add('active');
                 document.getElementById('uploadArea').classList.remove('disabled');
                 document.getElementById('uploadBtn').disabled = false;
-                document.getElementById('supportedFormats').textContent = bankInfo.formats.join(', ');
-                document.getElementById('bankAlert').style.display = 'none';
                 
-                // Activate step 2
-                document.getElementById('step2').classList.add('active');
-                
-                updateConvertButton();
+                // Reset file selection
+                document.getElementById('fileInput').value = '';
+                selectedFile = null;
+                document.getElementById('selectedFile').style.display = 'none';
+                document.getElementById('convertBtn').disabled = true;
             }
             
-            function handleFileSelect(input) {
-                if (!selectedBankId) {
-                    document.getElementById('bankAlert').style.display = 'block';
-                    return;
-                }
-                
-                const file = input.files[0];
+            function handleFileSelect(event) {
+                const file = event.target.files[0];
                 if (file) {
                     selectedFile = file;
-                    
-                    // Show file info
                     document.getElementById('fileName').textContent = file.name;
-                    document.getElementById('fileSize').textContent = formatFileSize(file.size);
-                    
-                    const banks = {{ banks|tojson }};
-                    document.getElementById('selectedBankName').textContent = banks[selectedBankId].name;
-                    
-                    document.getElementById('selectedFileInfo').style.display = 'block';
+                    document.getElementById('selectedFile').style.display = 'block';
                     document.getElementById('step3').classList.add('active');
-                    
-                    updateConvertButton();
+                    document.getElementById('convertBtn').disabled = false;
                 }
             }
             
-            function updateConvertButton() {
-                const convertBtn = document.getElementById('convertBtn');
-                if (selectedBankId && selectedFile) {
-                    convertBtn.disabled = false;
-                } else {
-                    convertBtn.disabled = true;
+            // Drag and drop
+            const uploadArea = document.getElementById('uploadArea');
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                if (!uploadArea.classList.contains('disabled')) {
+                    const file = e.dataTransfer.files[0];
+                    if (file) {
+                        document.getElementById('fileInput').files = e.dataTransfer.files;
+                        handleFileSelect({ target: { files: [file] } });
+                    }
                 }
-            }
+            });
             
-            function formatFileSize(bytes) {
-                if (bytes === 0) return '0 Bytes';
-                const k = 1024;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-            }
-            
-            // Handle form submission
-            document.getElementById('converterForm').addEventListener('submit', function(e) {
+            // Form submission
+            document.getElementById('converterForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 
-                if (!selectedBankId || !selectedFile) {
-                    alert('Please select a bank and upload a file first.');
+                if (!selectedBank || !selectedFile) {
+                    alert('Please select a bank and upload a file');
                     return;
                 }
                 
                 // Show processing
                 const resultSection = document.getElementById('resultSection');
+                const resultContent = document.getElementById('resultContent');
                 resultSection.className = 'result-section processing';
                 resultSection.style.display = 'block';
-                resultSection.innerHTML = `
-                    <div class="spinner"></div>
-                    <h3>Processing your ${document.getElementById('selectedBankName').textContent} statement...</h3>
-                    <p>This may take a few moments depending on the file size.</p>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
-                    </div>
-                `;
+                resultContent.innerHTML = '<div class="spinner"></div><p style="text-align: center; margin-top: 10px;">Converting your statement...</p>';
                 
-                // Simulate progress
-                let progress = 0;
-                const progressInterval = setInterval(() => {
-                    progress += Math.random() * 30;
-                    if (progress > 90) progress = 90;
-                    document.getElementById('progressFill').style.width = progress + '%';
-                }, 500);
-                
-                // Submit form
-                const formData = new FormData(this);
-                
-                fetch('/convert', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    clearInterval(progressInterval);
-                    document.getElementById('progressFill').style.width = '100%';
-                    
-                    setTimeout(() => {
-                        if (data.success) {
-                            resultSection.className = 'result-section success';
-                            resultSection.innerHTML = `
-                                <h3>✅ Conversion Successful!</h3>
-                                <p>Your ${data.bank_name} statement has been successfully converted to QuickBooks format.</p>
-                                <p><strong>Output File:</strong> ${data.output_file}</p>
-                                <a href="${data.download_url}" class="download-btn">📥 Download QBO File</a>
-                                <button onclick="resetForm()" class="upload-btn" style="margin-left: 15px;">🔄 Convert Another File</button>
-                            `;
-                        } else {
-                            resultSection.className = 'result-section error';
-                            resultSection.innerHTML = `
-                                <h3>❌ Conversion Failed</h3>
-                                <p><strong>Error:</strong> ${data.error}</p>
-                                <p>Please check your file format and try again.</p>
-                                <button onclick="resetForm()" class="upload-btn">🔄 Try Again</button>
-                            `;
-                        }
-                    }, 1000);
-                })
-                .catch(error => {
-                    clearInterval(progressInterval);
-                    resultSection.className = 'result-section error';
-                    resultSection.innerHTML = `
-                        <h3>❌ Upload Error</h3>
-                        <p><strong>Error:</strong> ${error.message}</p>
-                        <button onclick="resetForm()" class="upload-btn">🔄 Try Again</button>
-                    `;
-                });
-            });
-            
-            function resetForm() {
-                // Reset form
-                document.getElementById('converterForm').reset();
-                selectedBankId = null;
-                selectedFile = null;
-                
-                // Reset UI
-                document.querySelectorAll('.bank-card').forEach(card => {
-                    card.classList.remove('selected');
-                });
-                
-                document.getElementById('selectedFileInfo').style.display = 'none';
-                document.getElementById('resultSection').style.display = 'none';
-                document.getElementById('uploadArea').classList.add('disabled');
-                document.getElementById('uploadBtn').disabled = true;
+                // Disable form
                 document.getElementById('convertBtn').disabled = true;
                 
-                document.getElementById('step2').classList.remove('active');
-                document.getElementById('step3').classList.remove('active');
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('bank', selectedBank);
+                formData.append('file', selectedFile);
                 
-                document.getElementById('supportedFormats').textContent = 'Select a bank first';
-            }
-            
-            // Drag and drop functionality
-            const uploadArea = document.getElementById('uploadArea');
-            
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                uploadArea.addEventListener(eventName, preventDefaults, false);
-            });
-            
-            function preventDefaults(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            
-            ['dragenter', 'dragover'].forEach(eventName => {
-                uploadArea.addEventListener(eventName, highlight, false);
-            });
-            
-            ['dragleave', 'drop'].forEach(eventName => {
-                uploadArea.addEventListener(eventName, unhighlight, false);
-            });
-            
-            function highlight(e) {
-                if (!selectedBankId) return;
-                uploadArea.classList.add('dragover');
-            }
-            
-            function unhighlight(e) {
-                uploadArea.classList.remove('dragover');
-            }
-            
-            uploadArea.addEventListener('drop', handleDrop, false);
-            
-            function handleDrop(e) {
-                if (!selectedBankId) return;
-                
-                const dt = e.dataTransfer;
-                const files = dt.files;
-                
-                if (files.length > 0) {
-                    document.getElementById('fileInput').files = files;
-                    handleFileSelect(document.getElementById('fileInput'));
+                try {
+                    const response = await fetch('/convert', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        resultSection.className = 'result-section success';
+                        resultContent.innerHTML = `
+                            <h3 style="color: #27ae60; margin-bottom: 15px;">✅ Conversion Successful!</h3>
+                            <p style="margin-bottom: 10px;"><strong>Original File:</strong> ${result.original_filename}</p>
+                            <p style="margin-bottom: 10px;"><strong>Converted File:</strong> ${result.output_filename}</p>
+                            <a href="/download/${result.job_id}" class="download-btn">⬇️ Download QuickBooks CSV</a>
+                        `;
+                    } else {
+                        resultSection.className = 'result-section error';
+                        resultContent.innerHTML = `
+                            <h3 style="color: #e74c3c; margin-bottom: 15px;">❌ Conversion Failed</h3>
+                            <p><strong>Error:</strong> ${result.error || 'Unknown error occurred'}</p>
+                        `;
+                    }
+                } catch (error) {
+                    resultSection.className = 'result-section error';
+                    resultContent.innerHTML = `
+                        <h3 style="color: #e74c3c; margin-bottom: 15px;">❌ Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    `;
+                } finally {
+                    document.getElementById('convertBtn').disabled = false;
                 }
-            }
+            });
         </script>
     </body>
     </html>
     """
-    
-    return render_template_string(html_content, banks=BANK_CONFIGS)
+    return render_template_string(html_content, banks=BANK_CONFIGS, current_user=current_user)
 
 @app.route('/convert', methods=['POST'])
-def convert_statement():
-    """Convert bank statement using specific bank script"""
+@login_required
+def convert_file():
+    """Handle file conversion"""
     try:
-        # Get form data
+        # Get selected bank
         bank_id = request.form.get('bank')
-        file = request.files.get('file')
-        
         if not bank_id or bank_id not in BANK_CONFIGS:
-            return jsonify({'success': False, 'error': 'Invalid bank selection'})
+            return jsonify({'success': False, 'error': 'Invalid bank selection'}), 400
         
-        if not file or file.filename == '':
-            return jsonify({'success': False, 'error': 'No file uploaded'})
+        # Check if file is present
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': 'No file uploaded'}), 400
         
-        bank_config = BANK_CONFIGS[bank_id]
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'No file selected'}), 400
         
-        # Create job ID
+        if not allowed_file(file.filename):
+            return jsonify({'success': False, 'error': 'Invalid file type. Use PDF, CSV, or TXT'}), 400
+        
+        # Generate job ID
         job_id = str(uuid.uuid4())
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         
-        # Save uploaded file
+        # Create job-specific directory to preserve original filename
+        job_upload_dir = UPLOAD_FOLDER / job_id
+        job_upload_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save uploaded file with original filename (no UUID prefix)
         filename = secure_filename(file.filename)
-        file_ext = os.path.splitext(filename)[1].lower()
+        input_path = job_upload_dir / filename
+        file.save(str(input_path))
         
-        # Check file format is supported by the bank
-        supported_formats = [fmt.lower() for fmt in bank_config['formats']]
-        if file_ext.replace('.', '') not in supported_formats:
-            return jsonify({
-                'success': False, 
-                'error': f'File format {file_ext} not supported by {bank_config["name"]}. Supported formats: {", ".join(bank_config["formats"])}'
-            })
+        # Create job-specific output directory
+        job_output_dir = CONVERTED_FOLDER / job_id
+        job_output_dir.mkdir(parents=True, exist_ok=True)
         
-        # Create input file path
-        input_filename = f"{bank_id}_{timestamp}_{filename}"
-        input_path = os.path.join(UPLOAD_FOLDER, input_filename)
-        file.save(input_path)
+        # Get converter script
+        bank_config = BANK_CONFIGS[bank_id]
+        script_name = bank_config['script']
+        script_path = get_script_path(script_name)
         
-        # Use export folder directly (no individual job directories)
-        output_dir = CONVERTED_FOLDER
-        
-        # Get absolute paths
-        script_path = get_script_path(bank_config['script'])
-        script_path = os.path.abspath(script_path)
-        input_abs_path = os.path.abspath(input_path)
-        
-        # Check if script exists
-        if not os.path.exists(script_path):
+        if not script_path:
+            # Clean up job directories
+            if input_path.exists():
+                input_path.unlink()
+            if job_upload_dir.exists():
+                job_upload_dir.rmdir()
             return jsonify({
                 'success': False,
-                'error': f'Converter script not found: {script_path}. Checked locations: {[get_script_path(bank_config["script"])]}'
-            })
+                'error': f'Converter script not found: {script_name}'
+            }), 500
         
-        # Run the specific bank converter script
+        # Run converter script with job-specific output directory
         try:
-            # Change to the script's directory to ensure relative paths work
-            script_dir = os.path.dirname(script_path)
-            original_cwd = os.getcwd()
-            
-            os.chdir(script_dir)
-            
-            # Run the script with the input file
-            # Set environment to handle Unicode properly on Windows
-            env = os.environ.copy()
-            env['PYTHONIOENCODING'] = 'utf-8'
-            
+            import sys
             result = subprocess.run(
-                ['python', os.path.basename(script_path), input_abs_path],
+                [sys.executable, script_path, '--input', str(input_path), '--output', str(job_output_dir)],
                 capture_output=True,
                 text=True,
-                timeout=300,  # 5 minute timeout
-                env=env,
-                encoding='utf-8',
-                errors='replace'
+                timeout=300  # 5 minute timeout
             )
             
-            # Change back to original directory
-            os.chdir(original_cwd)
-            
-            if result.returncode == 0:
-                # Find generated QBO/CSV files
-                output_files = []
-                
-                # Look in common output locations
-                search_dirs = [
-                    os.path.dirname(input_abs_path),  # Same dir as input
-                    os.path.join(os.path.dirname(script_path), 'export'),  # export folder
-                    os.path.join(os.path.dirname(script_path), 'converted'),  # converted folder
-                    script_dir  # script directory
-                ]
-                
-                for search_dir in search_dirs:
-                    if os.path.exists(search_dir):
-                        for file in os.listdir(search_dir):
-                            # Look for both .qbo and .csv files (especially 4qbo.csv files)
-                            if (file.endswith('.qbo') or file.endswith('.csv')) and (timestamp in file or job_id in file or 'converted' in file.lower() or '4qbo' in file.lower()):
-                                source_path = os.path.join(search_dir, file)
-                                if os.path.getctime(source_path) > (datetime.now().timestamp() - 300):  # Created in last 5 minutes
-                                    output_files.append(source_path)
-                
-                # If no timestamped files found, look for any recent QBO/CSV files
-                if not output_files:
-                    for search_dir in search_dirs:
-                        if os.path.exists(search_dir):
-                            for file in os.listdir(search_dir):
-                                if file.endswith('.qbo') or (file.endswith('.csv') and '4qbo' in file.lower()):
-                                    source_path = os.path.join(search_dir, file)
-                                    if os.path.getctime(source_path) > (datetime.now().timestamp() - 300):
-                                        output_files.append(source_path)
-                
-                if output_files:
-                    # Use the most recent output file
-                    latest_output = max(output_files, key=os.path.getctime)
-                    
-                    # Determine output extension based on input file
-                    file_ext = '.csv' if latest_output.endswith('.csv') else '.qbo'
-                    
-                    # Create output filename based on original filename + " - 4qbo"
-                    original_name = os.path.splitext(filename)[0]  # Remove extension from original filename (without prefix)
-                    output_filename = f"{original_name} - 4qbo{file_ext}"
-                    output_path = os.path.join(output_dir, output_filename)
-                    shutil.copy2(latest_output, output_path)
-                    
-                    # Store job info (including input path for later cleanup)
-                    conversion_jobs[job_id] = {
-                        'bank': bank_id,
-                        'bank_name': bank_config['name'],
-                        'input_file': input_filename,
-                        'input_path': input_path,  # Store for cleanup after download
-                        'output_file': output_filename,
-                        'output_path': output_path,
-                        'created_at': datetime.now().isoformat(),
-                        'status': 'completed'
-                    }
-                    
-                    # Don't clean up input file yet - wait until after download
-                    
-                    return jsonify({
-                        'success': True,
-                        'job_id': job_id,
-                        'bank_name': bank_config['name'],
-                        'output_file': output_filename,
-                        'download_url': f'/download/{job_id}',
-                        'message': f'Successfully converted {bank_config["name"]} statement'
-                    })
-                else:
-                    return jsonify({
-                        'success': False,
-                        'error': f'No output file generated. Script output: {result.stdout}\\n{result.stderr}'
-                    })
-            else:
+            # Check for errors
+            if result.returncode != 0:
+                error_msg = result.stderr if result.stderr else result.stdout
                 return jsonify({
                     'success': False,
-                    'error': f'Conversion failed: {result.stderr or result.stdout}'
-                })
-                
+                    'error': f'Conversion failed: {error_msg}'
+                }), 500
+            
+            # Find output file in job-specific directory
+            output_files = list(job_output_dir.glob(f'*{Path(filename).stem}*4qbo.csv'))
+            if not output_files:
+                # Fallback: check for any CSV file in the job directory
+                output_files = list(job_output_dir.glob('*.csv'))
+            
+            if not output_files:
+                return jsonify({
+                    'success': False,
+                    'error': 'Conversion completed but output file not found'
+                }), 500
+            
+            output_file = output_files[0]
+            
+            # Store job info
+            with jobs_lock:
+                jobs[job_id] = {
+                    'bank': bank_id,
+                    'original_filename': filename,
+                    'output_filename': output_file.name,
+                    'output_path': str(output_file),
+                    'timestamp': time.time(),
+                    'user_id': current_user.id
+                }
+            
+            return jsonify({
+                'success': True,
+                'job_id': job_id,
+                'original_filename': filename,
+                'output_filename': output_file.name
+            })
+            
         except subprocess.TimeoutExpired:
+            input_path.unlink()  # Clean up
             return jsonify({
                 'success': False,
-                'error': 'Conversion timed out. File may be too large or corrupted.'
-            })
+                'error': 'Conversion timed out. File may be too large or complex.'
+            }), 500
         except Exception as e:
+            input_path.unlink()  # Clean up
             return jsonify({
                 'success': False,
-                'error': f'Script execution error: {str(e)}'
-            })
+                'error': f'Conversion error: {str(e)}'
+            }), 500
             
     except Exception as e:
         return jsonify({
             'success': False,
             'error': f'Server error: {str(e)}'
-        })
+        }), 500
 
 @app.route('/download/<job_id>')
+@login_required
 def download_file(job_id):
-    """Download converted file and clean up afterward"""
-    if job_id not in conversion_jobs:
-        return "Job not found", 404
-    
-    job = conversion_jobs[job_id]
-    
-    if not os.path.exists(job['output_path']):
-        return "File not found", 404
-    
-    # Determine mimetype based on file extension
-    mimetype = 'text/csv' if job['output_file'].endswith('.csv') else 'application/vnd.quickbooks'
-    
-    # Create a response with the file
-    response = send_file(
-        job['output_path'],
-        as_attachment=True,
-        download_name=job['output_file'],
-        mimetype=mimetype
-    )
-    
-    # Schedule cleanup after response is sent
-    @response.call_on_close
-    def cleanup_files():
-        try:
-            # Delete the converted file
-            if os.path.exists(job['output_path']):
-                os.remove(job['output_path'])
-                print(f"🗑️ Deleted converted file: {job['output_file']}")
+    """Download converted file"""
+    try:
+        with jobs_lock:
+            if job_id not in jobs:
+                flash('File not found or has expired', 'error')
+                return redirect(url_for('index'))
             
-            # Delete the input file
-            if 'input_path' in job and os.path.exists(job['input_path']):
-                os.remove(job['input_path'])
-                print(f"🗑️ Deleted input file: {job['input_file']}")
+            job = jobs[job_id]
             
-            # Remove job from memory (no directories to clean since we use flat structure)
-            conversion_jobs.pop(job_id, None)
+            # Verify user owns this job
+            if job['user_id'] != current_user.id:
+                flash('Unauthorized access to file', 'error')
+                return redirect(url_for('index'))
             
-            print(f"✅ Complete cleanup for job {job_id}")
-        except Exception as e:
-            print(f"⚠️ Cleanup warning for job {job_id}: {e}")
-    
-    return response
+            output_path = job['output_path']
+        
+        if not Path(output_path).exists():
+            flash('File not found or has been deleted', 'error')
+            return redirect(url_for('index'))
+        
+        return send_file(
+            output_path,
+            as_attachment=True,
+            download_name=job['output_filename']
+        )
+        
+    except Exception as e:
+        flash(f'Download error: {str(e)}', 'error')
+        return redirect(url_for('index'))
 
 @app.route('/status/<job_id>')
-def job_status(job_id):
-    """Get job status"""
-    if job_id not in conversion_jobs:
-        return jsonify({'error': 'Job not found'}), 404
-    
-    return jsonify(conversion_jobs[job_id])
+@login_required
+def check_status(job_id):
+    """Check conversion status"""
+    with jobs_lock:
+        if job_id not in jobs:
+            return jsonify({'success': False, 'error': 'Job not found'}), 404
+        
+        job = jobs[job_id]
+        
+        # Verify user owns this job
+        if job['user_id'] != current_user.id:
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+        return jsonify({'success': True, 'job': job})
 
 @app.route('/cleanup')
+@login_required
 def manual_cleanup():
-    """Manual cleanup endpoint for testing"""
-    cleanup_old_files()
-    
-    # Count remaining files
-    upload_count = len([f for f in os.listdir(UPLOAD_FOLDER) if os.path.isfile(os.path.join(UPLOAD_FOLDER, f))])
-    converted_count = len([f for f in os.listdir(CONVERTED_FOLDER) if os.path.isfile(os.path.join(CONVERTED_FOLDER, f))])
-    jobs_count = len(conversion_jobs)
-    
-    return jsonify({
-        'message': 'Cleanup completed',
-        'remaining_import_files': upload_count,
-        'remaining_export_files': converted_count,
-        'active_jobs': jobs_count
-    })
+    """Manually trigger cleanup (admin only - you can add role check here)"""
+    try:
+        cleanup_old_files()
+        flash('Cleanup completed successfully', 'success')
+    except Exception as e:
+        flash(f'Cleanup error: {str(e)}', 'error')
+    return redirect(url_for('index'))
 
 @app.route('/server-status')
 def server_status():
-    """Server status and storage info"""
-    import_files = [f for f in os.listdir(UPLOAD_FOLDER) if os.path.isfile(os.path.join(UPLOAD_FOLDER, f))]
-    export_files = [f for f in os.listdir(CONVERTED_FOLDER) if os.path.isfile(os.path.join(CONVERTED_FOLDER, f))]
-    
+    """Health check endpoint (no auth required for monitoring)"""
     return jsonify({
-        'server': 'Bank Statement Converter',
         'status': 'running',
-        'active_jobs': len(conversion_jobs),
-        'import_files_count': len(import_files),
-        'export_files_count': len(export_files),
-        'cleanup_enabled': True,
-        'auto_delete_after_download': True,
-        'folder_structure': 'Flat (import/export only)',
-        'storage': {
-            'import_folder': str(UPLOAD_FOLDER),
-            'export_folder': str(CONVERTED_FOLDER),
-            'files_in_import': import_files[:10],  # Show first 10
-            'files_in_export': export_files[:10]  # Show first 10
-        }
+        'timestamp': datetime.datetime.now().isoformat(),
+        'upload_folder': str(UPLOAD_FOLDER),
+        'converted_folder': str(CONVERTED_FOLDER),
+        'banks_configured': len(BANK_CONFIGS)
     })
 
 @app.route('/api/info')
 def api_info():
-    """API information"""
+    """API information endpoint (no auth required)"""
     return jsonify({
-        'name': 'Bank-Specific Albanian Statement Converter',
-        'version': '1.0.0',
-        'description': 'Convert Albanian bank statements using individual bank-specific scripts',
-        'features': [
-            'Auto-delete files after download',
-            'Periodic cleanup of old files',
-            'No permanent file storage',
-            'Memory-only job tracking'
-        ],
-        'supported_banks': {bank_id: config['name'] for bank_id, config in BANK_CONFIGS.items()},
-        'bank_details': BANK_CONFIGS
+        'name': 'Albanian Bank Statement Converter',
+        'version': '2.0.0',
+        'banks': list(BANK_CONFIGS.keys()),
+        'max_file_size': '50MB',
+        'supported_formats': list(ALLOWED_EXTENSIONS)
     })
 
 if __name__ == '__main__':
-    print("🏦 Bank-Specific Albanian Statement Converter")
     print("=" * 60)
-    print("🌐 Starting web server...")
-    print(f"� Import folder: {UPLOAD_FOLDER}")
-    print(f"� Export folder: {CONVERTED_FOLDER}")
-    print("🗂️  Flat file structure (no job directories)")
-    print("🏛️ Supported banks:")
-    for bank_id, config in BANK_CONFIGS.items():
-        print(f"   - {config['name']} ({', '.join(config['formats'])})")
+    print("Albanian Bank Statement Converter - Authenticated")
+    print("=" * 60)
+    print(f"Upload folder: {UPLOAD_FOLDER}")
+    print(f"Export folder: {CONVERTED_FOLDER}")
+    print(f"Scripts directory: {SCRIPTS_DIR}")
+    print(f"Configured banks: {', '.join(BANK_CONFIGS.keys())}")
+    print("=" * 60)
+    print("Starting server...")
+    print("Access at: http://127.0.0.1:5002")
     print("=" * 60)
     
-    app.run(host='0.0.0.0', port=5002, debug=True)
+    app.run(host='0.0.0.0', port=5002, debug=False)

@@ -261,7 +261,7 @@ def validate_and_fix_transactions(transactions):
                 # Swap debit and credit
                 current['Debit'], current['Credit'] = current['Credit'], current['Debit']
                 corrections_made += 1
-                print(f"  ⚠ Row {i+1}: Swapped debit/credit for '{current['Date']}' - {current['Description'][:30]}...")
+                print(f"  WARNING: Row {i+1}: Swapped debit/credit for '{current['Date']}' - {current['Description'][:30]}...", flush=True)
     
     return transactions, corrections_made
 
@@ -297,12 +297,12 @@ def pdf_to_csv(pdf_path, output_csv=None):
     debug_file = pdf_path.parent / f"{pdf_path.stem}_extracted.txt"
     with open(debug_file, 'w', encoding='utf-8') as f:
         f.write(text_content)
-    print(f"\n✓ Extracted text saved to: {debug_file}")
+    print(f"\nExtracted text saved to: {debug_file}", flush=True)
     
     # Show first 2000 characters
-    print("\n" + "="*60)
-    print("EXTRACTED TEXT (first 2000 characters):")
-    print("="*60)
+    print("\n" + "="*60, flush=True)
+    print("EXTRACTED TEXT (first 2000 characters):", flush=True)
+    print("="*60, flush=True)
     print(text_content[:2000])
     print("\n..." if len(text_content) > 2000 else "")
     
@@ -318,19 +318,19 @@ def pdf_to_csv(pdf_path, output_csv=None):
     
     # Validate and fix transactions
     if transactions:
-        print(f"\nValidating transactions...")
+        print(f"\nValidating transactions...", flush=True)
         transactions, corrections = validate_and_fix_transactions(transactions)
         if corrections > 0:
-            print(f"✓ Made {corrections} correction(s) by swapping debit/credit columns")
+            print(f"Made {corrections} correction(s) by swapping debit/credit columns", flush=True)
         else:
-            print(f"✓ All transactions validated successfully")
+            print(f"All transactions validated successfully", flush=True)
         
         # Remove first row if it has only balance (no debit or credit)
         if transactions and len(transactions) > 0:
             first_row = transactions[0]
             if (not first_row.get('Debit') or first_row['Debit'] == '') and \
                (not first_row.get('Credit') or first_row['Credit'] == ''):
-                print(f"✓ Removed first row (opening balance only)")
+                print(f"Removed first row (opening balance only)", flush=True)
                 transactions = transactions[1:]
         
         # Remove Balance column from all transactions
@@ -340,7 +340,7 @@ def pdf_to_csv(pdf_path, output_csv=None):
     
     # Write to CSV
     if transactions:
-        print(f"\nWriting {len(transactions)} transactions to CSV...")
+        print(f"\nWriting {len(transactions)} transactions to CSV...", flush=True)
         
         fieldnames = ['Date', 'Description', 'Debit', 'Credit']
         
@@ -349,26 +349,59 @@ def pdf_to_csv(pdf_path, output_csv=None):
             writer.writeheader()
             writer.writerows(transactions)
         
-        print(f"CSV file saved: {output_csv}")
-        print(f"✓ Success! {len(transactions)} transactions exported.")
+        print(f"CSV file saved: {output_csv}", flush=True)
+        print(f"Success! {len(transactions)} transactions exported.", flush=True)
     else:
-        print("⚠ Warning: No transactions found in the PDF.")
+        print("WARNING: No transactions found in the PDF.", flush=True)
+    
+    return output_csv
     
     return output_csv
 
 
 if __name__ == "__main__":
-    # Check if a specific PDF path is provided as argument
-    if len(sys.argv) > 1:
+    import argparse
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Convert TIBank statements to QuickBooks CSV format')
+    parser.add_argument('--input', '-i', dest='input_file', help='Input PDF file path')
+    parser.add_argument('--output', '-o', dest='output_dir', help='Output directory for CSV file')
+    parser.add_argument('pdf_file', nargs='?', help='PDF file path (positional argument)')
+    parser.add_argument('output_file', nargs='?', help='Output file path (positional argument)')
+    
+    args = parser.parse_args()
+    
+    # Determine input file (support both --input flag and positional argument)
+    input_pdf = None
+    if args.input_file:
+        input_pdf = Path(args.input_file)
+    elif args.pdf_file:
+        input_pdf = Path(args.pdf_file)
+    
+    # Check if a specific PDF path is provided
+    if input_pdf:
         # Process single PDF file
-        pdf_file = sys.argv[1]
-        output_file = sys.argv[2] if len(sys.argv) > 2 else None
+        pdf_file = input_pdf
+        
+        # Determine output path
+        if args.output_file:
+            output_file = Path(args.output_file)
+        elif args.output_dir:
+            output_dir = Path(args.output_dir)
+            output_dir.mkdir(exist_ok=True)
+            csv_filename = pdf_file.stem + " - 4qbo.csv"
+            output_file = output_dir / csv_filename
+        else:
+            output_dir = Path('export')
+            output_dir.mkdir(exist_ok=True)
+            csv_filename = pdf_file.stem + " - 4qbo.csv"
+            output_file = output_dir / csv_filename
         
         try:
             result_path = pdf_to_csv(pdf_file, output_file)
-            print(f"\n✓ CSV file created at: {result_path}")
+            print(f"\nSuccess! CSV file created at: {result_path}", flush=True)
         except Exception as e:
-            print(f"\n✗ Error: {e}")
+            print(f"\nError: {str(e)}", flush=True)
             import traceback
             traceback.print_exc()
             sys.exit(1)
@@ -407,28 +440,28 @@ if __name__ == "__main__":
                 output_csv = output_dir / csv_filename
                 
                 result_path = pdf_to_csv(pdf_file, output_csv)
-                print(f"\n✓ CSV file created at: {result_path}")
+                print(f"\nCSV file created at: {result_path}", flush=True)
                 success_count += 1
             except Exception as e:
-                print(f"\n✗ Error processing {pdf_file.name}: {e}")
+                print(f"\nError processing {pdf_file.name}: {e}", flush=True)
                 failed_files.append(pdf_file.name)
                 import traceback
                 traceback.print_exc()
         
         # Print summary
-        print(f"\n{'='*60}")
-        print(f"CONVERSION SUMMARY")
-        print(f"{'='*60}")
-        print(f"Total PDF files: {len(pdf_files)}")
-        print(f"Successfully converted: {success_count}")
-        print(f"Failed: {len(failed_files)}")
+        print(f"\n{'='*60}", flush=True)
+        print(f"CONVERSION SUMMARY", flush=True)
+        print(f"{'='*60}", flush=True)
+        print(f"Total PDF files: {len(pdf_files)}", flush=True)
+        print(f"Successfully converted: {success_count}", flush=True)
+        print(f"Failed: {len(failed_files)}", flush=True)
         
         if failed_files:
-            print("\nFailed files:")
+            print("\nFailed files:", flush=True)
             for filename in failed_files:
-                print(f"  - {filename}")
+                print(f"  - {filename}", flush=True)
         
         if success_count > 0:
-            print(f"\n✓ All CSV files saved in the 'export' folder")
+            print(f"\nAll CSV files saved in the 'export' folder", flush=True)
         
         sys.exit(0 if len(failed_files) == 0 else 1)
