@@ -508,6 +508,146 @@ def index():
                 text-align: center;
                 color: #7f8c8d;
             }
+            
+            /* Mobile Responsiveness */
+            @media (max-width: 768px) {
+                body {
+                    padding: 10px;
+                }
+                
+                .container {
+                    border-radius: 10px;
+                }
+                
+                .header {
+                    padding: 20px 15px;
+                }
+                
+                .header h1 {
+                    font-size: 1.8em;
+                }
+                
+                .header p {
+                    font-size: 1em;
+                }
+                
+                .user-info {
+                    flex-direction: column;
+                    gap: 12px;
+                    align-items: stretch;
+                }
+                
+                .user-email {
+                    text-align: center;
+                }
+                
+                .button-group {
+                    justify-content: center;
+                    flex-wrap: wrap;
+                }
+                
+                .converter-section {
+                    padding: 25px 15px;
+                }
+                
+                .step-title {
+                    font-size: 1.3em;
+                }
+                
+                .bank-grid {
+                    grid-template-columns: 1fr;
+                    gap: 12px;
+                }
+                
+                .bank-card {
+                    padding: 18px;
+                }
+                
+                .bank-name {
+                    font-size: 1.2em;
+                }
+                
+                .upload-area {
+                    padding: 25px 15px;
+                }
+                
+                .upload-area p {
+                    font-size: 1em !important;
+                }
+                
+                .upload-btn,
+                .download-btn {
+                    padding: 10px 20px;
+                    font-size: 1em;
+                }
+                
+                .convert-btn {
+                    padding: 14px 25px;
+                    font-size: 1.1em;
+                }
+                
+                .result-section {
+                    padding: 15px;
+                    font-size: 0.95em;
+                }
+                
+                .footer {
+                    padding: 15px;
+                    font-size: 0.9em;
+                }
+            }
+            
+            @media (max-width: 480px) {
+                .header h1 {
+                    font-size: 1.5em;
+                }
+                
+                .header p {
+                    font-size: 0.9em;
+                }
+                
+                .admin-btn,
+                .logout-btn {
+                    padding: 8px 12px;
+                    font-size: 0.8em;
+                }
+                
+                .step-title {
+                    font-size: 1.1em;
+                }
+                
+                .step-number {
+                    width: 35px;
+                    height: 35px;
+                    font-size: 1.1em;
+                }
+                
+                .bank-card {
+                    padding: 15px;
+                }
+                
+                .bank-name {
+                    font-size: 1.1em;
+                }
+                
+                .bank-formats,
+                .bank-description {
+                    font-size: 0.85em;
+                }
+                
+                .upload-area {
+                    padding: 20px 10px;
+                }
+                
+                .convert-btn {
+                    padding: 12px 20px;
+                    font-size: 1em;
+                }
+                
+                .converter-section {
+                    padding: 20px 10px;
+                }
+            }
         </style>
     </head>
     <body>
