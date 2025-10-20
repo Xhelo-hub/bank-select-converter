@@ -602,9 +602,9 @@
                                 </td>
                                 <td data-label="Status">
                                     {% if user.is_active %}
-                                        <span class="badge badge-active">Active</span>
+                                        <span class="badge badge-active">🟢 Active</span>
                                     {% else %}
-                                        <span class="badge badge-inactive">Inactive</span>
+                                        <span class="badge badge-inactive">⚫ Inactive</span>
                                     {% endif %}
                                 </td>
                                 <td data-label="Role">
@@ -618,13 +618,14 @@
                                     {% if user.id == current_user.id %}
                                         <span style="color: #999; font-style: italic;">You (cannot self-modify)</span>
                                     {% else %}
+                                        <!-- Role Management -->
                                         {% if user.is_admin %}
                                             <a href="{{ url_for('admin.demote_user', user_id=user.id) }}" 
                                                class="btn btn-demote"
                                                onclick="return confirm('Remove admin rights from {{ user.email }}?')">
                                                 ⬇️ Demote
                                             </a>
-                                        {% elif user.is_approved %}
+                                        {% else %}
                                             <a href="{{ url_for('admin.promote_user', user_id=user.id) }}" 
                                                class="btn btn-promote"
                                                onclick="return confirm('Promote {{ user.email }} to admin?')">
@@ -632,6 +633,7 @@
                                             </a>
                                         {% endif %}
                                         
+                                        <!-- Status Management -->
                                         {% if user.is_active %}
                                             <a href="{{ url_for('admin.deactivate_user', user_id=user.id) }}" 
                                                class="btn btn-deactivate"
@@ -645,6 +647,7 @@
                                             </a>
                                         {% endif %}
                                         
+                                        <!-- Delete -->
                                         <a href="{{ url_for('admin.delete_user', user_id=user.id) }}" 
                                            class="btn btn-delete"
                                            onclick="return confirm('Permanently delete {{ user.email }}? This cannot be undone!')">

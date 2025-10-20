@@ -26,9 +26,19 @@ class User(UserMixin):
         self.created_at = created_at or datetime.now().isoformat()
         self.is_admin = is_admin
         self.is_approved = is_approved
-        self.is_active = is_active
+        self._is_active = is_active  # Use private attribute to avoid conflict with UserMixin
         self.reset_token = reset_token
         self.reset_token_expiry = reset_token_expiry
+    
+    @property
+    def is_active(self):
+        """Override UserMixin's is_active property"""
+        return self._is_active
+    
+    @is_active.setter
+    def is_active(self, value):
+        """Setter for is_active property"""
+        self._is_active = value
     
     def to_dict(self):
         """Convert user to dictionary"""
