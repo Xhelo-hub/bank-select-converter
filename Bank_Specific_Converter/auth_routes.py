@@ -4,9 +4,10 @@ Authentication Routes with Flask-Login Support
 Routes for login, logout, and registration
 """
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, login_required
 from auth import UserManager
+from email_utils import send_password_reset_email
 import re
 
 # Create blueprint
@@ -101,3 +102,82 @@ def logout():
     logout_user()
     flash('Logged out successfully', 'success')
     return redirect(url_for('auth.login'))
+
+@auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    """Request password reset code"""
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        
+        if not email:
+            flash('Please provide your email address', 'error')
+            return render_template('forgot_password.html')
+        
+        if not is_valid_email(email):
+            flash('Invalid email format', 'error')
+            return render_template('forgot_password.html')
+        
+        # Generate reset token
+        token, message = user_manager.generate_reset_token(email)
+        if token:
+            # Send email
+            success, email_message = send_password_reset_email(email, token)
+            if success:
+                # Store email in session for reset page
+                session['reset_email'] = email
+                flash('Password reset code has been sent to your email. Please check your inbox.', 'success')
+                return redirect(url_for('auth.reset_password'))
+            else:
+                flash(f'Failed to send email: {email_message}', 'error')
+                return render_template('forgot_password.html')
+        else:
+            # Don't reveal if user exists or not for security
+            flash('If an account exists with this email, a reset code has been sent.', 'info')
+            return render_template('forgot_password.html')
+    
+    return render_template('forgot_password.html')
+
+@auth_bp.route('/reset-password', methods=['GET', 'POST'])
+def reset_password():
+    """Reset password with code"""
+    # Get email from session or query parameter
+    email = session.get('reset_email') or request.args.get('email')
+    
+    if not email:
+        flash('Please request a password reset first', 'error')
+        return redirect(url_for('auth.forgot_password'))
+    
+    if request.method == 'POST':
+        code = request.form.get('code', '').strip()
+        new_password = request.form.get('new_password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        
+        # Validation
+        if not code or not new_password or not confirm_password:
+            flash('All fields are required', 'error')
+            return render_template('reset_password.html', email=email)
+        
+        if len(code) != 6 or not code.isdigit():
+            flash('Invalid reset code format. Code must be 6 digits.', 'error')
+            return render_template('reset_password.html', email=email)
+        
+        if len(new_password) < 6:
+            flash('Password must be at least 6 characters long', 'error')
+            return render_template('reset_password.html', email=email)
+        
+        if new_password != confirm_password:
+            flash('Passwords do not match', 'error')
+            return render_template('reset_password.html', email=email)
+        
+        # Reset password
+        success, message = user_manager.reset_password(email, code, new_password)
+        if success:
+            # Clear session
+            session.pop('reset_email', None)
+            flash('Password reset successfully! Please log in with your new password.', 'success')
+            return redirect(url_for('auth.login'))
+        else:
+            flash(message, 'error')
+            return render_template('reset_password.html', email=email)
+    
+    return render_template('reset_password.html', email=email)

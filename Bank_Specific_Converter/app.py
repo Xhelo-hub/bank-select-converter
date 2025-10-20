@@ -800,6 +800,17 @@ def convert_file():
             
             output_file = output_files[0]
             
+            # Delete original uploaded file immediately after successful conversion
+            try:
+                if input_path.exists():
+                    input_path.unlink()
+                # Try to remove the job upload directory if empty
+                if job_upload_dir.exists() and not any(job_upload_dir.iterdir()):
+                    job_upload_dir.rmdir()
+            except Exception as cleanup_error:
+                # Log but don't fail the conversion
+                print(f"Warning: Failed to delete uploaded file: {cleanup_error}")
+            
             # Store job info
             with jobs_lock:
                 jobs[job_id] = {
@@ -860,11 +871,35 @@ def download_file(job_id):
             flash('File not found or has been deleted', 'error')
             return redirect(url_for('index'))
         
-        return send_file(
+        # Create response with file
+        response = send_file(
             output_path,
             as_attachment=True,
             download_name=job['output_filename']
         )
+        
+        # Delete file immediately after sending (cleanup on response close)
+        @response.call_on_close
+        def cleanup_after_download():
+            try:
+                output_file_path = Path(output_path)
+                if output_file_path.exists():
+                    output_file_path.unlink()
+                
+                # Try to remove the job output directory if empty
+                job_output_dir = output_file_path.parent
+                if job_output_dir.exists() and not any(job_output_dir.iterdir()):
+                    job_output_dir.rmdir()
+                
+                # Remove job from memory
+                with jobs_lock:
+                    jobs.pop(job_id, None)
+                    
+                print(f"Cleaned up job {job_id}: deleted file and removed from memory")
+            except Exception as cleanup_error:
+                print(f"Warning: Failed to cleanup after download for job {job_id}: {cleanup_error}")
+        
+        return response
         
     except Exception as e:
         flash(f'Download error: {str(e)}', 'error')

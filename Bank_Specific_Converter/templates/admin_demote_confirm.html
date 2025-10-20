@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Admin Removal - Bank Statement Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .confirm-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h1 {
+            color: #667eea;
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        .logo p {
+            color: #666;
+            font-size: 14px;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 5px;
+        }
+        .warning-box h3 {
+            color: #856404;
+            font-size: 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .warning-box h3::before {
+            content: "⚠️";
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        .warning-box p {
+            color: #856404;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 5px 0;
+        }
+        .warning-box strong {
+            color: #667eea;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 5px;
+        }
+        .info-box p {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 20px;
+            letter-spacing: 5px;
+            text-align: center;
+            font-weight: bold;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-bottom: 10px;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+        .btn-danger:hover {
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        }
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+        }
+        .links {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .links a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .links a:hover {
+            text-decoration: underline;
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="confirm-container">
+        <div class="logo">
+            <h1>⚠️ Confirm Admin Removal</h1>
+            <p>This action requires verification</p>
+        </div>
+        
+        <div class="warning-box">
+            <h3>Warning: Admin Privilege Removal</h3>
+            <p>You are about to remove admin privileges from:</p>
+            <p><strong>{{ user_to_demote.email }}</strong></p>
+            <p>This action cannot be undone. The user will lose all admin capabilities.</p>
+        </div>
+        
+        <div class="info-box">
+            <p>A 6-digit verification code has been sent to <strong>{{ user_to_demote.email }}</strong>. The code will expire in 15 minutes. Please ask the user to provide you with the code to confirm this action.</p>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form method="POST" action="{{ url_for('admin.demote_user', user_id=user_to_demote.id) }}">
+            <div class="form-group">
+                <label for="code">Verification Code (from {{ user_to_demote.email }})</label>
+                <input type="text" id="code" name="code" required autofocus placeholder="000000" maxlength="6" pattern="[0-9]{6}">
+            </div>
+            
+            <button type="submit" class="btn btn-danger">Confirm: Remove Admin Privileges</button>
+        </form>
+        
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary" style="display: block; text-align: center; text-decoration: none;">Cancel</a>
+        
+        <div class="links">
+            <p>Requester: <strong>{{ current_admin.email }}</strong></p>
+        </div>
+    </div>
+    
+    <script>
+        // Code input validation - only numbers
+        const codeInput = document.getElementById('code');
+        codeInput.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+        
+        // Auto-dismiss success/info messages after 3 seconds
+        setTimeout(function() {
+            const autoAlerts = document.querySelectorAll('.alert-success, .alert-info');
+            autoAlerts.forEach(alert => {
+                alert.style.transition = 'opacity 0.5s';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 3000);
+    </script>
+</body>
+</html>
