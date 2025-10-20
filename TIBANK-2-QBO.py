@@ -11,6 +11,35 @@ import sys
 from datetime import datetime
 
 
+def get_versioned_filename(file_path):
+    """
+    If the file exists, append (v.1), (v.2), etc. to the filename.
+    
+    Args:
+        file_path: Path object to the file
+    
+    Returns:
+        Path object with versioned filename if needed
+    """
+    file_path = Path(file_path)
+    
+    if not file_path.exists():
+        return file_path
+    
+    # File exists, add version number
+    version = 1
+    stem = file_path.stem
+    suffix = file_path.suffix
+    parent = file_path.parent
+    
+    while True:
+        new_name = f"{stem} (v.{version}){suffix}"
+        new_path = parent / new_name
+        if not new_path.exists():
+            return new_path
+        version += 1
+
+
 def extract_text_from_pdf(pdf_path):
     """
     Extract text content from PDF file.
@@ -338,6 +367,9 @@ def pdf_to_csv(pdf_path, output_csv=None):
             if 'Balance' in transaction:
                 del transaction['Balance']
     
+    # Check if output file exists and add version if needed
+    output_csv = get_versioned_filename(output_csv)
+    
     # Write to CSV
     if transactions:
         print(f"\nWriting {len(transactions)} transactions to CSV...", flush=True)
@@ -353,8 +385,6 @@ def pdf_to_csv(pdf_path, output_csv=None):
         print(f"Success! {len(transactions)} transactions exported.", flush=True)
     else:
         print("WARNING: No transactions found in the PDF.", flush=True)
-    
-    return output_csv
     
     return output_csv
 

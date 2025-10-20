@@ -447,11 +447,11 @@ def generate_quickbooks_csv(transactions, original_filename, source_type, output
     # Check if file exists and generate incremental name if needed
     counter = 1
     while output_file.exists():
-        # Generate filename with counter
+        # Generate filename with counter using (v.1), (v.2) pattern
         if source_type:
-            name_without_ext = f"{original_filename} - {source_type} - 4qbo ({counter})"
+            name_without_ext = f"{original_filename} - {source_type} - 4qbo (v.{counter})"
         else:
-            name_without_ext = f"{original_filename} - 4qbo ({counter})"
+            name_without_ext = f"{original_filename} - 4qbo (v.{counter})"
         output_file = export_dir / f"{name_without_ext}.csv"
         counter += 1
     
