@@ -120,12 +120,13 @@ def merge_description(transaction_type, beneficiary, description, reference):
     return ' '.join(parts)
 
 
-def convert_raiffeisen_csv(input_csv):
+def convert_raiffeisen_csv(input_csv, output_directory=None):
     """
     Convert Raiffeisen bank CSV to QBO format.
     
     Args:
         input_csv: Path to input CSV file
+        output_directory: Optional output directory path (defaults to 'export')
     
     Returns:
         Path to the created output CSV file
@@ -136,8 +137,8 @@ def convert_raiffeisen_csv(input_csv):
         raise FileNotFoundError(f"CSV file not found: {input_csv}")
     
     # Create output directory
-    output_dir = Path('export')
-    output_dir.mkdir(exist_ok=True)
+    output_dir = Path(output_directory) if output_directory else Path('export')
+    output_dir.mkdir(parents=True, exist_ok=True)
     
     # Generate output filename with " - 4qbo" suffix
     output_filename = input_path.stem + " - 4qbo.csv"
@@ -302,7 +303,7 @@ if __name__ == "__main__":
     # Check if a specific CSV path is provided
     if input_csv:
         try:
-            result_path = convert_raiffeisen_csv(input_csv)
+            result_path = convert_raiffeisen_csv(input_csv, args.output_dir)
             print(f"\n[SUCCESS] Conversion completed: {result_path}", flush=True)
         except Exception as e:
             print(f"\n[ERROR] Error: {str(e)}", flush=True)

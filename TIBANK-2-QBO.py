@@ -388,12 +388,12 @@ if __name__ == "__main__":
             output_file = Path(args.output_file)
         elif args.output_dir:
             output_dir = Path(args.output_dir)
-            output_dir.mkdir(exist_ok=True)
+            output_dir.mkdir(parents=True, exist_ok=True)
             csv_filename = pdf_file.stem + " - 4qbo.csv"
             output_file = output_dir / csv_filename
         else:
             output_dir = Path('export')
-            output_dir.mkdir(exist_ok=True)
+            output_dir.mkdir(parents=True, exist_ok=True)
             csv_filename = pdf_file.stem + " - 4qbo.csv"
             output_file = output_dir / csv_filename
         
@@ -434,7 +434,7 @@ if __name__ == "__main__":
             try:
                 # Generate output CSV in export folder
                 output_dir = Path('export')
-                output_dir.mkdir(exist_ok=True)
+                output_dir.mkdir(parents=True, exist_ok=True)
                 # Add " - 4qbo" to the filename
                 csv_filename = pdf_file.stem + " - 4qbo.csv"
                 output_csv = output_dir / csv_filename

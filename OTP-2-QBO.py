@@ -267,7 +267,7 @@ def find_otp_bank_files():
     
     return found_files
 
-def convert_to_quickbooks():
+def convert_to_quickbooks(output_directory=None):
     """Convert OTP Bank PDF and CSV files to QuickBooks CSV format."""
     print("=" * 80)
     print("OTP BANK TO QUICKBOOKS CONVERTER")
@@ -409,14 +409,14 @@ def convert_to_quickbooks():
         # Sort PDF transactions by date
         pdf_transactions.sort(key=lambda x: datetime.strptime(x['Date'], '%d/%m/%Y'))
         # Generate PDF QuickBooks CSV using PDF filename
-        pdf_output = generate_quickbooks_csv(pdf_transactions, pdf_filename, "")
+        pdf_output = generate_quickbooks_csv(pdf_transactions, pdf_filename, "", output_directory)
         output_files.append(f"📄 PDF: {pdf_output}")
     
     if csv_transactions:
         # Sort CSV transactions by date
         csv_transactions.sort(key=lambda x: datetime.strptime(x['Date'], '%d/%m/%Y'))
         # Generate CSV QuickBooks CSV using CSV filename
-        csv_output = generate_quickbooks_csv(csv_transactions, csv_filename, "")
+        csv_output = generate_quickbooks_csv(csv_transactions, csv_filename, "", output_directory)
         output_files.append(f"CSV: {csv_output}")
     
     print(f"\nSUCCESS!")
@@ -431,11 +431,11 @@ def convert_to_quickbooks():
     print(f"   PDF: {len(pdf_transactions)} transactions")
     print(f"   CSV: {len(csv_transactions)} transactions")
 
-def generate_quickbooks_csv(transactions, original_filename, source_type):
+def generate_quickbooks_csv(transactions, original_filename, source_type, output_directory=None):
     """Generate QuickBooks compatible CSV file."""
     # Ensure export directory exists
-    export_dir = Path("export")
-    export_dir.mkdir(exist_ok=True)
+    export_dir = Path(output_directory) if output_directory else Path("export")
+    export_dir.mkdir(parents=True, exist_ok=True)
     
     # Generate base filename 
     if source_type:
@@ -501,7 +501,7 @@ def main():
         shutil.copy2(input_path, import_dir / input_path.name)
         print(f"Processing: {input_path.name}", flush=True)
     
-    convert_to_quickbooks()
+    convert_to_quickbooks(args.output_dir)
 
 if __name__ == "__main__":
     main()
