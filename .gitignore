@@ -53,11 +53,19 @@ desktop.ini
 *.temp
 *.log
 
+# Test files
+test_*.py
+*_backup.py
+*.backup
+*.backup.*
+
 # Upload and conversion directories (temporary files)
 uploads/
 converted/
 import/
 export/
+web_uploads/
+web_converted/
 
 # Environment variables
 .env
