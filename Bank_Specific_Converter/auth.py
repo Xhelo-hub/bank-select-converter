@@ -19,13 +19,15 @@ USERS_FILE = os.path.join(os.path.dirname(__file__), 'users.json')
 
 class User(UserMixin):
     """User class for Flask-Login"""
-    def __init__(self, id, email, password, created_at=None, is_admin=False, is_approved=False):
+    def __init__(self, id, email, password, created_at=None, is_admin=False, is_approved=False, reset_token=None, reset_token_expiry=None):
         self.id = id
         self.email = email
         self.password = password
         self.created_at = created_at or datetime.now().isoformat()
         self.is_admin = is_admin
         self.is_approved = is_approved
+        self.reset_token = reset_token
+        self.reset_token_expiry = reset_token_expiry
     
     def to_dict(self):
         """Convert user to dictionary"""
@@ -35,7 +37,9 @@ class User(UserMixin):
             'password': self.password,
             'created_at': self.created_at,
             'is_admin': self.is_admin,
-            'is_approved': self.is_approved
+            'is_approved': self.is_approved,
+            'reset_token': self.reset_token,
+            'reset_token_expiry': self.reset_token_expiry
         }
     
     @staticmethod
@@ -47,7 +51,9 @@ class User(UserMixin):
             password=data['password'],
             created_at=data.get('created_at'),
             is_admin=data.get('is_admin', False),
-            is_approved=data.get('is_approved', False)
+            is_approved=data.get('is_approved', False),
+            reset_token=data.get('reset_token'),
+            reset_token_expiry=data.get('reset_token_expiry')
         )
 
 class UserManager:
@@ -174,3 +180,136 @@ class UserManager:
         self._save_users(users)
         
         return admin, "Admin user created successfully"
+    
+    def generate_reset_token(self, email):
+        """Generate password reset token for user"""
+        from datetime import datetime, timedelta
+        
+        users = self._load_users()
+        for user in users:
+            if user.email.lower() == email.lower():
+                # Generate 6-digit code
+                import random
+                reset_token = str(random.randint(100000, 999999))
+                
+                # Token expires in 30 minutes
+                expiry = (datetime.now() + timedelta(minutes=30)).isoformat()
+                
+                user.reset_token = reset_token
+                user.reset_token_expiry = expiry
+                self._save_users(users)
+                
+                return reset_token, "Reset token generated"
+        
+        return None, "User not found"
+    
+    def verify_reset_token(self, email, token):
+        """Verify password reset token"""
+        from datetime import datetime
+        
+        users = self._load_users()
+        for user in users:
+            if user.email.lower() == email.lower():
+                if not user.reset_token or not user.reset_token_expiry:
+                    return False, "No reset token found"
+                
+                # Check if token expired
+                expiry = datetime.fromisoformat(user.reset_token_expiry)
+                if datetime.now() > expiry:
+                    return False, "Reset token expired"
+                
+                # Check if token matches
+                if user.reset_token == token:
+                    return True, "Token verified"
+                else:
+                    return False, "Invalid token"
+        
+        return False, "User not found"
+    
+    def reset_password(self, email, token, new_password):
+        """Reset user password with token"""
+        # Verify token first
+        verified, message = self.verify_reset_token(email, token)
+        if not verified:
+            return False, message
+        
+        # Update password
+        users = self._load_users()
+        for user in users:
+            if user.email.lower() == email.lower():
+                user.password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+                user.reset_token = None
+                user.reset_token_expiry = None
+                self._save_users(users)
+                return True, "Password reset successfully"
+        
+        return False, "User not found"
+    
+    def promote_to_admin(self, user_id):
+        """Promote a user to admin"""
+        users = self._load_users()
+        for user in users:
+            if user.id == user_id:
+                user.is_admin = True
+                self._save_users(users)
+                return True, "User promoted to admin"
+        return False, "User not found"
+    
+    def demote_from_admin(self, user_id):
+        """Remove admin privileges from a user"""
+        users = self._load_users()
+        for user in users:
+            if user.id == user_id:
+                user.is_admin = False
+                self._save_users(users)
+                return True, "Admin privileges removed"
+        return False, "User not found"
+    
+    def generate_admin_removal_code(self, admin_email):
+        """Generate verification code for admin removal (sent to the admin being removed)"""
+        import random
+        from datetime import datetime, timedelta
+        
+        users = self._load_users()
+        for user in users:
+            if user.email.lower() == admin_email.lower() and user.is_admin:
+                # Generate 6-digit verification code
+                verification_code = str(random.randint(100000, 999999))
+                
+                # Store temporarily (we'll use reset_token field for this)
+                expiry = (datetime.now() + timedelta(minutes=15)).isoformat()
+                
+                user.reset_token = verification_code
+                user.reset_token_expiry = expiry
+                self._save_users(users)
+                
+                return verification_code, "Verification code generated"
+        
+        return None, "Admin user not found"
+    
+    def verify_admin_removal_code(self, admin_email, code):
+        """Verify the admin removal code"""
+        from datetime import datetime
+        
+        users = self._load_users()
+        for user in users:
+            if user.email.lower() == admin_email.lower() and user.is_admin:
+                if not user.reset_token or not user.reset_token_expiry:
+                    return False, "No verification code found"
+                
+                # Check if code expired
+                expiry = datetime.fromisoformat(user.reset_token_expiry)
+                if datetime.now() > expiry:
+                    return False, "Verification code expired"
+                
+                # Check if code matches
+                if user.reset_token == code:
+                    # Clear the token
+                    user.reset_token = None
+                    user.reset_token_expiry = None
+                    self._save_users(users)
+                    return True, "Code verified"
+                else:
+                    return False, "Invalid verification code"
+        
+        return False, "Admin user not found"
