@@ -739,18 +739,11 @@ def convert_file():
         # Generate job ID
         job_id = str(uuid.uuid4())
         
-        # Create job-specific directory to preserve original filename
-        job_upload_dir = UPLOAD_FOLDER / job_id
-        job_upload_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Save uploaded file with original filename (no UUID prefix)
+        # Save uploaded file directly to import folder with UUID prefix to avoid conflicts
         filename = secure_filename(file.filename)
-        input_path = job_upload_dir / filename
+        unique_filename = f"{job_id}_{filename}"
+        input_path = UPLOAD_FOLDER / unique_filename
         file.save(str(input_path))
-        
-        # Create job-specific output directory
-        job_output_dir = CONVERTED_FOLDER / job_id
-        job_output_dir.mkdir(parents=True, exist_ok=True)
         
         # Get converter script
         bank_config = BANK_CONFIGS[bank_id]
@@ -758,21 +751,19 @@ def convert_file():
         script_path = get_script_path(script_name)
         
         if not script_path:
-            # Clean up job directories
+            # Clean up uploaded file
             if input_path.exists():
                 input_path.unlink()
-            if job_upload_dir.exists():
-                job_upload_dir.rmdir()
             return jsonify({
                 'success': False,
                 'error': f'Converter script not found: {script_name}'
             }), 500
         
-        # Run converter script with job-specific output directory
+        # Run converter script - output will go directly to export folder
         try:
             import sys
             result = subprocess.run(
-                [sys.executable, script_path, '--input', str(input_path), '--output', str(job_output_dir)],
+                [sys.executable, script_path, '--input', str(input_path), '--output', str(CONVERTED_FOLDER)],
                 capture_output=True,
                 text=True,
                 timeout=300  # 5 minute timeout
@@ -786,11 +777,13 @@ def convert_file():
                     'error': f'Conversion failed: {error_msg}'
                 }), 500
             
-            # Find output file in job-specific directory
-            output_files = list(job_output_dir.glob(f'*{Path(filename).stem}*4qbo.csv'))
+            # Find output file in export folder
+            # Converter creates files with " - 4qbo.csv" suffix based on input filename
+            # Since we prefixed input with UUID, output will be like "uuid_filename - 4qbo.csv"
+            output_files = list(CONVERTED_FOLDER.glob(f'*{Path(filename).stem}*4qbo.csv'))
             if not output_files:
-                # Fallback: check for any CSV file in the job directory
-                output_files = list(job_output_dir.glob('*.csv'))
+                # Fallback: check for any CSV file with the job_id prefix
+                output_files = list(CONVERTED_FOLDER.glob(f'{job_id}_*.csv'))
             
             if not output_files:
                 return jsonify({
@@ -804,9 +797,6 @@ def convert_file():
             try:
                 if input_path.exists():
                     input_path.unlink()
-                # Try to remove the job upload directory if empty
-                if job_upload_dir.exists() and not any(job_upload_dir.iterdir()):
-                    job_upload_dir.rmdir()
             except Exception as cleanup_error:
                 # Log but don't fail the conversion
                 print(f"Warning: Failed to delete uploaded file: {cleanup_error}")
@@ -885,11 +875,6 @@ def download_file(job_id):
                 output_file_path = Path(output_path)
                 if output_file_path.exists():
                     output_file_path.unlink()
-                
-                # Try to remove the job output directory if empty
-                job_output_dir = output_file_path.parent
-                if job_output_dir.exists() and not any(job_output_dir.iterdir()):
-                    job_output_dir.rmdir()
                 
                 # Remove job from memory
                 with jobs_lock:
