@@ -96,11 +96,11 @@ def promote_user(user_id):
     
     return redirect(url_for('admin.dashboard'))
 
-@admin_bp.route('/demote/<user_id>', methods=['GET', 'POST'])
+@admin_bp.route('/demote/<user_id>')
 @login_required
 @admin_required
 def demote_user(user_id):
-    """Demote an admin to regular user (requires verification)"""
+    """Demote an admin to regular user (direct demotion without verification)"""
     # Get user to demote
     users = user_manager.get_all_users()
     user_to_demote = None
@@ -123,50 +123,63 @@ def demote_user(user_id):
         flash('User is not an admin', 'error')
         return redirect(url_for('admin.dashboard'))
     
-    if request.method == 'POST':
-        # Verify code
-        code = request.form.get('code', '').strip()
-        
-        if not code:
-            flash('Please enter the verification code', 'error')
-            return render_template('admin_demote_confirm.html', 
-                                 user_to_demote=user_to_demote,
-                                 current_admin=current_user)
-        
-        # Verify the code
-        verified, message = user_manager.verify_admin_removal_code(user_to_demote.email, code)
-        
-        if verified:
-            # Demote user
-            success, demote_message = user_manager.demote_from_admin(user_id)
-            if success:
-                flash(f'{user_to_demote.email} has been demoted to regular user', 'success')
-                return redirect(url_for('admin.dashboard'))
-            else:
-                flash(demote_message, 'error')
-                return render_template('admin_demote_confirm.html', 
-                                     user_to_demote=user_to_demote,
-                                     current_admin=current_user)
-        else:
-            flash(message, 'error')
-            return render_template('admin_demote_confirm.html', 
-                                 user_to_demote=user_to_demote,
-                                 current_admin=current_user)
-    
-    # GET request - generate and send verification code
-    code, message = user_manager.generate_admin_removal_code(user_to_demote.email)
-    
-    if code:
-        # Send verification email
-        success, email_message = send_admin_removal_verification(user_to_demote.email, code, current_user.email)
-        if success:
-            flash(f'A verification code has been sent to {user_to_demote.email}', 'info')
-        else:
-            flash(f'Warning: Failed to send email - {email_message}. Code: {code}', 'warning')
-        
-        return render_template('admin_demote_confirm.html', 
-                             user_to_demote=user_to_demote,
-                             current_admin=current_user)
+    # Demote user directly
+    success, message = user_manager.demote_from_admin(user_id)
+    if success:
+        flash(f'{user_to_demote.email} has been demoted to regular user', 'success')
     else:
         flash(message, 'error')
+    
+    return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/activate/<user_id>')
+@login_required
+@admin_required
+def activate_user(user_id):
+    """Activate a user account"""
+    success, message = user_manager.activate_user(user_id)
+    
+    if success:
+        flash(message, 'success')
+    else:
+        flash(message, 'error')
+    
+    return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/deactivate/<user_id>')
+@login_required
+@admin_required
+def deactivate_user(user_id):
+    """Deactivate a user account"""
+    # Prevent self-deactivation
+    if user_id == current_user.id:
+        flash('You cannot deactivate yourself', 'error')
         return redirect(url_for('admin.dashboard'))
+    
+    success, message = user_manager.deactivate_user(user_id)
+    
+    if success:
+        flash(message, 'success')
+    else:
+        flash(message, 'error')
+    
+    return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/delete/<user_id>')
+@login_required
+@admin_required
+def delete_user(user_id):
+    """Delete a user permanently"""
+    # Prevent self-deletion
+    if user_id == current_user.id:
+        flash('You cannot delete yourself', 'error')
+        return redirect(url_for('admin.dashboard'))
+    
+    success, message = user_manager.delete_user(user_id)
+    
+    if success:
+        flash(message, 'success')
+    else:
+        flash(message, 'error')
+    
+    return redirect(url_for('admin.dashboard'))

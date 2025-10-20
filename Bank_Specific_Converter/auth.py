@@ -19,13 +19,14 @@ USERS_FILE = os.path.join(os.path.dirname(__file__), 'users.json')
 
 class User(UserMixin):
     """User class for Flask-Login"""
-    def __init__(self, id, email, password, created_at=None, is_admin=False, is_approved=False, reset_token=None, reset_token_expiry=None):
+    def __init__(self, id, email, password, created_at=None, is_admin=False, is_approved=False, is_active=True, reset_token=None, reset_token_expiry=None):
         self.id = id
         self.email = email
         self.password = password
         self.created_at = created_at or datetime.now().isoformat()
         self.is_admin = is_admin
         self.is_approved = is_approved
+        self.is_active = is_active
         self.reset_token = reset_token
         self.reset_token_expiry = reset_token_expiry
     
@@ -38,6 +39,7 @@ class User(UserMixin):
             'created_at': self.created_at,
             'is_admin': self.is_admin,
             'is_approved': self.is_approved,
+            'is_active': self.is_active,
             'reset_token': self.reset_token,
             'reset_token_expiry': self.reset_token_expiry
         }
@@ -52,6 +54,7 @@ class User(UserMixin):
             created_at=data.get('created_at'),
             is_admin=data.get('is_admin', False),
             is_approved=data.get('is_approved', False),
+            is_active=data.get('is_active', True),
             reset_token=data.get('reset_token'),
             reset_token_expiry=data.get('reset_token_expiry')
         )
@@ -313,3 +316,34 @@ class UserManager:
                     return False, "Invalid verification code"
         
         return False, "Admin user not found"
+    
+    def activate_user(self, user_id):
+        """Activate a user account"""
+        users = self._load_users()
+        for user in users:
+            if user.id == user_id:
+                user.is_active = True
+                self._save_users(users)
+                return True, "User activated successfully"
+        return False, "User not found"
+    
+    def deactivate_user(self, user_id):
+        """Deactivate a user account"""
+        users = self._load_users()
+        for user in users:
+            if user.id == user_id:
+                user.is_active = False
+                self._save_users(users)
+                return True, "User deactivated successfully"
+        return False, "User not found"
+    
+    def delete_user(self, user_id):
+        """Delete a user permanently"""
+        users = self._load_users()
+        initial_count = len(users)
+        users = [u for u in users if u.id != user_id]
+        
+        if len(users) < initial_count:
+            self._save_users(users)
+            return True, "User deleted successfully"
+        return False, "User not found"

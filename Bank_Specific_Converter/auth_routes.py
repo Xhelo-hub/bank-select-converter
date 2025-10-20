@@ -49,6 +49,11 @@ def login():
             flash('Your account is pending admin approval. Please wait for approval before logging in.', 'error')
             return render_template('login.html')
         
+        # Check if user is active
+        if not user.is_active:
+            flash('Your user is inactive. Contact customer service at kontakt@konsulence.al or +355692064518.', 'error')
+            return render_template('login.html')
+        
         # Login user
         login_user(user, remember=remember)
         flash('Logged in successfully!', 'success')
