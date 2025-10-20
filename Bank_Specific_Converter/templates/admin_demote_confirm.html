@@ -17,15 +17,70 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 15px;
         }
         .confirm-container {
             background: white;
             border-radius: 10px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            padding: 40px;
+            padding: 30px 20px;
             width: 100%;
             max-width: 500px;
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .confirm-container {
+                padding: 25px 15px;
+                border-radius: 8px;
+                max-width: 100%;
+            }
+            .logo h1 {
+                font-size: 22px !important;
+            }
+            .logo p {
+                font-size: 13px !important;
+            }
+            .warning-box, .info-box {
+                padding: 15px !important;
+                font-size: 13px;
+                margin-bottom: 20px !important;
+            }
+            .warning-box h3 {
+                font-size: 14px !important;
+            }
+            .warning-box h3::before {
+                font-size: 18px !important;
+            }
+            .warning-box p, .info-box p {
+                font-size: 13px !important;
+            }
+            input[type="text"] {
+                padding: 10px !important;
+                font-size: 18px !important;
+                letter-spacing: 3px !important;
+            }
+            .btn {
+                padding: 11px !important;
+                font-size: 14px !important;
+                margin-bottom: 8px !important;
+            }
+            .links {
+                font-size: 12px;
+            }
+        }
+        
+        @media (max-width: 380px) {
+            .logo h1 {
+                font-size: 20px !important;
+            }
+            .btn {
+                font-size: 13px !important;
+                padding: 10px !important;
+            }
         }
         .logo {
             text-align: center;

@@ -246,6 +246,104 @@
             background: #667eea;
             color: white;
         }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 20px;
+                border-radius: 15px;
+            }
+            .header h1 {
+                font-size: 1.8em;
+            }
+            .header p {
+                font-size: 0.95em;
+            }
+            .user-info {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            .user-info div {
+                display: flex;
+                gap: 10px;
+                justify-content: center;
+            }
+            .stats {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            .users-table {
+                font-size: 13px;
+            }
+            .users-table th,
+            .users-table td {
+                padding: 10px 8px;
+            }
+            .btn {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+            .badge {
+                font-size: 0.75em;
+                padding: 3px 8px;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            .header h1 {
+                font-size: 1.5em;
+            }
+            /* Stack table on mobile */
+            .users-table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+            .users-table thead,
+            .users-table tbody,
+            .users-table tr,
+            .users-table th,
+            .users-table td {
+                display: block;
+            }
+            .users-table tr {
+                margin-bottom: 15px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 10px;
+                background: #f9f9f9;
+            }
+            .users-table thead {
+                display: none;
+            }
+            .users-table td {
+                text-align: left;
+                padding: 8px;
+                position: relative;
+                border: none;
+                white-space: normal;
+            }
+            .users-table td::before {
+                content: attr(data-label);
+                font-weight: bold;
+                display: inline-block;
+                width: 100px;
+                margin-right: 10px;
+                color: #667eea;
+            }
+            .btn {
+                margin: 5px 0;
+                display: inline-block;
+            }
+        }
     </style>
 </head>
 <body>
@@ -301,10 +399,10 @@
                     <tbody>
                         {% for user in pending_users %}
                             <tr>
-                                <td>{{ user.email }}</td>
-                                <td>{{ user.created_at[:10] }}</td>
-                                <td><span class="badge badge-pending">Pending</span></td>
-                                <td>
+                                <td data-label="Email">{{ user.email }}</td>
+                                <td data-label="Registration Date">{{ user.created_at[:10] }}</td>
+                                <td data-label="Status"><span class="badge badge-pending">Pending</span></td>
+                                <td data-label="Actions">
                                     <a href="{{ url_for('admin.approve_user', user_id=user.id) }}" 
                                        class="btn btn-approve"
                                        onclick="return confirm('Approve user {{ user.email }}?')">
@@ -343,23 +441,23 @@
                     <tbody>
                         {% for user in all_users %}
                             <tr>
-                                <td>{{ user.email }}</td>
-                                <td>{{ user.created_at[:10] }}</td>
-                                <td>
+                                <td data-label="Email">{{ user.email }}</td>
+                                <td data-label="Registration Date">{{ user.created_at[:10] }}</td>
+                                <td data-label="Status">
                                     {% if user.is_approved %}
                                         <span class="badge badge-approved">Approved</span>
                                     {% else %}
                                         <span class="badge badge-pending">Pending</span>
                                     {% endif %}
                                 </td>
-                                <td>
+                                <td data-label="Role">
                                     {% if user.is_admin %}
                                         <span class="badge badge-admin">Admin</span>
                                     {% else %}
                                         User
                                     {% endif %}
                                 </td>
-                                <td>
+                                <td data-label="Actions">
                                     {% if user.id == current_user.id %}
                                         <span style="color: #999; font-style: italic;">You (cannot self-modify)</span>
                                     {% elif user.is_admin %}

@@ -23,9 +23,43 @@
             background: white;
             border-radius: 10px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            padding: 40px;
+            padding: 30px 20px;
             width: 100%;
             max-width: 400px;
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            .login-container {
+                padding: 25px 15px;
+                border-radius: 8px;
+            }
+            .logo h1 {
+                font-size: 24px;
+            }
+            .logo p {
+                font-size: 12px;
+                line-height: 1.4;
+            }
+            input[type="text"],
+            input[type="password"],
+            input[type="email"] {
+                padding: 10px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+            .btn {
+                padding: 12px;
+                font-size: 15px;
+            }
+            .links {
+                font-size: 13px;
+            }
+            .links a {
+                font-size: 13px;
+            }
         }
         .logo {
             text-align: center;
