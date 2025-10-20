@@ -739,10 +739,21 @@ def convert_file():
         # Generate job ID
         job_id = str(uuid.uuid4())
         
-        # Save uploaded file directly to import folder with UUID prefix to avoid conflicts
+        # Save uploaded file directly to import folder
+        # Use versioned filename if file already exists to avoid conflicts
         filename = secure_filename(file.filename)
-        unique_filename = f"{job_id}_{filename}"
-        input_path = UPLOAD_FOLDER / unique_filename
+        input_path = UPLOAD_FOLDER / filename
+        
+        # If file exists, add version number (v.1), (v.2), etc.
+        if input_path.exists():
+            base_name = input_path.stem
+            extension = input_path.suffix
+            counter = 1
+            while input_path.exists():
+                input_path = UPLOAD_FOLDER / f"{base_name} (v.{counter}){extension}"
+                counter += 1
+            filename = input_path.name  # Update filename to versioned name
+        
         file.save(str(input_path))
         
         # Get converter script
@@ -779,11 +790,12 @@ def convert_file():
             
             # Find output file in export folder
             # Converter creates files with " - 4qbo.csv" suffix based on input filename
-            # Since we prefixed input with UUID, output will be like "uuid_filename - 4qbo.csv"
+            # Output will be like "filename - 4qbo.csv" or "filename (v.1) - 4qbo.csv"
             output_files = list(CONVERTED_FOLDER.glob(f'*{Path(filename).stem}*4qbo.csv'))
             if not output_files:
-                # Fallback: check for any CSV file with the job_id prefix
-                output_files = list(CONVERTED_FOLDER.glob(f'{job_id}_*.csv'))
+                # Fallback: check for any CSV file matching the base name
+                base_name = Path(filename).stem.split(' (v.')[0]  # Remove version if present
+                output_files = list(CONVERTED_FOLDER.glob(f'{base_name}*4qbo.csv'))
             
             if not output_files:
                 return jsonify({
@@ -791,7 +803,8 @@ def convert_file():
                     'error': 'Conversion completed but output file not found'
                 }), 500
             
-            output_file = output_files[0]
+            # Get the most recently created file if multiple matches
+            output_file = max(output_files, key=lambda p: p.stat().st_mtime)
             
             # Delete original uploaded file immediately after successful conversion
             try:
