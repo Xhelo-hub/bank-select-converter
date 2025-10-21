@@ -97,6 +97,18 @@ BANK_CONFIGS = {
         'formats': ['PDF', 'CSV'],
         'description': 'Union Bank Albania statements'
     },
+    'CREDINS': {
+        'name': 'Credins Bank',
+        'script': 'CREDINS-2-QBO.py',
+        'formats': ['PDF', 'CSV'],
+        'description': 'Credins Bank Albania statements'
+    },
+    'INTESA': {
+        'name': 'Intesa Sanpaolo Bank',
+        'script': 'INTESA-2-QBO.py',
+        'formats': ['CSV'],
+        'description': 'Intesa Sanpaolo Bank Albania statements (CSV only)'
+    },
     'EBILL': {
         'name': 'E-Bill',
         'script': 'Withholding.py',
@@ -773,12 +785,21 @@ def convert_file():
         # Run converter script - output will go directly to export folder
         try:
             import sys
+            print(f"[DEBUG] Running converter...")
+            print(f"[DEBUG] Script: {script_path}")
+            print(f"[DEBUG] Input: {input_path}")
+            print(f"[DEBUG] Output: {CONVERTED_FOLDER}")
+            
             result = subprocess.run(
                 [sys.executable, script_path, '--input', str(input_path), '--output', str(CONVERTED_FOLDER)],
                 capture_output=True,
                 text=True,
                 timeout=300  # 5 minute timeout
             )
+            
+            print(f"[DEBUG] Converter return code: {result.returncode}")
+            print(f"[DEBUG] Converter stdout: {result.stdout[:500] if result.stdout else 'None'}")
+            print(f"[DEBUG] Converter stderr: {result.stderr[:500] if result.stderr else 'None'}")
             
             # Check for errors
             if result.returncode != 0:
@@ -791,16 +812,45 @@ def convert_file():
             # Find output file in export folder
             # Converter creates files with " - 4qbo.csv" suffix based on input filename
             # Output will be like "filename - 4qbo.csv" or "filename (v.1) - 4qbo.csv"
-            output_files = list(CONVERTED_FOLDER.glob(f'*{Path(filename).stem}*4qbo.csv'))
-            if not output_files:
-                # Fallback: check for any CSV file matching the base name
-                base_name = Path(filename).stem.split(' (v.')[0]  # Remove version if present
-                output_files = list(CONVERTED_FOLDER.glob(f'{base_name}*4qbo.csv'))
+            
+            # Get the base name without extension
+            base_stem = Path(filename).stem
+            
+            # Try multiple search patterns
+            print(f"[DEBUG] Looking for output file...")
+            print(f"[DEBUG] Input filename: {filename}")
+            print(f"[DEBUG] Base stem: {base_stem}")
+            print(f"[DEBUG] Search folder: {CONVERTED_FOLDER}")
+            
+            # Pattern 1: Exact stem match
+            output_files = list(CONVERTED_FOLDER.glob(f'*{base_stem}*4qbo.csv'))
+            print(f"[DEBUG] Pattern 1 found {len(output_files)} files")
             
             if not output_files:
+                # Pattern 2: Remove version number and try again
+                base_name = base_stem.split(' (v.')[0]
+                output_files = list(CONVERTED_FOLDER.glob(f'{base_name}*4qbo.csv'))
+                print(f"[DEBUG] Pattern 2 found {len(output_files)} files")
+            
+            if not output_files:
+                # Pattern 3: List all 4qbo.csv files and find by timestamp
+                all_output_files = list(CONVERTED_FOLDER.glob('*4qbo.csv'))
+                print(f"[DEBUG] Pattern 3: All 4qbo files in folder: {len(all_output_files)}")
+                if all_output_files:
+                    # Get the most recent one created in the last 60 seconds
+                    current_time = time.time()
+                    recent_files = [f for f in all_output_files if (current_time - f.stat().st_mtime) < 60]
+                    if recent_files:
+                        output_files = recent_files
+                        print(f"[DEBUG] Found {len(recent_files)} recent files")
+            
+            if not output_files:
+                # List what's actually in the folder for debugging
+                all_files = list(CONVERTED_FOLDER.glob('*'))
+                print(f"[DEBUG] All files in export folder: {[f.name for f in all_files]}")
                 return jsonify({
                     'success': False,
-                    'error': 'Conversion completed but output file not found'
+                    'error': f'Conversion completed but output file not found. Searched for: {base_stem}'
                 }), 500
             
             # Get the most recently created file if multiple matches

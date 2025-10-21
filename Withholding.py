@@ -295,7 +295,7 @@ def process_withholding_from_csv(input_csv, output_dir=None):
     else:
         output_dir = Path(output_dir)
     
-    output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(exist_ok=True)
     
     # Extract withholding transactions
     transactions, date_range = extract_withholding_transactions(input_csv)

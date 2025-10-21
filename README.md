@@ -19,6 +19,7 @@ A comprehensive web-based Albanian bank statement converter that transforms bank
 - **Raiffeisen Bank** (PDF, CSV)
 - **TI Bank** (PDF, CSV)
 - **Union Bank** (PDF, CSV)
+- **Credins Bank** (PDF, CSV) ✨ **NEW**
 - **E-Bills** (PDF)
 
 ## 🚀 Quick Start
