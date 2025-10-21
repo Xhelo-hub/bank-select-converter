@@ -1,0 +1,13 @@
+[
+  {
+    "id": "5b8ea946-69fa-4595-ad82-2797490df94c",
+    "email": "kontakt@konsulence.al",
+    "password": "$2b$12$rzIyAB2nxj3hRABN/pFjZ.SBZPH1SQnXNoZndaifSQ79mlpIHz/Ai",
+    "created_at": "2025-10-17T20:00:29.150407",
+    "is_admin": true,
+    "is_approved": true,
+    "is_active": true,
+    "reset_token": null,
+    "reset_token_expiry": null
+  }
+]

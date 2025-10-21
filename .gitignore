@@ -67,6 +67,9 @@ export/
 web_uploads/
 web_converted/
 
+# User data (production - do not overwrite)
+Bank_Specific_Converter/users.json
+
 # Environment variables
 .env
 .env.local
