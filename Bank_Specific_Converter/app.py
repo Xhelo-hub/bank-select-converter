@@ -1045,9 +1045,6 @@ def index():
                             <i class="fas fa-cloud-upload-alt"></i>
                             <input type="file" id="fileInput" name="file" class="file-input" onchange="handleFileSelect(event)" accept=".pdf,.csv,.txt">
                             <p style="font-size: 1.2em; color: #7f8c8d; margin-bottom: 15px;">Drag & Drop or Click to Upload</p>
-                            <button type="button" class="upload-btn" onclick="document.getElementById('fileInput').click()" disabled id="uploadBtn">
-                                <i class="fas fa-file-upload"></i> Choose File
-                            </button>
                             <p style="margin-top: 15px; color: #95a5a6; font-size: 0.9em;"><i class="fas fa-info-circle"></i> Supported: PDF, CSV, TXT (Max 50MB)</p>
                         </div>
                         <div id="selectedFile" class="selected-file" style="display: none;">
@@ -1120,7 +1117,6 @@ def index():
                     // Enable upload
                     document.getElementById('step2').classList.add('active');
                     document.getElementById('uploadArea').classList.remove('disabled');
-                    document.getElementById('uploadBtn').disabled = false;
                     
                     // Reset file selection
                     document.getElementById('fileInput').value = '';
@@ -1145,7 +1141,6 @@ def index():
                 // Enable upload
                 document.getElementById('step2').classList.add('active');
                 document.getElementById('uploadArea').classList.remove('disabled');
-                document.getElementById('uploadBtn').disabled = false;
                 
                 // Reset file selection
                 document.getElementById('fileInput').value = '';
