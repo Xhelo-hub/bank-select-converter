@@ -225,14 +225,28 @@ def index():
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Albanian Bank Statement Converter</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
             :root {
                 --fa-style-family-classic: "Font Awesome 6 Free";
                 --fa-font-solid: normal 900 1em / 1 "Font Awesome 6 Free";
                 --primary-color: #33cc66;
-                --header-bg: #333366;
+                --primary-hover: #2eb85c;
+                --header-bg: #2b2b38;
                 --text-dark: #1a1a1a;
+                --text-secondary: #666666;
                 --bg-light: #f8f9fb;
+                --bg-gradient: linear-gradient(135deg, #f8fff8 0%, #e8f5ee 100%);
+                --border-color: #e0e0e0;
+                --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
+                --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+                --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+                --danger-color: #ff4d4d;
+                --radius-sm: 8px;
+                --radius-md: 12px;
+                --radius-lg: 16px;
             }
             
             * {
@@ -242,8 +256,8 @@ def index():
             }
             
             body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-                background: var(--bg-light);
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+                background: var(--bg-gradient);
                 min-height: 100vh;
                 padding: 20px;
                 color: var(--text-dark);
@@ -253,17 +267,17 @@ def index():
                 max-width: 900px;
                 margin: 0 auto;
                 background: white;
-                border-radius: 15px;
-                box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                border-radius: var(--radius-lg);
+                box-shadow: var(--shadow-lg);
                 overflow: hidden;
             }
             
             .header {
                 background: var(--header-bg);
-                border-radius: 10px;
-                padding: 20px;
+                border-radius: var(--radius-md);
+                padding: 24px;
                 margin-bottom: 20px;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                box-shadow: var(--shadow-md);
                 color: white;
             }
             
@@ -331,31 +345,33 @@ def index():
             
             .admin-btn,
             .logout-btn {
-                background: rgba(255,255,255,0.15);
+                background: rgba(255,255,255,0.1);
                 color: white;
-                padding: 8px 16px;
-                border: 1px solid rgba(255,255,255,0.3);
-                border-radius: 8px;
+                padding: 10px 20px;
+                border: 2px solid rgba(255,255,255,0.2);
+                border-radius: var(--radius-sm);
                 cursor: pointer;
                 font-size: 0.9em;
                 text-decoration: none;
                 display: inline-flex;
                 align-items: center;
                 gap: 8px;
-                transition: all 0.3s;
+                transition: all 0.2s ease;
                 font-weight: 500;
             }
             
             .admin-btn i,
             .logout-btn i {
                 color: var(--primary-color);
+                font-size: 1.1em;
             }
             
             .admin-btn:hover,
             .logout-btn:hover {
-                background: rgba(255,255,255,0.25);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                background: rgba(255,255,255,0.2);
+                border-color: var(--primary-color);
+                transform: translateY(-2px) scale(1.02);
+                box-shadow: 0 4px 12px rgba(51, 204, 102, 0.3);
             }
             
             .converter-section {
@@ -363,85 +379,90 @@ def index():
             }
             
             .step {
-                margin-bottom: 30px;
-                padding: 20px;
-                border: 2px solid #ecf0f1;
-                border-radius: 10px;
-                transition: border-color 0.3s;
+                margin-bottom: 35px;
+                padding: 24px;
+                border: 2px solid var(--border-color);
+                border-radius: var(--radius-md);
+                transition: all 0.3s ease;
+                background: white;
             }
             
             .step.active {
-                border-color: #3498db;
-                background: #f8f9fa;
+                border-color: var(--primary-color);
+                background: rgba(51, 204, 102, 0.02);
+                box-shadow: var(--shadow-sm);
             }
             
             .step-title {
                 font-size: 1.4em;
-                font-weight: bold;
-                color: #2c3e50;
+                font-weight: 600;
+                color: var(--text-dark);
                 margin-bottom: 15px;
                 display: flex;
                 align-items: center;
             }
             
             .step-number {
-                background: var(--primary-color);
+                background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
                 color: white;
-                width: 35px;
-                height: 35px;
+                width: 40px;
+                height: 40px;
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 margin-right: 15px;
-                font-weight: bold;
+                font-weight: 600;
                 font-size: 1.1em;
+                box-shadow: 0 4px 12px rgba(51, 204, 102, 0.25);
             }
             
             .step-number i {
-                font-size: 0.9em;
+                font-size: 1em;
             }
             
             .bank-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                gap: 15px;
-                margin-top: 15px;
+                gap: 20px;
+                margin-top: 20px;
             }
             
             .bank-card {
-                border: 2px solid #ecf0f1;
-                border-radius: 10px;
-                padding: 20px;
+                border: 2px solid var(--border-color);
+                border-radius: var(--radius-md);
+                padding: 24px;
                 cursor: pointer;
-                transition: all 0.3s;
+                transition: all 0.2s ease;
                 background: white;
+                box-shadow: var(--shadow-sm);
             }
             
             .bank-card:hover {
                 border-color: var(--primary-color);
-                transform: translateY(-2px);
-                box-shadow: 0 5px 15px rgba(51, 204, 102, 0.2);
+                transform: translateY(-3px) scale(1.02);
+                box-shadow: var(--shadow-md), 0 0 0 3px rgba(51, 204, 102, 0.1);
             }
             
             .bank-card.selected {
                 border-color: var(--primary-color);
-                background: rgba(51, 204, 102, 0.08);
-                box-shadow: 0 4px 12px rgba(51, 204, 102, 0.15);
+                background: linear-gradient(135deg, rgba(51, 204, 102, 0.08) 0%, rgba(51, 204, 102, 0.04) 100%);
+                box-shadow: var(--shadow-md), 0 0 0 3px rgba(51, 204, 102, 0.15);
             }
             
             .bank-card i {
                 color: var(--primary-color);
-                font-size: 1.8em;
-                margin-bottom: 10px;
+                font-size: 2em;
+                margin-bottom: 12px;
                 display: block;
             }
             
             .bank-name {
                 font-size: 1.3em;
-                font-weight: bold;
-                color: #2c3e50;
+                font-weight: 600;
+                color: var(--text-dark);
                 margin-bottom: 8px;
+            }
             }
             
             .bank-formats {
@@ -451,30 +472,33 @@ def index():
             }
             
             .bank-description {
-                color: #95a5a6;
+                color: var(--text-secondary);
                 font-size: 0.85em;
+                line-height: 1.4;
             }
             
             .upload-area {
-                border: 3px dashed #bdc3c7;
-                border-radius: 10px;
-                padding: 40px;
+                border: 3px dashed var(--border-color);
+                border-radius: var(--radius-md);
+                padding: 50px 40px;
                 text-align: center;
-                margin-top: 15px;
-                transition: all 0.3s;
-                background: #fafafa;
+                margin-top: 20px;
+                transition: all 0.3s ease;
+                background: linear-gradient(135deg, #fafbfc 0%, #f5f7fa 100%);
             }
             
             .upload-area.dragover {
                 border-color: var(--primary-color);
-                background: rgba(51, 204, 102, 0.05);
+                background: linear-gradient(135deg, rgba(51, 204, 102, 0.08) 0%, rgba(51, 204, 102, 0.04) 100%);
+                transform: scale(1.01);
             }
             
             .upload-area i {
                 color: var(--primary-color);
-                font-size: 3em;
-                margin-bottom: 15px;
+                font-size: 3.5em;
+                margin-bottom: 20px;
                 display: block;
+                filter: drop-shadow(0 4px 8px rgba(51, 204, 102, 0.2));
             }
             
             .upload-area.disabled {
@@ -487,106 +511,129 @@ def index():
             }
             
             .upload-btn {
-                background: var(--primary-color);
+                background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
                 color: white;
-                padding: 12px 30px;
+                padding: 14px 32px;
                 border: none;
-                border-radius: 8px;
+                border-radius: var(--radius-sm);
                 cursor: pointer;
-                font-size: 1.1em;
+                font-size: 1.05em;
+                font-weight: 600;
                 display: inline-flex;
                 align-items: center;
                 gap: 10px;
-                transition: background 0.3s;
+                transition: all 0.2s ease;
+                box-shadow: 0 4px 12px rgba(51, 204, 102, 0.3);
             }
             
             .upload-btn:hover {
-                background: #29a355;
+                background: linear-gradient(135deg, var(--primary-hover) 0%, #27a04d 100%);
+                transform: translateY(-2px) scale(1.03);
+                box-shadow: 0 6px 16px rgba(51, 204, 102, 0.4);
             }
             
             .upload-btn:disabled {
                 background: #95a5a6;
                 cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
             }
             
             .convert-btn {
-                background: #33cc66;
+                background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
                 color: white;
-                padding: 15px 40px;
+                padding: 18px 40px;
                 border: none;
-                border-radius: 8px;
+                border-radius: var(--radius-md);
                 cursor: pointer;
                 font-size: 1.2em;
-                font-weight: bold;
+                font-weight: 600;
                 width: 100%;
-                margin-top: 20px;
-                transition: background 0.3s;
+                margin-top: 25px;
+                transition: all 0.2s ease;
+                box-shadow: var(--shadow-md), 0 0 0 0 rgba(51, 204, 102, 0.4);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
             }
             
             .convert-btn:hover {
-                background: #29a355;
+                background: linear-gradient(135deg, var(--primary-hover) 0%, #27a04d 100%);
+                transform: translateY(-2px) scale(1.01);
+                box-shadow: var(--shadow-lg), 0 0 0 4px rgba(51, 204, 102, 0.15);
             }
             
             .convert-btn:disabled {
-                background: #95a5a6;
+                background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
                 cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
             }
             
             .result-section {
                 margin-top: 30px;
-                padding: 20px;
-                border-radius: 10px;
+                padding: 24px;
+                border-radius: var(--radius-md);
                 display: none;
+                box-shadow: var(--shadow-sm);
             }
             
             .result-section.success {
-                background: #d5f4e6;
-                border: 2px solid #27ae60;
+                background: linear-gradient(135deg, #d5f4e6 0%, #e8f9f0 100%);
+                border: 2px solid var(--primary-color);
             }
             
             .result-section.error {
-                background: #fadbd8;
-                border: 2px solid #e74c3c;
+                background: linear-gradient(135deg, #fadbd8 0%, #ffe6e6 100%);
+                border: 2px solid var(--danger-color);
             }
             
             .result-section.processing {
-                background: #fef9e7;
+                background: linear-gradient(135deg, #fef9e7 0%, #fff8e1 100%);
                 border: 2px solid #f39c12;
             }
             
             .download-btn {
-                background: #33cc66;
+                background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
                 color: white;
-                padding: 12px 30px;
+                padding: 14px 32px;
                 border: none;
-                border-radius: 5px;
+                border-radius: var(--radius-sm);
                 cursor: pointer;
-                font-size: 1.1em;
+                font-size: 1.05em;
+                font-weight: 600;
                 text-decoration: none;
-                display: inline-block;
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
                 margin-top: 15px;
-                transition: background 0.3s;
+                transition: all 0.2s ease;
+                box-shadow: 0 4px 12px rgba(51, 204, 102, 0.3);
             }
             
             .download-btn:hover {
-                background: #29a355;
+                background: linear-gradient(135deg, var(--primary-hover) 0%, #27a04d 100%);
+                transform: translateY(-2px) scale(1.03);
+                box-shadow: 0 6px 16px rgba(51, 204, 102, 0.4);
             }
             
             .selected-file {
-                background: #e8f5e8;
-                padding: 15px;
-                border-radius: 8px;
+                background: linear-gradient(135deg, #e8f5e8 0%, #f0f9f0 100%);
+                padding: 18px;
+                border-radius: var(--radius-sm);
                 margin-top: 15px;
-                border-left: 4px solid #27ae60;
+                border-left: 4px solid var(--primary-color);
+                box-shadow: var(--shadow-sm);
             }
             
             .spinner {
-                border: 4px solid #f3f3f3;
-                border-top: 4px solid #3498db;
+                border: 4px solid rgba(51, 204, 102, 0.1);
+                border-top: 4px solid var(--primary-color);
                 border-radius: 50%;
-                width: 40px;
-                height: 40px;
-                animation: spin 1s linear infinite;
+                width: 50px;
+                height: 50px;
+                animation: spin 0.8s linear infinite;
                 margin: 20px auto;
             }
             
@@ -596,10 +643,16 @@ def index():
             }
             
             .footer {
-                background: #ecf0f1;
-                padding: 20px;
+                background: linear-gradient(135deg, #2b2b38 0%, #1f1f29 100%);
+                padding: 25px;
                 text-align: center;
-                color: #7f8c8d;
+                color: rgba(255, 255, 255, 0.7);
+                border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+            }
+            
+            .footer strong {
+                color: var(--primary-color);
+                font-weight: 600;
             }
             
             /* Mobile Responsiveness */
