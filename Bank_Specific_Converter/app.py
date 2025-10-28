@@ -479,10 +479,10 @@ def index():
             
             .selected-bank-info {
                 margin-top: 20px;
-                padding: 18px 24px;
-                background: linear-gradient(135deg, rgba(51, 204, 102, 0.08) 0%, rgba(51, 204, 102, 0.04) 100%);
-                border-left: 4px solid var(--primary-color);
-                border-radius: var(--radius-sm);
+                padding: 20px 24px;
+                background: linear-gradient(135deg, rgba(52, 152, 219, 0.08) 0%, rgba(41, 128, 185, 0.04) 100%);
+                border: 2px solid rgba(52, 152, 219, 0.3);
+                border-radius: var(--radius-md);
                 display: none;
                 box-shadow: var(--shadow-sm);
             }
@@ -504,14 +504,28 @@ def index():
             }
             
             .selected-bank-info .bank-icon {
-                color: var(--primary-color);
-                font-size: 1.3em;
+                color: #3498db;
+                font-size: 1.4em;
                 margin-right: 10px;
             }
             
             .selected-bank-info strong {
                 color: var(--text-dark);
                 font-weight: 600;
+                font-size: 1.05em;
+            }
+            
+            .selected-bank-info .formats {
+                color: var(--text-dark);
+                font-size: 1em;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .selected-bank-info .formats i {
+                color: var(--primary-color);
             }
             
             .selected-bank-info .formats {
@@ -949,16 +963,16 @@ def index():
                                 <option value="" disabled selected>Choose your bank...</option>
                                 {% for bank_id, config in banks.items() %}
                                 <option value="{{ bank_id }}" data-formats="{{ config.formats|join(', ') }}" data-description="{{ config.description }}">
-                                    {{ config.name }} - {{ config.formats|join(', ') }}
+                                    {{ config.name }}
                                 </option>
                                 {% endfor %}
                             </select>
                         </div>
                         
                         <div class="selected-bank-info" id="selectedBankInfo">
-                            <div>
-                                <i class="fas fa-check-circle bank-icon"></i>
-                                <strong>Selected Bank:</strong> <span id="selectedBankName"></span>
+                            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                                <i class="fas fa-info-circle bank-icon"></i>
+                                <strong>Supported Formats:</strong>
                             </div>
                             <div class="formats">
                                 <i class="fas fa-file-alt"></i> <span id="selectedBankFormats"></span>
@@ -1021,11 +1035,9 @@ def index():
                 selectedBank = selectElement.value;
                 
                 if (selectedBank) {
-                    // Show selected bank info
-                    const bankName = selectedOption.text;
+                    // Show selected bank formats
                     const bankFormats = selectedOption.getAttribute('data-formats');
                     
-                    document.getElementById('selectedBankName').textContent = bankName;
                     document.getElementById('selectedBankFormats').textContent = bankFormats;
                     document.getElementById('selectedBankInfo').classList.add('show');
                     
