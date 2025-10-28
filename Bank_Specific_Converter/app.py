@@ -112,8 +112,8 @@ BANK_CONFIGS = {
     'PROCREDIT': {
         'name': 'ProCredit Bank',
         'script': 'PROCREDIT-2-QBO.py',
-        'formats': ['CSV'],
-        'description': 'ProCredit Bank Albania statements (CSV only)'
+        'formats': ['CSV', 'PDF'],
+        'description': 'ProCredit Bank Albania statements (CSV and PDF formats)'
     },
     'EBILL': {
         'name': 'E-Bill',

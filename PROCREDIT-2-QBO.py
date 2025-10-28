@@ -2,16 +2,17 @@
 """
 ProCredit Bank Albania to QuickBooks CSV Converter
 ==================================================
-Converts ProCredit Bank Albania statements (CSV format) to QuickBooks-compatible CSV.
+Converts ProCredit Bank Albania statements (CSV and PDF format) to QuickBooks-compatible CSV.
 
 Bank: ProCredit Bank Albania
-Input: CSV export from ProCredit online banking
+Input: CSV or PDF export from ProCredit online banking
 Output: QuickBooks CSV (Date, Description, Debit, Credit, Balance)
 
 Features:
+- Handles both CSV and PDF formats
 - Handles Albanian date format (DD.MM.YYYY)
 - Processes amounts with comma as decimal separator
-- Supports debit/credit columns (Amount, Amount1)
+- Supports debit/credit columns (Amount, Amount1 for CSV; Debit, Kredit for PDF)
 - Extracts transaction descriptions
 - Versioned output files to prevent overwrites
 
@@ -26,6 +27,12 @@ from datetime import datetime
 from pathlib import Path
 import re
 import argparse
+try:
+    import PyPDF2
+    PDF_SUPPORT = True
+except ImportError:
+    PDF_SUPPORT = False
+    print("Warning: PyPDF2 not installed. PDF support disabled.")
 
 def parse_procredit_amount(amount_str):
     """
@@ -122,6 +129,147 @@ def extract_description(row):
     full_desc = ' '.join(full_desc.split())
     
     return full_desc
+
+def extract_text_from_pdf(pdf_path):
+    """
+    Extract text content from ProCredit PDF file.
+    
+    Args:
+        pdf_path: Path to the PDF file
+        
+    Returns:
+        str: Extracted text content
+    """
+    if not PDF_SUPPORT:
+        print("Error: PyPDF2 not installed. Cannot process PDF files.")
+        return ""
+    
+    try:
+        with open(pdf_path, 'rb') as file:
+            reader = PyPDF2.PdfReader(file)
+            text = ""
+            for page in reader.pages:
+                text += page.extract_text()
+            return text
+    except Exception as e:
+        print(f"Error extracting PDF text: {e}")
+        return ""
+
+def parse_procredit_pdf(pdf_path):
+    """
+    Parse ProCredit Bank PDF file and extract transactions.
+    
+    PDF format pattern:
+    Nr  Nr.Trans  Data  Debit  Kredit  Bilanci  Tipi i Veprimit  Komente mbi Veprimin
+    
+    Args:
+        pdf_path: Path to the PDF file
+        
+    Returns:
+        list: List of transaction dictionaries
+    """
+    transactions = []
+    text = extract_text_from_pdf(pdf_path)
+    
+    if not text:
+        return transactions
+    
+    try:
+        # Split into tokens (text is separated by newlines)
+        tokens = [t.strip() for t in text.split('\n') if t.strip()]
+        
+        # Find the start of data (after header row)
+        start_index = -1
+        for i, token in enumerate(tokens):
+            if token == "Komente mbi  Veprimin" or token == "Komente mbi Veprimin":
+                start_index = i + 1
+                break
+        
+        if start_index == -1:
+            print("Error: Could not find data start in PDF")
+            return transactions
+        
+        # Process tokens in groups
+        i = start_index
+        while i < len(tokens):
+            token = tokens[i]
+            
+            # Check if this is a row number (start of new transaction)
+            if token.isdigit() and len(token) <= 3:  # Row numbers are 1-3 digits
+                try:
+                    # Extract transaction fields
+                    row_num = token
+                    trans_num = tokens[i + 1] if i + 1 < len(tokens) else ""
+                    date_str = tokens[i + 2] if i + 2 < len(tokens) else ""
+                    debit_str = tokens[i + 3] if i + 3 < len(tokens) else "0.00"
+                    credit_str = tokens[i + 4] if i + 4 < len(tokens) else "0.00"
+                    balance_str = tokens[i + 5] if i + 5 < len(tokens) else "0.00"
+                    
+                    # Validate date format
+                    if not re.match(r'\d{2}\.\d{2}\.\d{4}', date_str):
+                        i += 1
+                        continue
+                    
+                    # Parse amounts
+                    debit = parse_procredit_amount(debit_str)
+                    credit = parse_procredit_amount(credit_str)
+                    balance = parse_procredit_amount(balance_str)
+                    
+                    # Parse date
+                    date = parse_procredit_date(date_str)
+                    
+                    # Collect description (transaction type + comments)
+                    description_parts = []
+                    j = i + 6
+                    
+                    # Look ahead for description text until we hit another row number
+                    while j < len(tokens):
+                        next_token = tokens[j]
+                        
+                        # Stop if we hit another row number with valid date pattern ahead
+                        if next_token.isdigit() and len(next_token) <= 3:
+                            # Check if next tokens look like a new transaction
+                            if j + 2 < len(tokens) and re.match(r'\d{2}\.\d{2}\.\d{4}', tokens[j + 2]):
+                                break
+                        
+                        description_parts.append(next_token)
+                        j += 1
+                        
+                        # Limit description length
+                        if len(description_parts) > 20:
+                            break
+                    
+                    description = ' '.join(description_parts).strip()
+                    if not description:
+                        description = "Transaction"
+                    
+                    # Clean up description
+                    description = ' '.join(description.split())  # Remove extra spaces
+                    
+                    transaction = {
+                        'Date': date,
+                        'Description': description,
+                        'Debit': debit if debit > 0 else 0,
+                        'Credit': credit if credit > 0 else 0,
+                        'Balance': balance
+                    }
+                    
+                    transactions.append(transaction)
+                    i = j  # Move to next transaction
+                    
+                except (IndexError, ValueError) as e:
+                    i += 1
+            else:
+                i += 1
+        
+        print(f"Successfully parsed {len(transactions)} transactions from PDF")
+        return transactions
+        
+    except Exception as e:
+        print(f"Error parsing PDF: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
 
 def parse_procredit_csv(csv_path):
     """
@@ -254,11 +402,11 @@ def write_quickbooks_csv(transactions, output_path):
 def main():
     """Main execution function."""
     parser = argparse.ArgumentParser(
-        description='Convert ProCredit Bank Albania CSV to QuickBooks format'
+        description='Convert ProCredit Bank Albania CSV or PDF to QuickBooks format'
     )
     parser.add_argument(
         '--input',
-        help='Input CSV file path',
+        help='Input CSV or PDF file path',
         default=None
     )
     parser.add_argument(
@@ -273,15 +421,18 @@ def main():
     if args.input:
         input_files = [args.input]
     else:
-        # Look for CSV files in current directory and import folder
+        # Look for CSV and PDF files in current directory and import folder
         search_paths = [Path('.'), Path('import')]
         input_files = []
         for search_path in search_paths:
             if search_path.exists():
                 input_files.extend(search_path.glob('*.csv'))
+                if PDF_SUPPORT:
+                    input_files.extend(search_path.glob('*.pdf'))
         
         if not input_files:
-            print("Error: No CSV files found. Please provide --input parameter or place CSV in current/import folder.")
+            file_types = "CSV/PDF" if PDF_SUPPORT else "CSV"
+            print(f"Error: No {file_types} files found. Please provide --input parameter or place files in current/import folder.")
             return 1
     
     # Process each file
@@ -296,8 +447,21 @@ def main():
         print(f"\nProcessing: {input_path.name}")
         print("=" * 60)
         
-        # Parse the CSV
-        transactions = parse_procredit_csv(input_path)
+        # Determine file type and parse accordingly
+        file_extension = input_path.suffix.lower()
+        
+        if file_extension == '.pdf':
+            if not PDF_SUPPORT:
+                print(f"Error: PDF support not available. Install PyPDF2 to process PDF files.")
+                continue
+            print("File type: PDF")
+            transactions = parse_procredit_pdf(input_path)
+        elif file_extension == '.csv':
+            print("File type: CSV")
+            transactions = parse_procredit_csv(input_path)
+        else:
+            print(f"Error: Unsupported file type: {file_extension}")
+            continue
         
         if not transactions:
             print(f"No transactions found in {input_path.name}")
