@@ -115,6 +115,12 @@ BANK_CONFIGS = {
         'formats': ['CSV', 'PDF'],
         'description': 'ProCredit Bank Albania statements (CSV and PDF formats)'
     },
+    'PAYSERA': {
+        'name': 'Paysera',
+        'script': 'PAYSERA-2-QBO.py',
+        'formats': ['CSV', 'PDF'],
+        'description': 'Paysera statements (CSV and PDF formats)'
+    },
     'EBILL': {
         'name': 'E-Bill',
         'script': 'Withholding.py',
