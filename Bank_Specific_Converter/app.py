@@ -109,6 +109,12 @@ BANK_CONFIGS = {
         'formats': ['CSV'],
         'description': 'Intesa Sanpaolo Bank Albania statements (CSV only)'
     },
+    'PROCREDIT': {
+        'name': 'ProCredit Bank',
+        'script': 'PROCREDIT-2-QBO.py',
+        'formats': ['CSV'],
+        'description': 'ProCredit Bank Albania statements (CSV only)'
+    },
     'EBILL': {
         'name': 'E-Bill',
         'script': 'Withholding.py',
