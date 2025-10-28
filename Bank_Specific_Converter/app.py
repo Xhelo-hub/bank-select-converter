@@ -264,12 +264,16 @@ def index():
                 padding: 20px;
                 margin-bottom: 20px;
                 box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                color: white;
+            }
+            
+            .header-top {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 flex-wrap: wrap;
                 gap: 15px;
-                color: white;
+                margin-bottom: 15px;
             }
             
             .header-left {
@@ -296,26 +300,28 @@ def index():
                 display: flex;
                 align-items: center;
                 gap: 15px;
-                flex-wrap: wrap;
             }
             
             .user-info {
                 display: flex;
                 align-items: center;
                 gap: 10px;
-                background: rgba(255,255,255,0.1);
-                padding: 8px 15px;
-                border-radius: 20px;
             }
             
             .user-info i {
-                color: var(--primary-color);
+                color: white;
                 font-size: 1.1em;
             }
             
             .user-email {
                 font-size: 0.9em;
                 font-weight: 500;
+            }
+            
+            .button-row {
+                display: flex;
+                justify-content: flex-end;
+                gap: 8px;
             }
             
             .button-group {
@@ -740,14 +746,18 @@ def index():
     <body>
         <div class="container">
             <div class="header">
-                <div class="header-left">
-                    <h1><i class="fas fa-file-invoice-dollar"></i> Bank Statement Converter</h1>
-                </div>
-                <div class="header-right">
-                    <div class="user-info">
-                        <i class="fas fa-user-circle"></i>
-                        <span class="user-email">{{ current_user.email }}</span>
+                <div class="header-top">
+                    <div class="header-left">
+                        <h1><i class="fas fa-file-invoice-dollar"></i> Bank Statement Converter</h1>
                     </div>
+                    <div class="header-right">
+                        <div class="user-info">
+                            <i class="fas fa-user-circle"></i>
+                            <span class="user-email">{{ current_user.email }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="button-row">
                     <div class="button-group">
                         {% if current_user.is_admin %}
                         <a href="{{ url_for('admin.dashboard') }}" class="admin-btn">
