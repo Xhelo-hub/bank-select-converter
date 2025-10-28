@@ -132,9 +132,103 @@ def get_versioned_filename(file_path):
         version += 1
 
 
+def parse_intesa_row(line, expected_columns=10):
+    """
+    Parse a single Intesa CSV row, handling malformed data where description 
+    extends into the reference column causing column shifts.
+    
+    Args:
+        line: Raw CSV line string
+        expected_columns: Expected number of columns (default 10)
+    
+    Returns:
+        Dictionary with parsed fields or None if row is invalid
+    """
+    # Split by comma (basic split)
+    parts = line.strip().split(',')
+    
+    # Expected structure after header:
+    # 0: Data, 1: Data e vlerës, 2: Përshkrimi, 3: Numri i referencës, 
+    # 4: Transaction Type, 5: Valuta, 6: Shuma, 7: Balance Currency, 8: Balance Amount, 9: (empty)
+    
+    if len(parts) < 8:
+        return None  # Too few columns, skip
+    
+    # Handle cases where description extends into reference field
+    # Strategy: Transaction Type should be "DEBIT" or "KREDIT"
+    # Work backwards from known fields
+    
+    # Find the Transaction Type field (should be DEBIT or KREDIT)
+    trans_type_index = -1
+    for i, part in enumerate(parts):
+        if part.strip().upper() in ['DEBIT', 'KREDIT']:
+            trans_type_index = i
+            break
+    
+    if trans_type_index == -1:
+        print(f"  [WARNING] Could not find Transaction Type (DEBIT/KREDIT) in row")
+        return None
+    
+    # From Transaction Type, we know the structure:
+    # [...description parts...], [reference], [DEBIT/KREDIT], [Currency], [Amount], [Balance Currency], [Balance Amount], [empty]
+    # So Transaction Type should be at index 4, but if it's shifted, description overflowed
+    
+    expected_trans_type_index = 4
+    shift = trans_type_index - expected_trans_type_index
+    
+    try:
+        # Extract fixed position fields from the end
+        balance_amount = parts[trans_type_index + 4].strip() if trans_type_index + 4 < len(parts) else ''
+        balance_currency = parts[trans_type_index + 3].strip() if trans_type_index + 3 < len(parts) else ''
+        amount = parts[trans_type_index + 2].strip() if trans_type_index + 2 < len(parts) else ''
+        currency = parts[trans_type_index + 1].strip() if trans_type_index + 1 < len(parts) else ''
+        trans_type = parts[trans_type_index].strip()
+        
+        # Date fields (should always be at start)
+        date = parts[0].strip()
+        value_date = parts[1].strip()
+        
+        # Description and reference (the tricky part)
+        if shift == 0:
+            # No shift - normal structure
+            description = parts[2].strip()
+            reference = parts[3].strip()
+        elif shift > 0:
+            # Shift detected - description overflowed into reference and beyond
+            # Combine all parts between value_date and trans_type as description
+            description_parts = parts[2:trans_type_index]
+            # Last part before trans_type is likely the reference
+            reference = description_parts[-1].strip() if description_parts else ''
+            # Everything before that is description
+            description = ','.join(description_parts[:-1]).strip() if len(description_parts) > 1 else description_parts[0].strip() if description_parts else ''
+            
+            print(f"  [INFO] Detected column shift (+{shift}), merged description: {description[:50]}...")
+        else:
+            # Shouldn't happen, but handle it
+            description = parts[2].strip()
+            reference = parts[3].strip()
+        
+        return {
+            'Data': date,
+            'Data e vlerës': value_date,
+            'Përshkrimi': description,
+            'Numri i referencës': reference,
+            'Transaction Type': trans_type,
+            'Valuta': currency,
+            'Shuma': amount,
+            'Balance Currency': balance_currency,
+            'Balance Amount': balance_amount
+        }
+    
+    except Exception as e:
+        print(f"  [WARNING] Error parsing row: {e}")
+        return None
+
+
 def convert_intesa_csv(input_csv, output_directory=None):
     """
     Convert Intesa Bank CSV to QuickBooks format.
+    Handles malformed CSV rows where description extends into other columns.
     
     Args:
         input_csv: Path to input CSV file
@@ -165,6 +259,7 @@ def convert_intesa_csv(input_csv, output_directory=None):
     header_found = False
     skipped_lines = 0
     data_quality_issues = 0
+    column_shift_fixes = 0
     
     # Read the CSV file
     with open(input_path, 'r', encoding='utf-8') as csvfile:
@@ -179,11 +274,19 @@ def convert_intesa_csv(input_csv, output_directory=None):
         if not header_line.startswith('Data,'):
             print(f"  [WARNING] Expected header at line 4, got: {header_line[:50]}")
         
-        # Parse transaction lines (starting from line 5)
-        reader = csv.DictReader(lines[3:])  # Start from header line
-        
-        for row_num, row in enumerate(reader, start=5):
+        # Parse transaction lines manually (starting from line 5) to handle malformed CSV
+        for row_num, line in enumerate(lines[4:], start=5):
+            if not line.strip():
+                continue  # Skip empty lines
+            
             try:
+                # Use custom parser to handle column misalignment
+                row = parse_intesa_row(line)
+                
+                if row is None:
+                    skipped_lines += 1
+                    continue
+                
                 # Extract fields
                 date = row.get('Data', '').strip()
                 description = row.get('Përshkrimi', '').strip()
@@ -196,6 +299,11 @@ def convert_intesa_csv(input_csv, output_directory=None):
                 if not date or not amount_str:
                     skipped_lines += 1
                     continue
+                
+                # Check if this row had column shift (contains multiple commas in description area)
+                if ',' in description:
+                    column_shift_fixes += 1
+                
                 
                 # Data quality checks
                 if len(description) > 1000:
@@ -252,6 +360,9 @@ def convert_intesa_csv(input_csv, output_directory=None):
         return None
     
     print(f"  [INFO] Extracted {len(transactions)} transactions from CSV")
+    
+    if column_shift_fixes > 0:
+        print(f"  [INFO] Fixed {column_shift_fixes} rows with column misalignment")
     
     if skipped_lines > 0:
         print(f"  [WARNING] Skipped {skipped_lines} lines due to errors or empty data")
