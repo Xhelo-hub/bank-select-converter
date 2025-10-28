@@ -224,7 +224,17 @@ def index():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Albanian Bank Statement Converter</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <style>
+            :root {
+                --fa-style-family-classic: "Font Awesome 6 Free";
+                --fa-font-solid: normal 900 1em / 1 "Font Awesome 6 Free";
+                --primary-color: #33cc66;
+                --header-bg: #333366;
+                --text-dark: #1a1a1a;
+                --bg-light: #f8f9fb;
+            }
+            
             * {
                 margin: 0;
                 padding: 0;
@@ -232,10 +242,11 @@ def index():
             }
             
             body {
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+                background: var(--bg-light);
                 min-height: 100vh;
                 padding: 20px;
+                color: var(--text-dark);
             }
             
             .container {
@@ -248,40 +259,62 @@ def index():
             }
             
             .header {
-                background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+                background: var(--header-bg);
+                border-radius: 10px;
+                padding: 20px;
+                margin-bottom: 20px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 15px;
                 color: white;
-                padding: 30px;
-                text-align: center;
-                position: relative;
+            }
+            
+            .header-left {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                flex: 1;
             }
             
             .header h1 {
-                font-size: 2.5em;
-                margin-bottom: 10px;
+                font-size: 1.8em;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 12px;
             }
             
-            .header p {
-                font-size: 1.2em;
-                opacity: 0.9;
-                margin-bottom: 20px;
+            .header h1 i {
+                color: var(--primary-color);
+                font-size: 1.1em;
             }
             
-            .header-divider {
-                border: none;
-                border-top: 1px solid rgba(255,255,255,0.2);
-                margin: 20px 0;
+            .header-right {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                flex-wrap: wrap;
             }
             
             .user-info {
                 display: flex;
-                justify-content: space-between;
                 align-items: center;
-                margin-top: 15px;
+                gap: 10px;
+                background: rgba(255,255,255,0.1);
+                padding: 8px 15px;
+                border-radius: 20px;
+            }
+            
+            .user-info i {
+                color: var(--primary-color);
+                font-size: 1.1em;
             }
             
             .user-email {
                 font-size: 0.9em;
-                opacity: 0.9;
                 font-weight: 500;
             }
             
@@ -292,24 +325,31 @@ def index():
             
             .admin-btn,
             .logout-btn {
-                background: rgba(255,255,255,0.2);
+                background: rgba(255,255,255,0.15);
                 color: white;
-                padding: 6px 14px;
+                padding: 8px 16px;
                 border: 1px solid rgba(255,255,255,0.3);
-                border-radius: 5px;
+                border-radius: 8px;
                 cursor: pointer;
-                font-size: 0.85em;
+                font-size: 0.9em;
                 text-decoration: none;
                 display: inline-flex;
                 align-items: center;
-                gap: 5px;
+                gap: 8px;
                 transition: all 0.3s;
+                font-weight: 500;
+            }
+            
+            .admin-btn i,
+            .logout-btn i {
+                color: var(--primary-color);
             }
             
             .admin-btn:hover,
             .logout-btn:hover {
-                background: rgba(255,255,255,0.3);
-                transform: translateY(-1px);
+                background: rgba(255,255,255,0.25);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             }
             
             .converter-section {
@@ -339,16 +379,21 @@ def index():
             }
             
             .step-number {
-                background: #3498db;
+                background: var(--primary-color);
                 color: white;
-                width: 30px;
-                height: 30px;
+                width: 35px;
+                height: 35px;
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 margin-right: 15px;
                 font-weight: bold;
+                font-size: 1.1em;
+            }
+            
+            .step-number i {
+                font-size: 0.9em;
             }
             
             .bank-grid {
@@ -368,14 +413,22 @@ def index():
             }
             
             .bank-card:hover {
-                border-color: #3498db;
+                border-color: var(--primary-color);
                 transform: translateY(-2px);
-                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                box-shadow: 0 5px 15px rgba(51, 204, 102, 0.2);
             }
             
             .bank-card.selected {
-                border-color: #27ae60;
-                background: #d5f4e6;
+                border-color: var(--primary-color);
+                background: rgba(51, 204, 102, 0.08);
+                box-shadow: 0 4px 12px rgba(51, 204, 102, 0.15);
+            }
+            
+            .bank-card i {
+                color: var(--primary-color);
+                font-size: 1.8em;
+                margin-bottom: 10px;
+                display: block;
             }
             
             .bank-name {
@@ -407,8 +460,15 @@ def index():
             }
             
             .upload-area.dragover {
-                border-color: #3498db;
-                background: #e3f2fd;
+                border-color: var(--primary-color);
+                background: rgba(51, 204, 102, 0.05);
+            }
+            
+            .upload-area i {
+                color: var(--primary-color);
+                font-size: 3em;
+                margin-bottom: 15px;
+                display: block;
             }
             
             .upload-area.disabled {
@@ -421,13 +481,16 @@ def index():
             }
             
             .upload-btn {
-                background: #33cc66;
+                background: var(--primary-color);
                 color: white;
                 padding: 12px 30px;
                 border: none;
-                border-radius: 5px;
+                border-radius: 8px;
                 cursor: pointer;
                 font-size: 1.1em;
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
                 transition: background 0.3s;
             }
             
@@ -677,18 +740,23 @@ def index():
     <body>
         <div class="container">
             <div class="header">
-                <h1>Bank Statement Converter</h1>
-                <p>Convert Albanian bank statements to QuickBooks .csv format</p>
-                
-                <hr class="header-divider">
-                
-                <div class="user-info">
-                    <div class="user-email">{{ current_user.email }}</div>
+                <div class="header-left">
+                    <h1><i class="fas fa-file-invoice-dollar"></i> Bank Statement Converter</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span class="user-email">{{ current_user.email }}</span>
+                    </div>
                     <div class="button-group">
                         {% if current_user.is_admin %}
-                        <a href="{{ url_for('admin.dashboard') }}" class="admin-btn">👤 User Management</a>
+                        <a href="{{ url_for('admin.dashboard') }}" class="admin-btn">
+                            <i class="fas fa-users-cog"></i> Admin Panel
+                        </a>
                         {% endif %}
-                        <a href="{{ url_for('auth.logout') }}" class="logout-btn">🚪 Logout</a>
+                        <a href="{{ url_for('auth.logout') }}" class="logout-btn">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
                     </div>
                 </div>
             </div>
@@ -698,14 +766,15 @@ def index():
                     <!-- Step 1: Select Bank -->
                     <div class="step active" id="step1">
                         <div class="step-title">
-                            <div class="step-number">1</div>
+                            <div class="step-number"><i class="fas fa-university"></i></div>
                             Select Your Bank
                         </div>
                         <div class="bank-grid" id="bankGrid">
                             {% for bank_id, config in banks.items() %}
                             <div class="bank-card" data-bank="{{ bank_id }}" onclick="selectBank('{{ bank_id }}')">
+                                <i class="fas fa-building"></i>
                                 <div class="bank-name">{{ config.name }}</div>
-                                <div class="bank-formats">Supported Formats: {{ config.formats|join(', ') }}</div>
+                                <div class="bank-formats"><i class="fas fa-file-alt"></i> {{ config.formats|join(', ') }}</div>
                                 <div class="bank-description">{{ config.description }}</div>
                             </div>
                             {% endfor %}
@@ -715,30 +784,31 @@ def index():
                     <!-- Step 2: Upload File -->
                     <div class="step" id="step2">
                         <div class="step-title">
-                            <div class="step-number">2</div>
+                            <div class="step-number"><i class="fas fa-upload"></i></div>
                             Upload Bank Statement
                         </div>
                         <div class="upload-area disabled" id="uploadArea">
+                            <i class="fas fa-cloud-upload-alt"></i>
                             <input type="file" id="fileInput" name="file" class="file-input" onchange="handleFileSelect(event)" accept=".pdf,.csv,.txt">
-                            <p style="font-size: 1.2em; color: #7f8c8d; margin-bottom: 15px;">📄 Drag & Drop or Click to Upload</p>
+                            <p style="font-size: 1.2em; color: #7f8c8d; margin-bottom: 15px;">Drag & Drop or Click to Upload</p>
                             <button type="button" class="upload-btn" onclick="document.getElementById('fileInput').click()" disabled id="uploadBtn">
-                                Choose File
+                                <i class="fas fa-file-upload"></i> Choose File
                             </button>
-                            <p style="margin-top: 15px; color: #95a5a6; font-size: 0.9em;">Supported: PDF, CSV, TXT (Max 50MB)</p>
+                            <p style="margin-top: 15px; color: #95a5a6; font-size: 0.9em;"><i class="fas fa-info-circle"></i> Supported: PDF, CSV, TXT (Max 50MB)</p>
                         </div>
                         <div id="selectedFile" class="selected-file" style="display: none;">
-                            <strong>📎 Selected:</strong> <span id="fileName"></span>
+                            <i class="fas fa-check-circle" style="color: var(--primary-color);"></i> <strong>Selected:</strong> <span id="fileName"></span>
                         </div>
                     </div>
                     
                     <!-- Step 3: Convert -->
                     <div class="step" id="step3">
                         <div class="step-title">
-                            <div class="step-number">3</div>
+                            <div class="step-number"><i class="fas fa-sync-alt"></i></div>
                             Convert to QuickBooks Format
                         </div>
                         <button type="submit" class="convert-btn" disabled id="convertBtn">
-                            🔄 Convert Statement
+                            <i class="fas fa-magic"></i> Convert Statement
                         </button>
                     </div>
                 </form>
@@ -750,8 +820,8 @@ def index():
             </div>
             
             <div class="footer">
-                <p>Albanian Bank Statement Converter | QuickBooks Compatible</p>
-                <p style="margin-top: 5px; font-size: 0.9em;">Supports: BKT, OTP, Raiffeisen, Tirana Bank, Union Bank, E-Bill</p>
+                <p><i class="fas fa-shield-alt" style="color: var(--primary-color);"></i> Albanian Bank Statement Converter | QuickBooks Compatible</p>
+                <p style="margin-top: 5px; font-size: 0.9em;">Supports: BKT, OTP, Raiffeisen, Tirana Bank, Union Bank, Credins, Intesa, ProCredit, Paysera, E-Bill</p>
             </div>
         </div>
         
