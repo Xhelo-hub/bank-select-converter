@@ -43,27 +43,99 @@
             background: white;
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-lg);
-            padding: 40px;
+            padding: 0;
+            overflow: hidden;
         }
 
         .header {
-            text-align: center;
-            margin-bottom: 35px;
-            padding-bottom: 25px;
-            border-bottom: 2px solid var(--border-color);
+            background: var(--header-bg);
+            padding: 30px 40px;
+            margin: 0;
+            border-bottom: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .admin-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2em;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(51, 204, 102, 0.3);
+        }
+        
+        .admin-logo img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .header-text {
+            flex: 1;
         }
 
         .header h1 {
-            color: var(--header-bg);
-            font-size: 2.2em;
-            margin-bottom: 8px;
+            color: white;
+            font-size: 1.8em;
+            margin-bottom: 5px;
             font-weight: 600;
         }
 
         .header p {
-            color: var(--text-secondary);
-            font-size: 1em;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.95em;
             font-weight: 500;
+            margin: 0;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .header-actions a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-sm);
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 600;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            white-space: nowrap;
+        }
+        
+        .header-actions a:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .content-wrapper {
+            padding: 40px;
         }
 
         .user-info {
@@ -223,29 +295,33 @@
             background: white;
             border-radius: var(--radius-md);
             overflow: hidden;
-            box-shadow: var(--shadow-sm);
+            box-shadow: var(--shadow-md);
+            border: 2px solid var(--border-color);
         }
 
         .users-table th,
         .users-table td {
-            padding: 14px 12px;
+            padding: 16px 14px;
             text-align: left;
             border-bottom: 1px solid #f0f0f0;
         }
 
         .users-table th {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
             color: white;
             font-weight: 600;
             font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .users-table tbody tr {
-            transition: background 0.2s;
+            transition: all 0.3s ease;
         }
 
         .users-table tbody tr:hover {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #f8fff8 0%, #e8f5ee 100%);
+            transform: translateX(2px);
         }
 
         .users-table tbody tr:last-child td {
@@ -391,14 +467,38 @@
                 padding: 10px;
             }
             .container {
-                padding: 20px;
-                border-radius: 15px;
+                border-radius: var(--radius-md);
+            }
+            .header {
+                flex-direction: column;
+                padding: 25px 20px;
+                text-align: center;
+            }
+            .header-left {
+                flex-direction: column;
+                width: 100%;
+                text-align: center;
+            }
+            .logo-container {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .header-text {
+                width: 100%;
             }
             .header h1 {
-                font-size: 1.8em;
+                font-size: 1.6em;
             }
             .header p {
-                font-size: 0.95em;
+                font-size: 0.9em;
+            }
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            .content-wrapper {
+                padding: 20px;
             }
             .user-info {
                 flex-direction: column;
@@ -432,11 +532,11 @@
         }
         
         @media (max-width: 600px) {
-            .container {
+            .content-wrapper {
                 padding: 15px;
             }
             .header h1 {
-                font-size: 1.5em;
+                font-size: 1.4em;
             }
             /* Stack table on mobile */
             .users-table {
@@ -454,8 +554,8 @@
             }
             .users-table tr {
                 margin-bottom: 15px;
-                border: 1px solid #ddd;
-                border-radius: 8px;
+                border: 2px solid var(--primary-color);
+                border-radius: var(--radius-md);
                 padding: 10px;
                 background: #f9f9f9;
             }
@@ -475,7 +575,7 @@
                 display: inline-block;
                 width: 100px;
                 margin-right: 10px;
-                color: #667eea;
+                color: var(--primary-color);
             }
             .btn {
                 margin: 5px 0;
@@ -722,17 +822,29 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🛡️ Admin Dashboard</h1>
-            <p>Manage User Registrations</p>
-        </div>
-
-        <div class="user-info">
-            <span>Logged in as: <strong>{{ current_user.email }}</strong> <span class="badge badge-admin">Admin</span></span>
-            <div>
-                <a href="{{ url_for('index') }}">Back to Converter</a>
-                <a href="{{ url_for('auth.logout') }}">Logout</a>
+            <div class="header-left">
+                <div class="logo-container">
+                    <div class="admin-logo" id="adminHeaderLogo">BS</div>
+                    <div class="header-text">
+                        <h1>🛡️ Admin Dashboard</h1>
+                        <p>Manage User Registrations</p>
+                    </div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="{{ url_for('index') }}">
+                    <i class="fas fa-arrow-left"></i> Back to Converter
+                </a>
+                <a href="{{ url_for('auth.logout') }}">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
             </div>
         </div>
+
+        <div class="content-wrapper">
+            <div class="user-info">
+                <span>Logged in as: <strong>{{ current_user.email }}</strong> <span class="badge badge-admin">Admin</span></span>
+            </div>
 
         <div class="server-control">
             <div class="info">
@@ -947,7 +1059,8 @@
                 </div>
             {% endif %}
         </div>
-    </div>
+        </div><!-- End content-wrapper -->
+    </div><!-- End container -->
 
     <script>
         // Auto-dismiss flash messages after 5 seconds
@@ -1027,6 +1140,24 @@
                 form.submit();
             }
         }
+        
+        // Load logo in admin header
+        (function() {
+            const headerLogo = document.getElementById('adminHeaderLogo');
+            const logoPath = '/static/logo.png';
+            
+            fetch(logoPath)
+                .then(response => {
+                    if (response.ok) {
+                        headerLogo.style.background = 'white';
+                        headerLogo.style.padding = '10px';
+                        headerLogo.innerHTML = '<img src="' + logoPath + '?' + new Date().getTime() + '" alt="Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">';
+                    }
+                })
+                .catch(() => {
+                    // Use placeholder if logo doesn't exist
+                });
+        })();
     </script>
 </body>
 </html>
