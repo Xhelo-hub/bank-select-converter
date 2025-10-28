@@ -297,12 +297,40 @@ def index():
                 flex: 1;
             }
             
+            .logo-container {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .app-logo {
+                width: 80px;
+                height: 80px;
+                object-fit: contain;
+                background: white;
+                border-radius: var(--radius-sm);
+                padding: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+            
+            .logo-placeholder {
+                width: 80px;
+                height: 80px;
+                background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+                border-radius: var(--radius-sm);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 2em;
+                color: white;
+                font-weight: 700;
+                box-shadow: 0 4px 12px rgba(51, 204, 102, 0.4);
+            }
+            
             .header h1 {
                 font-size: 1.8em;
                 font-weight: 600;
-                display: flex;
-                align-items: center;
-                gap: 12px;
+                margin: 0;
             }
             
             .header h1 i {
@@ -793,13 +821,35 @@ def index():
                 .header {
                     padding: 20px 15px;
                 }
+                
+                .header-top {
+                    flex-direction: column;
+                    text-align: center;
+                }
+                
+                .header-left {
+                    flex-direction: column;
+                    width: 100%;
+                    text-align: center;
+                }
+                
+                .logo-container {
+                    flex-direction: column;
+                    gap: 12px;
+                }
 
                 .header h1 {
-                    font-size: 1.8em;
+                    font-size: 1.5em;
+                    text-align: center;
                 }
 
                 .header p {
                     font-size: 1em;
+                }
+                
+                .header-right {
+                    width: 100%;
+                    justify-content: center;
                 }
 
                 .user-info {
@@ -926,7 +976,12 @@ def index():
             <div class="header">
                 <div class="header-top">
                     <div class="header-left">
-                        <h1><i class="fas fa-file-invoice-dollar"></i> Bank Statement Converter</h1>
+                        <div class="logo-container">
+                            <div class="logo-placeholder" id="appLogo">
+                                BS
+                            </div>
+                            <h1>Bank Statement Converter</h1>
+                        </div>
                     </div>
                     <div class="header-right">
                         <div class="user-info">
@@ -1025,6 +1080,27 @@ def index():
         </div>
         
         <script>
+            // Load custom logo if exists
+            (function() {
+                const logoContainer = document.getElementById('appLogo');
+                const logoPath = '/static/logo.png';
+                
+                // Try to load custom logo
+                fetch(logoPath)
+                    .then(response => {
+                        if (response.ok) {
+                            const img = document.createElement('img');
+                            img.src = logoPath;
+                            img.className = 'app-logo';
+                            img.alt = 'Bank Statement Converter Logo';
+                            logoContainer.replaceWith(img);
+                        }
+                    })
+                    .catch(() => {
+                        // Use placeholder if logo doesn't exist
+                    });
+            })();
+            
             let selectedBank = null;
             let selectedFile = null;
             
