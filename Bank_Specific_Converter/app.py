@@ -1052,9 +1052,6 @@ def index():
                         </div>
                         <div id="selectedFile" class="selected-file" style="display: none;">
                             <i class="fas fa-check-circle" style="color: var(--primary-color);"></i> <strong>Selected:</strong> <span id="fileName"></span>
-                            <button type="button" onclick="changeFile()" class="change-file-btn" style="margin-left: 15px; padding: 5px 15px; background: var(--primary-color); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.9em;">
-                                <i class="fas fa-exchange-alt"></i> Change File
-                            </button>
                         </div>
                     </div>
                     
@@ -1165,37 +1162,16 @@ def index():
                     document.getElementById('selectedFile').style.display = 'block';
                     document.getElementById('step3').classList.add('active');
                     document.getElementById('convertBtn').disabled = false;
-                    
-                    // Hide upload button and show file selected message
-                    document.getElementById('uploadBtn').style.display = 'none';
-                    document.querySelector('.upload-area p').style.display = 'none';
-                    document.querySelector('.upload-area i.fa-cloud-upload-alt').style.display = 'none';
                 }
-            }
-            
-            function changeFile() {
-                // Reset file selection
-                selectedFile = null;
-                document.getElementById('fileInput').value = '';
-                document.getElementById('selectedFile').style.display = 'none';
-                document.getElementById('convertBtn').disabled = true;
-                
-                // Show upload UI again
-                document.getElementById('uploadBtn').style.display = 'inline-block';
-                document.querySelector('.upload-area p').style.display = 'block';
-                document.querySelector('.upload-area i.fa-cloud-upload-alt').style.display = 'block';
-                
-                // Open file dialog
-                document.getElementById('fileInput').click();
             }
             
             // Drag and drop
             const uploadArea = document.getElementById('uploadArea');
             const fileInput = document.getElementById('fileInput');
             
-            // Make entire upload area clickable (only if no file selected)
+            // Make entire upload area clickable
             uploadArea.addEventListener('click', (e) => {
-                if (!uploadArea.classList.contains('disabled') && !selectedFile && e.target !== fileInput) {
+                if (!uploadArea.classList.contains('disabled') && e.target !== fileInput) {
                     fileInput.click();
                 }
             });
