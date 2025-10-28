@@ -1157,6 +1157,9 @@ def index():
                     document.getElementById('selectedFile').style.display = 'block';
                     document.getElementById('step3').classList.add('active');
                     document.getElementById('convertBtn').disabled = false;
+                    
+                    // Disable upload area clicks to prevent reopening file dialog
+                    document.getElementById('uploadArea').style.pointerEvents = 'none';
                 }
             }
             
@@ -1164,9 +1167,9 @@ def index():
             const uploadArea = document.getElementById('uploadArea');
             const fileInput = document.getElementById('fileInput');
             
-            // Make entire upload area clickable
+            // Make entire upload area clickable (only when no file is selected)
             uploadArea.addEventListener('click', (e) => {
-                if (!uploadArea.classList.contains('disabled') && e.target !== fileInput) {
+                if (!uploadArea.classList.contains('disabled') && e.target !== fileInput && !selectedFile) {
                     fileInput.click();
                 }
             });
