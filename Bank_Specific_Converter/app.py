@@ -485,12 +485,19 @@ def index():
                 margin-top: 20px;
                 transition: all 0.3s ease;
                 background: linear-gradient(135deg, #fafbfc 0%, #f5f7fa 100%);
+                cursor: pointer;
             }
             
             .upload-area.dragover {
                 border-color: var(--primary-color);
                 background: linear-gradient(135deg, rgba(51, 204, 102, 0.08) 0%, rgba(51, 204, 102, 0.04) 100%);
                 transform: scale(1.01);
+                border-width: 4px;
+            }
+            
+            .upload-area:not(.disabled):hover {
+                border-color: var(--primary-color);
+                background: linear-gradient(135deg, rgba(51, 204, 102, 0.05) 0%, rgba(51, 204, 102, 0.02) 100%);
             }
             
             .upload-area i {
@@ -513,27 +520,31 @@ def index():
             .upload-btn {
                 background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
                 color: white;
-                padding: 14px 32px;
+                padding: 16px 32px;
                 border: none;
                 border-radius: var(--radius-sm);
                 cursor: pointer;
-                font-size: 1.05em;
+                font-size: 1.1em;
                 font-weight: 600;
-                display: inline-flex;
+                display: flex;
                 align-items: center;
-                gap: 10px;
+                justify-content: center;
+                gap: 12px;
                 transition: all 0.2s ease;
                 box-shadow: 0 4px 12px rgba(51, 204, 102, 0.3);
+                width: 100%;
+                max-width: 400px;
+                margin: 0 auto;
             }
             
             .upload-btn:hover {
                 background: linear-gradient(135deg, var(--primary-hover) 0%, #27a04d 100%);
-                transform: translateY(-2px) scale(1.03);
+                transform: translateY(-2px) scale(1.02);
                 box-shadow: 0 6px 16px rgba(51, 204, 102, 0.4);
             }
             
             .upload-btn:disabled {
-                background: #95a5a6;
+                background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
                 cursor: not-allowed;
                 transform: none;
                 box-shadow: none;
@@ -926,24 +937,38 @@ def index():
             
             // Drag and drop
             const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            
+            // Make entire upload area clickable
+            uploadArea.addEventListener('click', (e) => {
+                if (!uploadArea.classList.contains('disabled') && e.target !== fileInput) {
+                    fileInput.click();
+                }
+            });
             
             uploadArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                uploadArea.classList.add('dragover');
+                e.stopPropagation();
+                if (!uploadArea.classList.contains('disabled')) {
+                    uploadArea.classList.add('dragover');
+                }
             });
             
-            uploadArea.addEventListener('dragleave', () => {
+            uploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 uploadArea.classList.remove('dragover');
             });
             
             uploadArea.addEventListener('drop', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 uploadArea.classList.remove('dragover');
                 
                 if (!uploadArea.classList.contains('disabled')) {
                     const file = e.dataTransfer.files[0];
                     if (file) {
-                        document.getElementById('fileInput').files = e.dataTransfer.files;
+                        fileInput.files = e.dataTransfer.files;
                         handleFileSelect({ target: { files: [file] } });
                     }
                 }
