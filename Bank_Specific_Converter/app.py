@@ -421,11 +421,111 @@ def index():
                 font-size: 1em;
             }
             
+            .bank-select-wrapper {
+                margin-top: 20px;
+                position: relative;
+            }
+            
+            .bank-select {
+                width: 100%;
+                padding: 18px 50px 18px 20px;
+                font-size: 1.1em;
+                font-weight: 500;
+                border: 2px solid var(--border-color);
+                border-radius: var(--radius-md);
+                background: white;
+                color: var(--text-dark);
+                cursor: pointer;
+                transition: all 0.3s ease;
+                appearance: none;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                font-family: 'Inter', sans-serif;
+                box-shadow: var(--shadow-sm);
+            }
+            
+            .bank-select:hover {
+                border-color: var(--primary-color);
+                box-shadow: var(--shadow-md), 0 0 0 3px rgba(51, 204, 102, 0.1);
+            }
+            
+            .bank-select:focus {
+                outline: none;
+                border-color: var(--primary-color);
+                box-shadow: var(--shadow-md), 0 0 0 4px rgba(51, 204, 102, 0.15);
+            }
+            
+            .bank-select-wrapper::after {
+                content: '\f107';
+                font-family: 'Font Awesome 6 Free';
+                font-weight: 900;
+                position: absolute;
+                right: 20px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: var(--primary-color);
+                font-size: 1.3em;
+                pointer-events: none;
+            }
+            
+            .bank-select option {
+                padding: 15px;
+                font-size: 1em;
+            }
+            
+            .bank-select option:disabled {
+                color: var(--text-secondary);
+            }
+            
+            .selected-bank-info {
+                margin-top: 20px;
+                padding: 18px 24px;
+                background: linear-gradient(135deg, rgba(51, 204, 102, 0.08) 0%, rgba(51, 204, 102, 0.04) 100%);
+                border-left: 4px solid var(--primary-color);
+                border-radius: var(--radius-sm);
+                display: none;
+                box-shadow: var(--shadow-sm);
+            }
+            
+            .selected-bank-info.show {
+                display: block;
+                animation: slideIn 0.3s ease;
+            }
+            
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            .selected-bank-info .bank-icon {
+                color: var(--primary-color);
+                font-size: 1.3em;
+                margin-right: 10px;
+            }
+            
+            .selected-bank-info strong {
+                color: var(--text-dark);
+                font-weight: 600;
+            }
+            
+            .selected-bank-info .formats {
+                color: var(--text-secondary);
+                font-size: 0.9em;
+                margin-top: 8px;
+            }
+            
             .bank-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
                 gap: 20px;
                 margin-top: 20px;
+                display: none;
             }
             
             .bank-card {
@@ -843,15 +943,26 @@ def index():
                             <div class="step-number"><i class="fas fa-university"></i></div>
                             Select Your Bank
                         </div>
-                        <div class="bank-grid" id="bankGrid">
-                            {% for bank_id, config in banks.items() %}
-                            <div class="bank-card" data-bank="{{ bank_id }}" onclick="selectBank('{{ bank_id }}')">
-                                <i class="fas fa-building"></i>
-                                <div class="bank-name">{{ config.name }}</div>
-                                <div class="bank-formats"><i class="fas fa-file-alt"></i> {{ config.formats|join(', ') }}</div>
-                                <div class="bank-description">{{ config.description }}</div>
+                        
+                        <div class="bank-select-wrapper">
+                            <select class="bank-select" id="bankSelect" onchange="selectBankFromDropdown()">
+                                <option value="" disabled selected>Choose your bank...</option>
+                                {% for bank_id, config in banks.items() %}
+                                <option value="{{ bank_id }}" data-formats="{{ config.formats|join(', ') }}" data-description="{{ config.description }}">
+                                    {{ config.name }} - {{ config.formats|join(', ') }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="selected-bank-info" id="selectedBankInfo">
+                            <div>
+                                <i class="fas fa-check-circle bank-icon"></i>
+                                <strong>Selected Bank:</strong> <span id="selectedBankName"></span>
                             </div>
-                            {% endfor %}
+                            <div class="formats">
+                                <i class="fas fa-file-alt"></i> <span id="selectedBankFormats"></span>
+                            </div>
                         </div>
                     </div>
                     
@@ -903,6 +1014,34 @@ def index():
             let selectedBank = null;
             let selectedFile = null;
             
+            function selectBankFromDropdown() {
+                const selectElement = document.getElementById('bankSelect');
+                const selectedOption = selectElement.options[selectElement.selectedIndex];
+                
+                selectedBank = selectElement.value;
+                
+                if (selectedBank) {
+                    // Show selected bank info
+                    const bankName = selectedOption.text;
+                    const bankFormats = selectedOption.getAttribute('data-formats');
+                    
+                    document.getElementById('selectedBankName').textContent = bankName;
+                    document.getElementById('selectedBankFormats').textContent = bankFormats;
+                    document.getElementById('selectedBankInfo').classList.add('show');
+                    
+                    // Enable upload
+                    document.getElementById('step2').classList.add('active');
+                    document.getElementById('uploadArea').classList.remove('disabled');
+                    document.getElementById('uploadBtn').disabled = false;
+                    
+                    // Reset file selection
+                    document.getElementById('fileInput').value = '';
+                    selectedFile = null;
+                    document.getElementById('selectedFile').style.display = 'none';
+                    document.getElementById('convertBtn').disabled = true;
+                }
+            }
+            
             function selectBank(bankId) {
                 selectedBank = bankId;
                 
@@ -910,7 +1049,10 @@ def index():
                 document.querySelectorAll('.bank-card').forEach(card => {
                     card.classList.remove('selected');
                 });
-                document.querySelector(`[data-bank="${bankId}"]`).classList.add('selected');
+                const selectedCard = document.querySelector(`[data-bank="${bankId}"]`);
+                if (selectedCard) {
+                    selectedCard.classList.add('selected');
+                }
                 
                 // Enable upload
                 document.getElementById('step2').classList.add('active');
