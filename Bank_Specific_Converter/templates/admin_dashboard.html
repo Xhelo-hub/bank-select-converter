@@ -541,6 +541,194 @@
         .restart-btn i {
             font-size: 16px;
         }
+
+        .logo-management {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border: 1px solid #2196F3;
+        }
+
+        .logo-management h3 {
+            color: #1565C0;
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-management h3 i {
+            font-size: 20px;
+        }
+
+        .logo-content {
+            display: flex;
+            gap: 25px;
+            align-items: flex-start;
+        }
+
+        .logo-preview {
+            flex-shrink: 0;
+        }
+
+        .logo-preview-box {
+            width: 120px;
+            height: 120px;
+            border: 2px solid #2196F3;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            padding: 10px;
+        }
+
+        .logo-preview-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .logo-placeholder-preview {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #33cc66 0%, #2eb85c 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2em;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(51, 204, 102, 0.3);
+        }
+
+        .logo-controls {
+            flex: 1;
+        }
+
+        .logo-info {
+            color: #1565C0;
+            font-size: 14px;
+            margin-bottom: 15px;
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 3px solid #2196F3;
+        }
+
+        .logo-upload-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            display: none;
+        }
+
+        .file-input-label {
+            background: white;
+            color: #1565C0;
+            border: 2px solid #2196F3;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .file-input-label:hover {
+            background: #2196F3;
+            color: white;
+        }
+
+        .file-name {
+            color: #1565C0;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .logo-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4);
+        }
+
+        .upload-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .delete-logo-btn {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+        }
+
+        .delete-logo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(244, 67, 54, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .logo-content {
+                flex-direction: column;
+            }
+
+            .logo-actions {
+                flex-direction: column;
+            }
+
+            .upload-btn, .delete-logo-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -569,6 +757,51 @@
                     Restart Server
                 </button>
             </form>
+        </div>
+
+        <div class="logo-management">
+            <h3>
+                <i class="fas fa-image"></i>
+                Logo Management
+            </h3>
+            <div class="logo-content">
+                <div class="logo-preview">
+                    <div class="logo-preview-box">
+                        <div class="logo-placeholder-preview" id="adminLogoPreview">BS</div>
+                    </div>
+                </div>
+                <div class="logo-controls">
+                    <div class="logo-info">
+                        <i class="fas fa-info-circle"></i>
+                        Upload a custom 80x80px logo (PNG, JPG, or SVG). The system will automatically resize images to fit.
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('admin.upload_logo') }}" enctype="multipart/form-data" id="logoUploadForm">
+                        <div class="logo-upload-form">
+                            <div class="file-input-wrapper">
+                                <input type="file" id="logoFile" name="logo" accept=".png,.jpg,.jpeg,.svg" onchange="updateFileName(this)">
+                                <label for="logoFile" class="file-input-label">
+                                    <i class="fas fa-upload"></i>
+                                    Choose Logo File
+                                </label>
+                                <span class="file-name" id="fileName">No file chosen</span>
+                            </div>
+                            
+                            <div class="logo-actions">
+                                <button type="submit" class="upload-btn" id="uploadBtn" disabled>
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    Upload Logo
+                                </button>
+                                
+                                <button type="button" class="delete-logo-btn" onclick="deleteLogo()">
+                                    <i class="fas fa-trash-alt"></i>
+                                    Delete Logo
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -738,6 +971,74 @@
                 setTimeout(() => alert.remove(), 500);
             });
         }, 5000);
+
+        // Load logo preview on page load
+        (function() {
+            const logoPreview = document.getElementById('adminLogoPreview');
+            const logoPath = '/static/logo.png';
+            
+            fetch(logoPath)
+                .then(response => {
+                    if (response.ok) {
+                        const img = document.createElement('img');
+                        img.src = logoPath + '?' + new Date().getTime(); // Cache bust
+                        img.alt = 'Current Logo';
+                        img.style.maxWidth = '100%';
+                        img.style.maxHeight = '100%';
+                        img.style.objectFit = 'contain';
+                        logoPreview.replaceWith(img);
+                        img.id = 'adminLogoPreview';
+                    }
+                })
+                .catch(() => {
+                    // Use placeholder if logo doesn't exist
+                });
+        })();
+
+        // Update file name and enable upload button
+        function updateFileName(input) {
+            const fileNameSpan = document.getElementById('fileName');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const logoPreview = document.getElementById('adminLogoPreview');
+            
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                fileNameSpan.textContent = file.name;
+                uploadBtn.disabled = false;
+                
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (logoPreview.tagName === 'DIV') {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = 'Preview';
+                        img.style.maxWidth = '100%';
+                        img.style.maxHeight = '100%';
+                        img.style.objectFit = 'contain';
+                        logoPreview.replaceWith(img);
+                        img.id = 'adminLogoPreview';
+                    } else {
+                        logoPreview.src = e.target.result;
+                    }
+                };
+                reader.readAsDataURL(file);
+            } else {
+                fileNameSpan.textContent = 'No file chosen';
+                uploadBtn.disabled = true;
+            }
+        }
+
+        // Delete logo
+        function deleteLogo() {
+            if (confirm('Are you sure you want to delete the custom logo and revert to the default placeholder?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ url_for("admin.delete_logo") }}';
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
     </script>
 </body>
 </html>

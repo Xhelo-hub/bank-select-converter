@@ -1,8 +1,10 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
 from flask_login import login_required, current_user
 from functools import wraps
 from auth import UserManager
 from email_utils import send_admin_promotion_notification, send_admin_removal_verification
+from werkzeug.utils import secure_filename
+from PIL import Image
 import subprocess
 import os
 import signal
@@ -184,6 +186,101 @@ def delete_user(user_id):
         flash(message, 'success')
     else:
         flash(message, 'error')
+    
+    return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/upload-logo', methods=['POST'])
+@login_required
+@admin_required
+def upload_logo():
+    """Upload custom logo for the application"""
+    try:
+        if 'logo' not in request.files:
+            flash('No file selected', 'error')
+            return redirect(url_for('admin.dashboard'))
+        
+        file = request.files['logo']
+        if file.filename == '':
+            flash('No file selected', 'error')
+            return redirect(url_for('admin.dashboard'))
+        
+        # Validate file type
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'svg'}
+        file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+        
+        if file_ext not in allowed_extensions:
+            flash('Invalid file type. Please upload PNG, JPG, or SVG', 'error')
+            return redirect(url_for('admin.dashboard'))
+        
+        # Get the static directory path
+        app_dir = os.path.dirname(os.path.abspath(__file__))
+        static_dir = os.path.join(app_dir, 'static')
+        os.makedirs(static_dir, exist_ok=True)
+        
+        logo_path = os.path.join(static_dir, 'logo.png')
+        
+        # For SVG files, save directly
+        if file_ext == 'svg':
+            svg_path = os.path.join(static_dir, 'logo.svg')
+            file.save(svg_path)
+            # Also create a note that SVG is being used
+            with open(os.path.join(static_dir, 'logo_type.txt'), 'w') as f:
+                f.write('svg')
+            flash('SVG logo uploaded successfully!', 'success')
+        else:
+            # For raster images, resize to 80x80
+            img = Image.open(file.stream)
+            
+            # Convert RGBA to RGB if necessary (for JPEG)
+            if img.mode in ('RGBA', 'LA', 'P'):
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                if img.mode == 'P':
+                    img = img.convert('RGBA')
+                background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                img = background
+            
+            # Resize maintaining aspect ratio
+            img.thumbnail((80, 80), Image.Resampling.LANCZOS)
+            
+            # Create a new 80x80 image with white background
+            final_img = Image.new('RGB', (80, 80), (255, 255, 255))
+            
+            # Center the resized image
+            offset = ((80 - img.size[0]) // 2, (80 - img.size[1]) // 2)
+            final_img.paste(img, offset)
+            
+            # Save as PNG
+            final_img.save(logo_path, 'PNG', optimize=True)
+            
+            with open(os.path.join(static_dir, 'logo_type.txt'), 'w') as f:
+                f.write('png')
+            
+            flash('Logo uploaded and resized to 80x80 pixels successfully!', 'success')
+        
+    except Exception as e:
+        flash(f'Failed to upload logo: {str(e)}', 'error')
+    
+    return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/delete-logo', methods=['POST'])
+@login_required
+@admin_required
+def delete_logo():
+    """Delete custom logo and revert to placeholder"""
+    try:
+        app_dir = os.path.dirname(os.path.abspath(__file__))
+        static_dir = os.path.join(app_dir, 'static')
+        
+        # Remove logo files
+        for filename in ['logo.png', 'logo.svg', 'logo_type.txt']:
+            file_path = os.path.join(static_dir, filename)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        
+        flash('Logo deleted successfully! Reverted to default placeholder.', 'success')
+        
+    except Exception as e:
+        flash(f'Failed to delete logo: {str(e)}', 'error')
     
     return redirect(url_for('admin.dashboard'))
 
