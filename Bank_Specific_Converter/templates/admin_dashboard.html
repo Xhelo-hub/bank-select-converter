@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Bank Statement Converter</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -493,6 +494,53 @@
                 display: inline-block;
             }
         }
+
+        .server-control {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+            padding: 20px 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #ffc107;
+        }
+
+        .server-control .info {
+            color: #856404;
+            font-weight: 500;
+            font-size: 15px;
+        }
+
+        .server-control .info i {
+            margin-right: 8px;
+            font-size: 18px;
+        }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+        }
+
+        .restart-btn i {
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -508,6 +556,19 @@
                 <a href="{{ url_for('index') }}">Back to Converter</a>
                 <a href="{{ url_for('auth.logout') }}">Logout</a>
             </div>
+        </div>
+
+        <div class="server-control">
+            <div class="info">
+                <i class="fas fa-server"></i>
+                <strong>Server Control:</strong> Restart the application server if you experience issues
+            </div>
+            <form method="POST" action="{{ url_for('admin.restart_server') }}" style="margin: 0;" onsubmit="return confirm('Are you sure you want to restart the server? This will briefly interrupt service.');">
+                <button type="submit" class="restart-btn">
+                    <i class="fas fa-sync-alt"></i>
+                    Restart Server
+                </button>
+            </form>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}

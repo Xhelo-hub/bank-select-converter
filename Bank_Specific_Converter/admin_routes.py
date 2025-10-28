@@ -3,6 +3,9 @@ from flask_login import login_required, current_user
 from functools import wraps
 from auth import UserManager
 from email_utils import send_admin_promotion_notification, send_admin_removal_verification
+import subprocess
+import os
+import signal
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 user_manager = UserManager()
@@ -181,5 +184,47 @@ def delete_user(user_id):
         flash(message, 'success')
     else:
         flash(message, 'error')
+    
+    return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/restart-server', methods=['POST'])
+@login_required
+@admin_required
+def restart_server():
+    """Restart the Flask application using gunicorn"""
+    try:
+        # Get the path to the PID file
+        app_dir = os.path.dirname(os.path.abspath(__file__))
+        pid_file = os.path.join(app_dir, 'gunicorn.pid')
+        
+        # Check if gunicorn is running
+        if os.path.exists(pid_file):
+            try:
+                with open(pid_file, 'r') as f:
+                    pid = int(f.read().strip())
+                
+                # Kill the gunicorn master process (will kill workers too)
+                os.kill(pid, signal.SIGTERM)
+                flash('Server stopped. Starting new instance...', 'info')
+            except (ProcessLookupError, ValueError):
+                flash('Old process not found. Starting new instance...', 'info')
+        
+        # Start gunicorn with the simple config
+        venv_path = os.path.join(os.path.dirname(app_dir), '.venv', 'bin', 'activate')
+        gunicorn_cmd = f"cd {app_dir} && source {venv_path} && gunicorn --config gunicorn_simple.conf.py wsgi:application"
+        
+        # Execute the command
+        subprocess.Popen(
+            gunicorn_cmd,
+            shell=True,
+            executable='/bin/bash',
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        
+        flash('Server restart initiated successfully! Please refresh the page in a few seconds.', 'success')
+        
+    except Exception as e:
+        flash(f'Failed to restart server: {str(e)}', 'error')
     
     return redirect(url_for('admin.dashboard'))
