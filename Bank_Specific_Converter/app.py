@@ -1240,7 +1240,7 @@ def index():
                             <h3 style="color: #27ae60; margin-bottom: 15px;">✅ Conversion Successful!</h3>
                             <p style="margin-bottom: 10px;"><strong>Original File:</strong> ${result.original_filename}</p>
                             <p style="margin-bottom: 10px;"><strong>Converted File:</strong> ${result.output_filename}</p>
-                            <a href="/download/${result.job_id}" class="download-btn">⬇️ Download QuickBooks CSV</a>
+                            <button onclick="window.location.href='/download/${result.job_id}'" class="download-btn" style="border: none; cursor: pointer;">⬇️ Download QuickBooks CSV</button>
                         `;
                     } else {
                         resultSection.className = 'result-section error';
