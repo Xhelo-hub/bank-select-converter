@@ -1101,6 +1101,16 @@ def index():
             let selectedBank = null;
             let selectedFile = null;
             
+            function downloadFile(jobId) {
+                // Create a temporary link and click it to trigger download
+                const link = document.createElement('a');
+                link.href = '/download/' + jobId;
+                link.download = '';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            
             function selectBankFromDropdown() {
                 const selectElement = document.getElementById('bankSelect');
                 const selectedOption = selectElement.options[selectElement.selectedIndex];
@@ -1240,7 +1250,7 @@ def index():
                             <h3 style="color: #27ae60; margin-bottom: 15px;">✅ Conversion Successful!</h3>
                             <p style="margin-bottom: 10px;"><strong>Original File:</strong> ${result.original_filename}</p>
                             <p style="margin-bottom: 10px;"><strong>Converted File:</strong> ${result.output_filename}</p>
-                            <button onclick="window.location.href='/download/${result.job_id}'" class="download-btn" style="border: none; cursor: pointer;">⬇️ Download QuickBooks CSV</button>
+                            <button onclick="downloadFile('${result.job_id}')" class="download-btn" style="border: none; cursor: pointer;">⬇️ Download QuickBooks CSV</button>
                         `;
                     } else {
                         resultSection.className = 'result-section error';
