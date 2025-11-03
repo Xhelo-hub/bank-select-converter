@@ -1456,27 +1456,26 @@ def download_file(job_id):
     try:
         with jobs_lock:
             if job_id not in jobs:
-                flash('File not found or has expired', 'error')
-                return redirect(url_for('index'))
+                return "File not found or has expired", 404
             
             job = jobs[job_id]
             
             # Verify user owns this job
             if job['user_id'] != current_user.id:
-                flash('Unauthorized access to file', 'error')
-                return redirect(url_for('index'))
+                return "Unauthorized access to file", 403
             
             output_path = job['output_path']
+            output_filename = job['output_filename']
         
         if not Path(output_path).exists():
-            flash('File not found or has been deleted', 'error')
-            return redirect(url_for('index'))
+            return "File not found or has been deleted", 404
         
-        # Create response with file
+        # Create response with file - specify mimetype explicitly for CSV
         response = send_file(
             output_path,
             as_attachment=True,
-            download_name=job['output_filename']
+            download_name=output_filename,
+            mimetype='text/csv'
         )
         
         # Delete file immediately after sending (cleanup on response close)
@@ -1498,8 +1497,8 @@ def download_file(job_id):
         return response
         
     except Exception as e:
-        flash(f'Download error: {str(e)}', 'error')
-        return redirect(url_for('index'))
+        print(f"Download error: {str(e)}")
+        return f"Download error: {str(e)}", 500
 
 @app.route('/status/<job_id>')
 @login_required
