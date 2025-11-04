@@ -145,28 +145,64 @@ def parse_bank_statement(text_content):
                 j = i + 1
                 while j < len(lines):
                     next_line = lines[j].strip()
-                    # Stop if we hit another transaction date or a separator line
-                    if re.match(r'^\d{2}-[A-Z]{3}-\d{2}', next_line) or '---' in next_line:
+                    
+                    # Stop if we hit another transaction date (but not a table header)
+                    if re.match(r'^\d{2}-[A-Z]{3}-\d{2}', next_line):
                         break
-                    # Stop at page markers, headers, footers, and footnotes
+                    
+                    # Stop at separator lines
+                    if '---' in next_line or '===' in next_line:
+                        break
+                    
+                    # Skip table headers (but continue processing after them)
                     if any(keyword in next_line.upper() for keyword in [
-                        'PAGE NO', 'ACCOUNTNO:', 'ACCOUNT NO:', 'IBAN:', 
-                        'OPENING BALANCE', 'CLOSING BALANCE',
-                        'INFORMACIONI NUK PERPUTHET', 'NË KONSIDERATË',
-                        'MERRNI PRANË DEGËVE', 'KOPJE TË AUTORIZUAR',
-                        'BKT-SË NJË KOPJE'
+                        'DATE DESCRIPTION', 'VALUE DATE', 'DEBIT CREDIT', 
+                        'TRANSACTION DATE', 'POSTING DATE'
+                    ]):
+                        j += 1
+                        continue
+                    
+                    # Skip page markers and page numbers (but continue processing)
+                    if any(keyword in next_line.upper() for keyword in [
+                        'PAGE NO', 'PAGE:', 'ACCOUNTNO:', 'ACCOUNT NO:', 
+                        'BANK STATEMENT', 'STATEMENT OF ACCOUNT'
+                    ]):
+                        j += 1
+                        continue
+                    
+                    # Skip IBAN lines that appear on new pages
+                    if next_line.upper().startswith('IBAN:'):
+                        j += 1
+                        continue
+                    
+                    # Stop at balance lines (end of transactions)
+                    if any(keyword in next_line.upper() for keyword in [
+                        'OPENING BALANCE', 'CLOSING BALANCE', 'BALANCE B/F', 'BALANCE C/F'
                     ]):
                         break
+                    
+                    # Stop at footnotes (don't continue after these)
+                    if any(keyword in next_line.upper() for keyword in [
+                        'INFORMACIONI NUK PERPUTHET', 'NË KONSIDERATË',
+                        'MERRNI PRANË DEGËVE', 'KOPJE TË AUTORIZUAR',
+                        'BKT-SË NJË KOPJE', 'SHËNIM:', 'NOTE:'
+                    ]):
+                        break
+                    
                     # Skip lines starting with footnote markers
                     if next_line.startswith('Shënim:') or next_line.startswith('Note:'):
                         break
+                    
                     # Skip very long lines that are likely footnotes
                     if len(next_line) > 200:
                         break
+                    
+                    # Add valid detail lines
                     if next_line and len(next_line) > 3:
                         # Clean up the detail line
                         detail_clean = re.sub(r'\s+', ' ', next_line)
                         details.append(detail_clean)
+                    
                     j += 1
                 
                 # Merge description, reference, and details into one field
