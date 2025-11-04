@@ -1101,14 +1101,47 @@ def index():
             let selectedBank = null;
             let selectedFile = null;
             
-            function downloadFile(jobId) {
-                // Create a temporary link and click it to trigger download
-                const link = document.createElement('a');
-                link.href = '/download/' + jobId;
-                link.download = '';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+            async function downloadFile(jobId) {
+                try {
+                    // Fetch the file
+                    const response = await fetch('/download/' + jobId);
+                    
+                    // Check if request was successful
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        alert('Download error: ' + errorText);
+                        return;
+                    }
+                    
+                    // Get the blob data
+                    const blob = await response.blob();
+                    
+                    // Extract filename from Content-Disposition header or use default
+                    let filename = 'converted_statement.csv';
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+                        if (filenameMatch) {
+                            filename = filenameMatch[1];
+                        }
+                    }
+                    
+                    // Create a download link and click it
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    // Clean up the blob URL
+                    window.URL.revokeObjectURL(url);
+                    
+                } catch (error) {
+                    console.error('Download error:', error);
+                    alert('Download failed: ' + error.message);
+                }
             }
             
             function selectBankFromDropdown() {
