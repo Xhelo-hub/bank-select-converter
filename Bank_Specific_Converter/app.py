@@ -1120,9 +1120,22 @@ def index():
                     let filename = 'converted_statement.csv';
                     const contentDisposition = response.headers.get('Content-Disposition');
                     if (contentDisposition) {
-                        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
-                        if (filenameMatch) {
-                            filename = filenameMatch[1];
+                        // More robust filename extraction
+                        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                        if (filenameMatch && filenameMatch[1]) {
+                            filename = filenameMatch[1].replace(/['"]/g, '');
+                        }
+                    }
+                    
+                    // Ensure filename ends with .csv (remove any trailing characters)
+                    filename = filename.trim();
+                    if (!filename.endsWith('.csv')) {
+                        // If there's extra stuff after .csv, remove it
+                        const csvIndex = filename.indexOf('.csv');
+                        if (csvIndex > -1) {
+                            filename = filename.substring(0, csvIndex + 4);
+                        } else {
+                            filename = filename + '.csv';
                         }
                     }
                     
