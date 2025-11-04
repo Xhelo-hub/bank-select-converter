@@ -148,14 +148,25 @@ def parse_bank_statement(text_content):
                     # Stop if we hit another transaction date or a separator line
                     if re.match(r'^\d{2}-[A-Z]{3}-\d{2}', next_line) or '---' in next_line:
                         break
-                    # Stop at page markers
-                    if 'PAGE NO' in next_line or 'AccountNo:' in next_line:
+                    # Stop at page markers, headers, footers, and footnotes
+                    if any(keyword in next_line.upper() for keyword in [
+                        'PAGE NO', 'ACCOUNTNO:', 'ACCOUNT NO:', 'IBAN:', 
+                        'OPENING BALANCE', 'CLOSING BALANCE',
+                        'INFORMACIONI NUK PERPUTHET', 'NË KONSIDERATË',
+                        'MERRNI PRANË DEGËVE', 'KOPJE TË AUTORIZUAR',
+                        'BKT-SË NJË KOPJE'
+                    ]):
                         break
-                    if next_line and not next_line.startswith('Shënim:'):
+                    # Skip lines starting with footnote markers
+                    if next_line.startswith('Shënim:') or next_line.startswith('Note:'):
+                        break
+                    # Skip very long lines that are likely footnotes
+                    if len(next_line) > 200:
+                        break
+                    if next_line and len(next_line) > 3:
                         # Clean up the detail line
                         detail_clean = re.sub(r'\s+', ' ', next_line)
-                        if detail_clean and len(detail_clean) > 3:
-                            details.append(detail_clean)
+                        details.append(detail_clean)
                     j += 1
                 
                 # Merge description, reference, and details into one field
