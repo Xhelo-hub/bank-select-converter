@@ -1491,6 +1491,9 @@ def convert_file():
         # Generate job ID
         job_id = str(uuid.uuid4())
         
+        # Store original filename for display
+        original_filename = file.filename
+        
         # Save uploaded file directly to import folder
         # Use versioned filename if file already exists to avoid conflicts
         filename = secure_filename(file.filename)
@@ -1600,21 +1603,27 @@ def convert_file():
             print(f"[DEBUG] File size: {output_file.stat().st_size if output_file.exists() else 'N/A'}")
             
             # Verify the output file is fully written (not still being written)
-            # Wait up to 5 seconds for file to be stable
-            max_wait = 5
+            # Wait up to 10 seconds for file to be stable (increased for slower conversions)
+            max_wait = 10
             last_size = 0
+            stable_count = 0
             for i in range(max_wait):
                 if not output_file.exists():
                     print(f"[DEBUG] Waiting for output file to be created... ({i+1}/{max_wait})")
                     time.sleep(1)
                     continue
                 current_size = output_file.stat().st_size
-                if current_size > 0 and current_size == last_size:
-                    print(f"[DEBUG] Output file is stable at {current_size} bytes")
-                    break
+                if current_size > 0:
+                    if current_size == last_size:
+                        stable_count += 1
+                        if stable_count >= 2:  # File size stable for 2 consecutive checks
+                            print(f"[DEBUG] Output file is stable at {current_size} bytes")
+                            break
+                    else:
+                        stable_count = 0
                 last_size = current_size
                 if i < max_wait - 1:
-                    print(f"[DEBUG] Waiting for output file to stabilize... ({i+1}/{max_wait})")
+                    print(f"[DEBUG] Waiting for output file to stabilize... ({i+1}/{max_wait}, size: {current_size})")
                     time.sleep(1)
             
             # Final verification
@@ -1642,7 +1651,7 @@ def convert_file():
             with jobs_lock:
                 jobs[job_id] = {
                     'bank': bank_id,
-                    'original_filename': filename,
+                    'original_filename': original_filename,  # Use original filename
                     'output_filename': output_file.name,
                     'output_path': str(output_file),
                     'timestamp': time.time(),
@@ -1652,7 +1661,7 @@ def convert_file():
             return jsonify({
                 'success': True,
                 'job_id': job_id,
-                'original_filename': filename,
+                'original_filename': original_filename,  # Show original filename to user
                 'output_filename': output_file.name
             })
             
