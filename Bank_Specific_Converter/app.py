@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from flask import Flask, render_template_string, request, redirect, url_for, flash, send_file, jsonify
+from flask import Flask, render_template_string, request, redirect, url_for, flash, send_file, jsonify, make_response
 from werkzeug.utils import secure_filename
 from flask_login import LoginManager, login_required, current_user
 import os
@@ -1333,7 +1333,12 @@ def index():
     </body>
     </html>
     """
-    return render_template_string(html_content, banks=BANK_CONFIGS, current_user=current_user)
+    response = make_response(render_template_string(html_content, banks=BANK_CONFIGS, current_user=current_user))
+    # Prevent caching to ensure users always get the latest version
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 @app.route('/convert', methods=['POST'])
 @login_required
