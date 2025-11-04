@@ -1429,7 +1429,7 @@ def index():
                             resultContent.innerHTML = `
                                 <div style="text-align: center;">
                                     <i class="fas fa-thumbs-up fa-3x" style="color: #27ae60; margin-bottom: 15px;"></i>
-                                    <h3 style="color: #27ae60; margin-bottom: 15px;">✅ Ready to Download!</h3>
+                                    <h3 style="color: #27ae60; margin-bottom: 15px;">Ready to Download!</h3>
                                 </div>
                                 <p style="margin-bottom: 10px;"><strong>Original File:</strong> ${result.original_filename}</p>
                                 <p style="margin-bottom: 10px;"><strong>Converted File:</strong> ${result.output_filename}</p>
