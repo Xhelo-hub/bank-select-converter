@@ -1224,6 +1224,28 @@ def index():
                 document.getElementById('convertBtn').disabled = true;
             }
             
+            function resetForm() {
+                console.log('Resetting form for new conversion');
+                
+                // Reset file selection
+                document.getElementById('fileInput').value = '';
+                selectedFile = null;
+                document.getElementById('selectedFile').style.display = 'none';
+                
+                // Re-enable upload area
+                const uploadArea = document.getElementById('uploadArea');
+                uploadArea.style.pointerEvents = '';
+                
+                // Reset steps
+                document.getElementById('step3').classList.remove('active');
+                document.getElementById('convertBtn').disabled = true;
+                
+                // Hide result section
+                document.getElementById('resultSection').style.display = 'none';
+                
+                console.log('Form reset complete - ready for new file');
+            }
+            
             function handleFileSelect(event) {
                 const file = event.target.files[0];
                 if (file) {
@@ -1336,6 +1358,7 @@ def index():
                             <p style="margin-bottom: 10px;"><strong>Original File:</strong> ${result.original_filename}</p>
                             <p style="margin-bottom: 10px;"><strong>Converted File:</strong> ${result.output_filename}</p>
                             <button onclick="downloadFile('${result.job_id}')" class="download-btn" style="border: none; cursor: pointer;">⬇️ Download QuickBooks CSV</button>
+                            <button onclick="resetForm()" class="download-btn" style="border: none; cursor: pointer; background: #3498db; margin-left: 10px;">🔄 Convert Another File</button>
                         `;
                     } else {
                         resultSection.className = 'result-section error';
