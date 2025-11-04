@@ -1098,6 +1098,11 @@ def index():
                     });
             })();
             
+            // Immediate debug on page load
+            console.log('=== PAGE LOADED ===');
+            console.log('bankSelect element:', document.getElementById('bankSelect'));
+            console.log('uploadArea element:', document.getElementById('uploadArea'));
+            
             let selectedBank = null;
             let selectedFile = null;
             
@@ -1237,10 +1242,30 @@ def index():
             const uploadArea = document.getElementById('uploadArea');
             const fileInput = document.getElementById('fileInput');
             
+            // Add event listener to dropdown as fallback (in case onchange attr doesn't work)
+            const bankSelectElement = document.getElementById('bankSelect');
+            if (bankSelectElement) {
+                console.log('Adding change event listener to dropdown');
+                bankSelectElement.addEventListener('change', function() {
+                    console.log('Dropdown changed via addEventListener');
+                    selectBankFromDropdown();
+                });
+            } else {
+                console.error('bankSelect element not found!');
+            }
+            
             // Make entire upload area clickable (only when no file is selected)
             uploadArea.addEventListener('click', (e) => {
+                console.log('Upload area clicked', {
+                    hasDisabled: uploadArea.classList.contains('disabled'),
+                    target: e.target,
+                    selectedFile: selectedFile
+                });
                 if (!uploadArea.classList.contains('disabled') && e.target !== fileInput && !selectedFile) {
+                    console.log('Opening file dialog');
                     fileInput.click();
+                } else {
+                    console.log('Click blocked - disabled:', uploadArea.classList.contains('disabled'), 'selectedFile:', selectedFile);
                 }
             });
             
