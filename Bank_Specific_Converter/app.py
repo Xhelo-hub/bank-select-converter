@@ -743,8 +743,8 @@ def index():
             }
             
             .result-section.processing {
-                background: linear-gradient(135deg, #fef9e7 0%, #fff8e1 100%);
-                border: 2px solid #f39c12;
+                background: linear-gradient(135deg, #e8f5e8 0%, #f0f9f0 100%);
+                border: 2px solid #33cc66;
             }
             
             .download-btn {
@@ -1345,7 +1345,7 @@ def index():
                 const resultContent = document.getElementById('resultContent');
                 resultSection.className = 'result-section processing';
                 resultSection.style.display = 'block';
-                resultContent.innerHTML = '<div class="spinner"></div><p style="text-align: center; margin-top: 10px;">Converting your statement...</p>';
+                resultContent.innerHTML = '<div class="spinner"></div><p style="text-align: center; margin-top: 10px; color: #33cc66; font-weight: 600;">Converting your statement...</p>';
                 
                 // Disable form
                 document.getElementById('convertBtn').disabled = true;
