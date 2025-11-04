@@ -1170,11 +1170,11 @@ def index():
                     document.getElementById('selectedBankFormats').textContent = bankFormats;
                     document.getElementById('selectedBankInfo').classList.add('show');
                     
-                    // Enable upload
+                    // Enable upload - remove disabled class first, then clear inline style
                     document.getElementById('step2').classList.add('active');
                     const uploadArea = document.getElementById('uploadArea');
                     uploadArea.classList.remove('disabled');
-                    uploadArea.style.pointerEvents = 'auto'; // Re-enable clicks
+                    uploadArea.style.pointerEvents = ''; // Clear inline style to allow CSS to work
                     
                     // Reset file selection and step 3
                     document.getElementById('fileInput').value = '';
@@ -1197,11 +1197,11 @@ def index():
                     selectedCard.classList.add('selected');
                 }
                 
-                // Enable upload
+                // Enable upload - remove disabled class first, then clear inline style
                 document.getElementById('step2').classList.add('active');
                 const uploadArea = document.getElementById('uploadArea');
                 uploadArea.classList.remove('disabled');
-                uploadArea.style.pointerEvents = 'auto'; // Re-enable clicks
+                uploadArea.style.pointerEvents = ''; // Clear inline style to allow CSS to work
                 
                 // Reset file selection and step 3
                 document.getElementById('fileInput').value = '';
