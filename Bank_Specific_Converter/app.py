@@ -1176,10 +1176,11 @@ def index():
                     uploadArea.classList.remove('disabled');
                     uploadArea.style.pointerEvents = 'auto'; // Re-enable clicks
                     
-                    // Reset file selection
+                    // Reset file selection and step 3
                     document.getElementById('fileInput').value = '';
                     selectedFile = null;
                     document.getElementById('selectedFile').style.display = 'none';
+                    document.getElementById('step3').classList.remove('active');
                     document.getElementById('convertBtn').disabled = true;
                 }
             }
@@ -1202,10 +1203,11 @@ def index():
                 uploadArea.classList.remove('disabled');
                 uploadArea.style.pointerEvents = 'auto'; // Re-enable clicks
                 
-                // Reset file selection
+                // Reset file selection and step 3
                 document.getElementById('fileInput').value = '';
                 selectedFile = null;
                 document.getElementById('selectedFile').style.display = 'none';
+                document.getElementById('step3').classList.remove('active');
                 document.getElementById('convertBtn').disabled = true;
             }
             
