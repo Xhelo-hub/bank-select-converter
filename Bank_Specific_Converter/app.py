@@ -1172,7 +1172,9 @@ def index():
                     
                     // Enable upload
                     document.getElementById('step2').classList.add('active');
-                    document.getElementById('uploadArea').classList.remove('disabled');
+                    const uploadArea = document.getElementById('uploadArea');
+                    uploadArea.classList.remove('disabled');
+                    uploadArea.style.pointerEvents = 'auto'; // Re-enable clicks
                     
                     // Reset file selection
                     document.getElementById('fileInput').value = '';
@@ -1196,7 +1198,9 @@ def index():
                 
                 // Enable upload
                 document.getElementById('step2').classList.add('active');
-                document.getElementById('uploadArea').classList.remove('disabled');
+                const uploadArea = document.getElementById('uploadArea');
+                uploadArea.classList.remove('disabled');
+                uploadArea.style.pointerEvents = 'auto'; // Re-enable clicks
                 
                 // Reset file selection
                 document.getElementById('fileInput').value = '';
