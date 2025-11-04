@@ -759,10 +759,13 @@ def index():
                 text-decoration: none;
                 display: inline-flex;
                 align-items: center;
+                justify-content: center;
                 gap: 10px;
                 margin-top: 15px;
                 transition: all 0.2s ease;
                 box-shadow: 0 4px 12px rgba(51, 204, 102, 0.3);
+                width: 50%;
+                min-width: 200px;
             }
             
             .download-btn:hover {
@@ -900,6 +903,10 @@ def index():
                 .download-btn {
                     padding: 10px 20px;
                     font-size: 1em;
+                    width: 100%;
+                    max-width: 100%;
+                    margin-left: 0 !important;
+                    margin-bottom: 10px;
                 }
 
                 .convert-btn {
@@ -1357,8 +1364,10 @@ def index():
                             <h3 style="color: #27ae60; margin-bottom: 15px;">✅ Conversion Successful!</h3>
                             <p style="margin-bottom: 10px;"><strong>Original File:</strong> ${result.original_filename}</p>
                             <p style="margin-bottom: 10px;"><strong>Converted File:</strong> ${result.output_filename}</p>
-                            <button onclick="downloadFile('${result.job_id}')" class="download-btn">⬇️ Download QuickBooks CSV</button>
-                            <button onclick="resetForm()" class="download-btn" style="margin-left: 10px;">🔄 Convert Another File</button>
+                            <div style="display: flex; gap: 15px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 20px;">
+                                <button onclick="downloadFile('${result.job_id}')" class="download-btn">⬇️ Download QuickBooks CSV</button>
+                                <button onclick="resetForm()" class="download-btn">🔄 Convert Another File</button>
+                            </div>
                         `;
                     } else {
                         resultSection.className = 'result-section error';
