@@ -1516,6 +1516,9 @@ def convert_file():
             
             # Get the most recently created file if multiple matches
             output_file = max(output_files, key=lambda p: p.stat().st_mtime)
+            print(f"[DEBUG] Selected output file: {output_file}")
+            print(f"[DEBUG] File exists: {output_file.exists()}")
+            print(f"[DEBUG] File size: {output_file.stat().st_size if output_file.exists() else 'N/A'}")
             
             # Delete original uploaded file immediately after successful conversion
             try:
@@ -1567,23 +1570,32 @@ def convert_file():
 def download_file(job_id):
     """Download converted file"""
     try:
+        print(f"[DEBUG] Download request for job_id: {job_id}")
         with jobs_lock:
             if job_id not in jobs:
+                print(f"[DEBUG] Job {job_id} not found in jobs dictionary")
+                print(f"[DEBUG] Available jobs: {list(jobs.keys())}")
                 return "File not found or has expired", 404
             
             job = jobs[job_id]
+            print(f"[DEBUG] Job found: {job}")
             
             # Verify user owns this job
             if job['user_id'] != current_user.id:
+                print(f"[DEBUG] Unauthorized access - job user_id: {job['user_id']}, current user: {current_user.id}")
                 return "Unauthorized access to file", 403
             
             output_path = job['output_path']
             output_filename = job['output_filename']
         
+        print(f"[DEBUG] Checking file exists: {output_path}")
         if not Path(output_path).exists():
+            print(f"[DEBUG] File does not exist at path: {output_path}")
             return "File not found or has been deleted", 404
         
         # Create response with file - specify mimetype explicitly for CSV
+        # NOTE: File is NOT deleted after download to allow multiple downloads
+        # Background cleanup thread will remove files older than 1 hour
         response = send_file(
             output_path,
             as_attachment=True,
@@ -1591,21 +1603,7 @@ def download_file(job_id):
             mimetype='text/csv'
         )
         
-        # Delete file immediately after sending (cleanup on response close)
-        @response.call_on_close
-        def cleanup_after_download():
-            try:
-                output_file_path = Path(output_path)
-                if output_file_path.exists():
-                    output_file_path.unlink()
-                
-                # Remove job from memory
-                with jobs_lock:
-                    jobs.pop(job_id, None)
-                    
-                print(f"Cleaned up job {job_id}: deleted file and removed from memory")
-            except Exception as cleanup_error:
-                print(f"Warning: Failed to cleanup after download for job {job_id}: {cleanup_error}")
+        print(f"File downloaded for job {job_id}. File will be auto-cleaned after 1 hour.")
         
         return response
         
