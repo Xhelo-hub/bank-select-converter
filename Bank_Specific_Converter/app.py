@@ -1126,7 +1126,7 @@ def index():
                     const contentDisposition = response.headers.get('Content-Disposition');
                     if (contentDisposition) {
                         // More robust filename extraction
-                        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                        const filenameMatch = contentDisposition.match(/filename[^;=\\n]*=((['"]).*?\\2|[^;\\n]*)/);
                         if (filenameMatch && filenameMatch[1]) {
                             filename = filenameMatch[1].replace(/['"]/g, '');
                         }
