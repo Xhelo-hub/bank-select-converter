@@ -1534,6 +1534,37 @@ def convert_file():
             print(f"[DEBUG] File exists: {output_file.exists()}")
             print(f"[DEBUG] File size: {output_file.stat().st_size if output_file.exists() else 'N/A'}")
             
+            # Verify the output file is fully written (not still being written)
+            # Wait up to 5 seconds for file to be stable
+            max_wait = 5
+            last_size = 0
+            for i in range(max_wait):
+                if not output_file.exists():
+                    print(f"[DEBUG] Waiting for output file to be created... ({i+1}/{max_wait})")
+                    time.sleep(1)
+                    continue
+                current_size = output_file.stat().st_size
+                if current_size > 0 and current_size == last_size:
+                    print(f"[DEBUG] Output file is stable at {current_size} bytes")
+                    break
+                last_size = current_size
+                if i < max_wait - 1:
+                    print(f"[DEBUG] Waiting for output file to stabilize... ({i+1}/{max_wait})")
+                    time.sleep(1)
+            
+            # Final verification
+            if not output_file.exists():
+                return jsonify({
+                    'success': False,
+                    'error': 'Output file was not created by converter script'
+                }), 500
+            
+            if output_file.stat().st_size == 0:
+                return jsonify({
+                    'success': False,
+                    'error': 'Output file is empty - conversion may have failed'
+                }), 500
+            
             # Delete original uploaded file immediately after successful conversion
             try:
                 if input_path.exists():
