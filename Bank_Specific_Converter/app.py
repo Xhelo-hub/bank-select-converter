@@ -1158,14 +1158,17 @@ def index():
             }
             
             function selectBankFromDropdown() {
+                console.log('selectBankFromDropdown called');
                 const selectElement = document.getElementById('bankSelect');
                 const selectedOption = selectElement.options[selectElement.selectedIndex];
                 
                 selectedBank = selectElement.value;
+                console.log('Selected bank:', selectedBank);
                 
                 if (selectedBank) {
                     // Show selected bank formats
                     const bankFormats = selectedOption.getAttribute('data-formats');
+                    console.log('Bank formats:', bankFormats);
                     
                     document.getElementById('selectedBankFormats').textContent = bankFormats;
                     document.getElementById('selectedBankInfo').classList.add('show');
@@ -1173,8 +1176,10 @@ def index():
                     // Enable upload - remove disabled class first, then clear inline style
                     document.getElementById('step2').classList.add('active');
                     const uploadArea = document.getElementById('uploadArea');
+                    console.log('Upload area before:', uploadArea.classList, uploadArea.style.pointerEvents);
                     uploadArea.classList.remove('disabled');
                     uploadArea.style.pointerEvents = ''; // Clear inline style to allow CSS to work
+                    console.log('Upload area after:', uploadArea.classList, uploadArea.style.pointerEvents);
                     
                     // Reset file selection and step 3
                     document.getElementById('fileInput').value = '';
@@ -1182,6 +1187,9 @@ def index():
                     document.getElementById('selectedFile').style.display = 'none';
                     document.getElementById('step3').classList.remove('active');
                     document.getElementById('convertBtn').disabled = true;
+                    console.log('Upload area should now be clickable');
+                } else {
+                    console.log('No bank selected (empty value)');
                 }
             }
             
