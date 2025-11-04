@@ -157,7 +157,7 @@ def parse_bank_statement(text_content):
                     # Skip table headers (but continue processing after them)
                     if any(keyword in next_line.upper() for keyword in [
                         'DATE DESCRIPTION', 'VALUE DATE', 'DEBIT CREDIT', 
-                        'TRANSACTION DATE', 'POSTING DATE'
+                        'TRANSACTION DATE', 'POSTING DATE', 'BOOKING DATE'
                     ]):
                         j += 1
                         continue
