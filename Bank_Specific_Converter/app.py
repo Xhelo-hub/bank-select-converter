@@ -803,6 +803,49 @@ def index():
                 100% { transform: rotate(360deg); }
             }
             
+            .hourglass-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin: 30px auto 20px;
+            }
+            
+            .hourglass-spin {
+                animation: hourglass-rotate 2s ease-in-out infinite;
+            }
+            
+            @keyframes hourglass-rotate {
+                0% { transform: rotate(0deg); }
+                50% { transform: rotate(180deg); }
+                100% { transform: rotate(180deg); }
+            }
+            
+            .success-animation {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                padding: 40px 20px;
+            }
+            
+            .success-icon {
+                animation: success-pop 0.6s ease-out;
+            }
+            
+            @keyframes success-pop {
+                0% {
+                    transform: scale(0);
+                    opacity: 0;
+                }
+                50% {
+                    transform: scale(1.2);
+                }
+                100% {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
+            
             .footer {
                 background: linear-gradient(135deg, #2b2b38 0%, #1f1f29 100%);
                 padding: 25px;
@@ -1340,12 +1383,20 @@ def index():
                     return;
                 }
                 
-                // Show processing
+                // Show processing with hourglass animation
                 const resultSection = document.getElementById('resultSection');
                 const resultContent = document.getElementById('resultContent');
                 resultSection.className = 'result-section processing';
                 resultSection.style.display = 'block';
-                resultContent.innerHTML = '<div class="spinner"></div><p style="text-align: center; margin-top: 10px; color: #33cc66; font-weight: 600;">Converting your statement...</p>';
+                resultContent.innerHTML = `
+                    <div class="hourglass-container">
+                        <i class="fas fa-hourglass-half fa-3x hourglass-spin" style="color: #33cc66;"></i>
+                    </div>
+                    <p style="text-align: center; margin-top: 20px; color: #33cc66; font-weight: 600; font-size: 1.1em;">
+                        Converting your statement...<br>
+                        <span style="font-size: 0.9em; color: #666;">Please wait, this may take a few moments</span>
+                    </p>
+                `;
                 
                 // Disable form
                 document.getElementById('convertBtn').disabled = true;
@@ -1364,16 +1415,30 @@ def index():
                     const result = await response.json();
                     
                     if (result.success) {
+                        // Show success animation first
                         resultSection.className = 'result-section success';
                         resultContent.innerHTML = `
-                            <h3 style="color: #27ae60; margin-bottom: 15px;">✅ Conversion Successful!</h3>
-                            <p style="margin-bottom: 10px;"><strong>Original File:</strong> ${result.original_filename}</p>
-                            <p style="margin-bottom: 10px;"><strong>Converted File:</strong> ${result.output_filename}</p>
-                            <div style="display: flex; gap: 15px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 20px;">
-                                <button onclick="downloadFile('${result.job_id}')" class="download-btn"><i class="fas fa-download" style="color: white;"></i> Download QuickBooks CSV</button>
-                                <button onclick="resetForm()" class="download-btn"><i class="fas fa-redo" style="color: white;"></i> Convert Another File</button>
+                            <div class="success-animation">
+                                <i class="fas fa-check-circle fa-5x success-icon" style="color: #27ae60;"></i>
+                                <h3 style="color: #27ae60; margin-top: 20px; font-size: 1.5em;">Conversion Successful!</h3>
                             </div>
                         `;
+                        
+                        // After animation, show download buttons
+                        setTimeout(() => {
+                            resultContent.innerHTML = `
+                                <div style="text-align: center;">
+                                    <i class="fas fa-thumbs-up fa-3x" style="color: #27ae60; margin-bottom: 15px;"></i>
+                                    <h3 style="color: #27ae60; margin-bottom: 15px;">✅ Ready to Download!</h3>
+                                </div>
+                                <p style="margin-bottom: 10px;"><strong>Original File:</strong> ${result.original_filename}</p>
+                                <p style="margin-bottom: 10px;"><strong>Converted File:</strong> ${result.output_filename}</p>
+                                <div style="display: flex; gap: 15px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 20px;">
+                                    <button onclick="downloadFile('${result.job_id}')" class="download-btn"><i class="fas fa-download" style="color: white;"></i> Download QuickBooks CSV</button>
+                                    <button onclick="resetForm()" class="download-btn"><i class="fas fa-redo" style="color: white;"></i> Convert Another File</button>
+                                </div>
+                            `;
+                        }, 1500); // Show success animation for 1.5 seconds
                     } else {
                         resultSection.className = 'result-section error';
                         resultContent.innerHTML = `
