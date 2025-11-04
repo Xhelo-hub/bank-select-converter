@@ -768,6 +768,11 @@ def index():
                 min-width: 200px;
             }
             
+            .download-btn i,
+            .convert-btn i {
+                color: white !important;
+            }
+            
             .download-btn:hover {
                 background: linear-gradient(135deg, var(--primary-hover) 0%, #27a04d 100%);
                 transform: translateY(-2px) scale(1.03);
@@ -1066,7 +1071,7 @@ def index():
                             Convert to QuickBooks Format
                         </div>
                         <button type="submit" class="convert-btn" disabled id="convertBtn">
-                            <i class="fas fa-magic"></i> Convert Statement
+                            <i class="fas fa-sync-alt" style="color: white;"></i> Convert Statement
                         </button>
                     </div>
                 </form>
@@ -1365,8 +1370,8 @@ def index():
                             <p style="margin-bottom: 10px;"><strong>Original File:</strong> ${result.original_filename}</p>
                             <p style="margin-bottom: 10px;"><strong>Converted File:</strong> ${result.output_filename}</p>
                             <div style="display: flex; gap: 15px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 20px;">
-                                <button onclick="downloadFile('${result.job_id}')" class="download-btn">⬇️ Download QuickBooks CSV</button>
-                                <button onclick="resetForm()" class="download-btn">🔄 Convert Another File</button>
+                                <button onclick="downloadFile('${result.job_id}')" class="download-btn"><i class="fas fa-download" style="color: white;"></i> Download QuickBooks CSV</button>
+                                <button onclick="resetForm()" class="download-btn"><i class="fas fa-redo" style="color: white;"></i> Convert Another File</button>
                             </div>
                         `;
                     } else {
