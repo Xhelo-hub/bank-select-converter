@@ -158,7 +158,7 @@ def cleanup_old_files():
         try:
             time.sleep(1800)  # Run every 30 minutes
             current_time = time.time()
-            cutoff_time = current_time - 3600  # 1 hour
+            cutoff_time = current_time - 7200  # 2 hours (same as job retention)
             
             # Clean upload folder (now contains job subdirectories)
             for item in UPLOAD_FOLDER.glob('*'):
