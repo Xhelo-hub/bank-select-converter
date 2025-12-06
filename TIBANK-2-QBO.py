@@ -182,15 +182,15 @@ def parse_tabank_statement(text_content):
 
 def format_date(date_str):
     """
-    Convert various date formats to YYYY-MM-DD format (ISO 8601).
+    Convert various date formats to MM/DD/YYYY format.
     Handles both Albanian and English month names.
-    This format is unambiguous and accepted by QuickBooks.
+    This format is recognized by QuickBooks.
     
     Args:
         date_str: Date string in various formats
     
     Returns:
-        Date string in YYYY-MM-DD format (e.g., 2025-07-05)
+        Date string in MM/DD/YYYY format (e.g., 07/05/2025)
     """
     # Albanian month abbreviations mapping to month numbers
     albanian_months = {
@@ -204,7 +204,7 @@ def format_date(date_str):
         'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
     }
     
-    # Try Albanian/English format: "01 Kor 25" -> "2025-07-01"
+    # Try Albanian/English format: "01 Kor 25" -> "07/01/2025"
     alb_match = re.match(r'(\d{2})\s+(\w{3})\s+(\d{2})', date_str)
     if alb_match:
         day = alb_match.group(1)
@@ -216,11 +216,11 @@ def format_date(date_str):
         
         # Check Albanian months
         if month_abbr in albanian_months:
-            return f"{full_year}-{albanian_months[month_abbr]}-{day}"
+            return f"{albanian_months[month_abbr]}/{day}/{full_year}"
         
         # Check English months
         if month_abbr in english_months:
-            return f"{full_year}-{english_months[month_abbr]}-{day}"
+            return f"{english_months[month_abbr]}/{day}/{full_year}"
     
     # Try different numeric date formats
     date_formats = [
@@ -230,7 +230,7 @@ def format_date(date_str):
         '%d/%m/%y',
         '%d.%m.%y',
         '%d-%m-%y',
-        '%Y-%m-%d'  # Already in correct format
+        '%Y-%m-%d'
     ]
     
     for in_fmt in date_formats:
@@ -239,7 +239,7 @@ def format_date(date_str):
             # If year is 2-digit, ensure it's in 2000s
             if date_obj.year < 100:
                 date_obj = date_obj.replace(year=date_obj.year + 2000)
-            return date_obj.strftime('%Y-%m-%d')
+            return date_obj.strftime('%m/%d/%Y')
         except ValueError:
             continue
     

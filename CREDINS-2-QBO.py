@@ -47,9 +47,9 @@ def parse_credins_csv(csv_path):
                     if not date_str:
                         continue
                     
-                    # Convert date from DD.MM.YYYY to YYYY-MM-DD
+                    # Convert date from DD.MM.YYYY to MM/DD/YYYY
                     date_obj = datetime.strptime(date_str, '%d.%m.%Y')
-                    formatted_date = date_obj.strftime('%Y-%m-%d')
+                    formatted_date = date_obj.strftime('%m/%d/%Y')
                     
                     # Extract amounts (handle comma as thousand separator)
                     debit_str = row.get('Amount', '0').replace(',', '').replace('"', '').strip()
@@ -118,9 +118,9 @@ def parse_credins_pdf(text_content):
             transaction_type = match.group(6).strip()
             description = match.group(7).strip()
             
-            # Convert date from DD.MM.YYYY to YYYY-MM-DD
+            # Convert date from DD.MM.YYYY to MM/DD/YYYY
             date_obj = datetime.strptime(date_str, '%d.%m.%Y')
-            formatted_date = date_obj.strftime('%Y-%m-%d')
+            formatted_date = date_obj.strftime('%m/%d/%Y')
             
             # Parse amounts
             debit = float(amount_str) if amount_str and float(amount_str) > 0 else 0

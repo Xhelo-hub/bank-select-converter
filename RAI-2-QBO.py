@@ -42,20 +42,20 @@ def get_versioned_filename(file_path):
 
 def format_date(date_str):
     """
-    Convert date from DD.MM.YYYY to YYYY-MM-DD format (ISO 8601).
-    This format is unambiguous and accepted by QuickBooks.
+    Convert date from DD.MM.YYYY to MM/DD/YYYY format.
+    This format is recognized by QuickBooks.
     
     Args:
         date_str: Date string in DD.MM.YYYY format
     
     Returns:
-        Date string in YYYY-MM-DD format (e.g., 2025-09-01)
+        Date string in MM/DD/YYYY format (e.g., 09/01/2025)
     """
     try:
         # Parse the date (format: DD.MM.YYYY)
         date_obj = datetime.strptime(date_str.strip(), "%d.%m.%Y")
-        # Format as YYYY-MM-DD (e.g., 2025-09-01)
-        return date_obj.strftime("%Y-%m-%d")
+        # Format as MM/DD/YYYY (e.g., 09/01/2025)
+        return date_obj.strftime("%m/%d/%Y")
     except Exception as e:
         print(f"  [WARNING] Could not format date '{date_str}': {e}")
         return date_str

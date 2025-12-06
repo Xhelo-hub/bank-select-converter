@@ -14,13 +14,13 @@ from pathlib import Path
 
 def parse_albanian_date(date_str):
     """
-    Parse Albanian date format (D.M.YY or DD.MM.YY) to YYYY-MM-DD.
+    Parse Albanian date format (D.M.YY or DD.MM.YY) to MM/DD/YYYY.
     
     Args:
         date_str: Date string in format like "30.9.25" or "1.9.25"
     
     Returns:
-        ISO formatted date string (YYYY-MM-DD)
+        QuickBooks formatted date string (MM/DD/YYYY)
     """
     try:
         # Split by dot
@@ -38,7 +38,7 @@ def parse_albanian_date(date_str):
         
         # Create date object and format
         date_obj = datetime(int(year), int(month), int(day))
-        return date_obj.strftime('%Y-%m-%d')
+        return date_obj.strftime('%m/%d/%Y')
     
     except Exception as e:
         print(f"  [WARNING] Could not parse date '{date_str}': {e}")

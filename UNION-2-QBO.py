@@ -202,20 +202,20 @@ def parse_union_statement(text_content):
 
 def format_date(date_str):
     """
-    Convert various date formats to YYYY-MM-DD format (ISO 8601).
-    This format is unambiguous and accepted by QuickBooks.
+    Convert various date formats to MM/DD/YYYY format.
+    This format is recognized by QuickBooks.
     
     Args:
         date_str: Date string in various formats
     
     Returns:
-        Date string in YYYY-MM-DD format (e.g., 2025-06-05)
+        Date string in MM/DD/YYYY format (e.g., 06/05/2025)
     """
     # Check if already in DD-MMM-YYYY format (Union Bank format)
     if re.match(r'^\d{2}-[A-Z]{3}-\d{4}$', date_str):
         try:
             date_obj = datetime.strptime(date_str, '%d-%b-%Y')
-            return date_obj.strftime('%Y-%m-%d')
+            return date_obj.strftime('%m/%d/%Y')
         except ValueError:
             pass
     
@@ -229,7 +229,7 @@ def format_date(date_str):
         '%d-%m-%y',
         '%d-%b-%Y',
         '%d-%b-%y',
-        '%Y-%m-%d'  # Already in correct format
+        '%Y-%m-%d'
     ]
     
     for in_fmt in date_formats:
@@ -238,7 +238,7 @@ def format_date(date_str):
             # If year is 2-digit, ensure it's in 2000s
             if date_obj.year < 100:
                 date_obj = date_obj.replace(year=date_obj.year + 2000)
-            return date_obj.strftime('%Y-%m-%d')
+            return date_obj.strftime('%m/%d/%Y')
         except ValueError:
             continue
     
