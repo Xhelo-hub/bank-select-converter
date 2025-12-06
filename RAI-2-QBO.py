@@ -113,7 +113,7 @@ def merge_description(transaction_type, beneficiary, description, reference):
     if description and description.strip():
         parts.append(description.strip())
     
-    # Add reference with "Ref: " prefix
+    # Add reference at the end with "Ref: " prefix
     if reference and reference.strip():
         parts.append(f"Ref: {reference.strip()}")
     
@@ -223,8 +223,8 @@ def parse_raiffeisen_pdf(text_content):
             reference = ref_match.group(1) if ref_match else ''
             description_part = ref_match.group(2) if ref_match else beneficiary
             
-            # Build full description - limit to 500 chars
-            description = f"Ref: {reference} | {beneficiary}" if reference else beneficiary
+            # Build full description with reference at the end - limit to 500 chars
+            description = f"{beneficiary} | Ref: {reference}" if reference else beneficiary
             description = description.strip()[:500]
             
             # Create transaction dictionary

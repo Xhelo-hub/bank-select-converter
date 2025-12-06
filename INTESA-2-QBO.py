@@ -317,9 +317,9 @@ def convert_intesa_csv(input_csv, output_directory=None):
                 # Clean description
                 clean_desc = clean_description(description)
                 
-                # Add reference to description
+                # Add reference at the end of description
                 if reference:
-                    full_description = f"Ref: {reference} | {clean_desc}"
+                    full_description = f"{clean_desc} | Ref: {reference}"
                 else:
                     full_description = clean_desc
                 
