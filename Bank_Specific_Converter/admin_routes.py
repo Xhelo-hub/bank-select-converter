@@ -288,52 +288,63 @@ def delete_logo():
 @login_required
 @admin_required
 def restart_server():
-    """Restart the Flask application using gunicorn"""
+    """Restart the Flask application using systemd service"""
     try:
         import time
-        # Get the path to the PID file
-        app_dir = os.path.dirname(os.path.abspath(__file__))
-        pid_file = os.path.join(app_dir, 'gunicorn.pid')
         
-        # Check if gunicorn is running and kill it
-        if os.path.exists(pid_file):
-            try:
-                with open(pid_file, 'r') as f:
-                    pid = int(f.read().strip())
-                
-                # Kill the gunicorn master process (will kill workers too)
-                os.kill(pid, signal.SIGTERM)
-                time.sleep(2)  # Wait for processes to terminate
-                flash('Server stopped. Starting new instance...', 'info')
-            except (ProcessLookupError, ValueError):
-                flash('Old process not found. Starting new instance...', 'info')
-        
-        # Also try to kill any remaining gunicorn processes
-        try:
-            subprocess.run(['pkill', '-f', 'gunicorn.*wsgi:application'], 
-                          stdout=subprocess.DEVNULL, 
-                          stderr=subprocess.DEVNULL)
-            time.sleep(1)
-        except:
-            pass
-        
-        # Start gunicorn with the simple config
-        venv_path = os.path.join(os.path.dirname(app_dir), '.venv', 'bin', 'activate')
-        gunicorn_cmd = f"cd {app_dir} && source {venv_path} && gunicorn --config gunicorn_simple.conf.py wsgi:application"
-        
-        # Execute the command in background
-        process = subprocess.Popen(
-            gunicorn_cmd,
-            shell=True,
-            executable='/bin/bash',
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            preexec_fn=os.setsid  # Create new session to detach from parent
+        # Try to restart using systemd service (production)
+        result = subprocess.run(
+            ['systemctl', 'restart', 'bank-converter.service'],
+            capture_output=True,
+            text=True,
+            timeout=10
         )
         
-        time.sleep(1)  # Give it time to start
-        
-        flash('Server restart initiated successfully! Please refresh the page in a few seconds.', 'success')
+        if result.returncode == 0:
+            time.sleep(2)  # Give service time to restart
+            flash('Server restarted successfully via systemd! Please refresh the page in a few seconds.', 'success')
+        else:
+            # If systemd fails, try the old manual method (fallback for non-systemd environments)
+            app_dir = os.path.dirname(os.path.abspath(__file__))
+            pid_file = os.path.join(app_dir, 'gunicorn.pid')
+            
+            # Check if gunicorn is running and kill it
+            if os.path.exists(pid_file):
+                try:
+                    with open(pid_file, 'r') as f:
+                        pid = int(f.read().strip())
+                    
+                    # Kill the gunicorn master process (will kill workers too)
+                    os.kill(pid, signal.SIGTERM)
+                    time.sleep(2)  # Wait for processes to terminate
+                except (ProcessLookupError, ValueError):
+                    pass
+            
+            # Also try to kill any remaining gunicorn processes
+            try:
+                subprocess.run(['pkill', '-f', 'gunicorn.*wsgi:application'], 
+                              stdout=subprocess.DEVNULL, 
+                              stderr=subprocess.DEVNULL)
+                time.sleep(1)
+            except:
+                pass
+            
+            # Start gunicorn with the simple config
+            venv_path = os.path.join(os.path.dirname(app_dir), '.venv', 'bin', 'activate')
+            gunicorn_cmd = f"cd {app_dir} && source {venv_path} && gunicorn --config gunicorn_simple.conf.py wsgi:application"
+            
+            # Execute the command in background
+            process = subprocess.Popen(
+                gunicorn_cmd,
+                shell=True,
+                executable='/bin/bash',
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                preexec_fn=os.setsid  # Create new session to detach from parent
+            )
+            
+            time.sleep(1)  # Give it time to start
+            flash('Server restart initiated successfully (manual mode)! Please refresh the page in a few seconds.', 'success')
         
     except Exception as e:
         flash(f'Failed to restart server: {str(e)}', 'error')
