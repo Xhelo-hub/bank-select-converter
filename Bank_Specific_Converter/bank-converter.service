@@ -3,7 +3,7 @@ Description=Bank Statement Converter - Gunicorn Application
 After=network.target
 
 [Service]
-Type=notify
+Type=simple
 User=root
 Group=root
 WorkingDirectory=/home/converter/web/c.konsulence.al/public_html/Bank_Specific_Converter
