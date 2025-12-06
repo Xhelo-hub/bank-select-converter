@@ -1,0 +1,24 @@
+[Unit]
+Description=Bank Statement Converter - Gunicorn Application
+After=network.target
+
+[Service]
+Type=notify
+User=root
+Group=root
+WorkingDirectory=/home/converter/web/c.konsulence.al/public_html/Bank_Specific_Converter
+Environment="PATH=/home/converter/web/c.konsulence.al/public_html/.venv/bin"
+ExecStart=/home/converter/web/c.konsulence.al/public_html/.venv/bin/gunicorn --config gunicorn_simple.conf.py wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+
+# Restart configuration
+Restart=always
+RestartSec=10
+StartLimitInterval=300
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target
