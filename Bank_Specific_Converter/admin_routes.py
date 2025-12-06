@@ -293,8 +293,9 @@ def restart_server():
         import time
         
         # Try to restart using systemd service (production)
+        # Use full path to systemctl (running as root, no sudo needed)
         result = subprocess.run(
-            ['systemctl', 'restart', 'bank-converter.service'],
+            ['/bin/systemctl', 'restart', 'bank-converter.service'],
             capture_output=True,
             text=True,
             timeout=10
