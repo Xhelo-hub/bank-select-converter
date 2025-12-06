@@ -48,39 +48,40 @@ def parse_albanian_date(date_str):
 def clean_description(description):
     """
     Clean and simplify Intesa Bank description field.
-    Extracts main beneficiary/debtor and key information.
+    Keeps all important parts separated by || but removes redundant prefixes.
     
     Args:
         description: Raw description with || separators
     
     Returns:
-        Cleaned description string
+        Cleaned description string with all parts preserved
     """
     if not description:
         return ""
     
     # Split by || separator
-    parts = [p.strip() for p in description.split('||')]
+    parts = [p.strip() for p in description.split('||') if p.strip()]
     
-    # Extract key components
-    main_party = parts[0] if parts else ""
-    
-    # Look for Rem Info which usually has the main transaction details
-    rem_info = ""
+    # Clean each part by removing redundant prefixes
+    cleaned_parts = []
     for part in parts:
+        # Remove common prefixes but keep the content
         if part.startswith('Rem Info::'):
-            rem_info = part.replace('Rem Info::', '').strip()
-            break
+            cleaned_parts.append(part.replace('Rem Info::', 'Info: ').strip())
+        elif part.startswith('Deb/Cred::'):
+            cleaned_parts.append(part.replace('Deb/Cred::', '').strip())
+        elif part.startswith('Beneficiary::'):
+            cleaned_parts.append(part.replace('Beneficiary::', '').strip())
+        elif part.startswith('Debtor::'):
+            cleaned_parts.append(part.replace('Debtor::', '').strip())
+        else:
+            cleaned_parts.append(part)
     
-    # Build clean description
-    if rem_info:
-        # Limit length and combine
-        clean_desc = f"{main_party} | {rem_info}"
-    else:
-        clean_desc = main_party
+    # Join all parts with | separator
+    clean_desc = ' | '.join(cleaned_parts)
     
-    # Limit to 500 chars for QuickBooks compatibility
-    return clean_desc[:500].strip()
+    # Limit to 1000 chars for QuickBooks compatibility (increased from 500)
+    return clean_desc[:1000].strip()
 
 
 def clean_amount(amount_str):
