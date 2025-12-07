@@ -257,3 +257,153 @@ def send_admin_promotion_notification(to_email, promoter_email):
     """
     
     return send_email(to_email, subject, html_body, text_body)
+
+def send_system_recovery_notification(admin_emails, recovery_type):
+    """Send notification when system recovers from an issue"""
+    from datetime import datetime
+    
+    subject = "✅ System Recovered - Albanian Bank Converter"
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    html_body = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background-color: #27ae60; color: white; padding: 20px; text-align: center; }}
+            .content {{ background-color: #f9f9f9; padding: 30px; }}
+            .success-box {{ 
+                background-color: #d4edda; 
+                border-left: 4px solid #27ae60; 
+                padding: 15px; 
+                margin: 20px 0;
+            }}
+            .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>✅ System Recovered</h1>
+            </div>
+            <div class="content">
+                <div class="success-box">
+                    <h2>Good News!</h2>
+                    <p><strong>Recovery Type:</strong> {recovery_type}</p>
+                    <p><strong>Time:</strong> {timestamp}</p>
+                    <p>The system has automatically recovered and is now operating normally.</p>
+                </div>
+                <p>The Albanian Bank Statement Converter is back online and processing conversions.</p>
+                <p>No action is required at this time.</p>
+            </div>
+            <div class="footer">
+                <p>Albanian Bank Statement Converter - System Health Monitor</p>
+                <p>This is an automated notification, please do not reply.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    text_body = f"""
+    System Recovered
+    
+    Recovery Type: {recovery_type}
+    Time: {timestamp}
+    
+    The system has automatically recovered and is now operating normally.
+    The Albanian Bank Statement Converter is back online and processing conversions.
+    
+    No action is required at this time.
+    """
+    
+    # Send to all admins
+    for admin_email in admin_emails:
+        try:
+            send_email(admin_email, subject, html_body, text_body)
+        except Exception as e:
+            print(f"Error sending recovery notification to {admin_email}: {e}")
+
+def send_new_user_registration_notification(admin_emails, user_email, user_name):
+    """Send notification to admins when a new user registers"""
+    from datetime import datetime
+    
+    subject = "🔔 New User Registration - Albanian Bank Converter"
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    html_body = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background-color: #3498db; color: white; padding: 20px; text-align: center; }}
+            .content {{ background-color: #f9f9f9; padding: 30px; }}
+            .info-box {{ 
+                background-color: #fff; 
+                border: 1px solid #ddd; 
+                padding: 15px; 
+                margin: 20px 0;
+                border-radius: 5px;
+            }}
+            .button {{
+                display: inline-block;
+                padding: 12px 24px;
+                background-color: #3498db;
+                color: white;
+                text-decoration: none;
+                border-radius: 5px;
+                margin: 10px 5px;
+            }}
+            .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>New User Registration</h1>
+            </div>
+            <div class="content">
+                <p>A new user has registered and is awaiting approval:</p>
+                <div class="info-box">
+                    <p><strong>Name:</strong> {user_name}</p>
+                    <p><strong>Email:</strong> {user_email}</p>
+                    <p><strong>Registration Time:</strong> {timestamp}</p>
+                </div>
+                <p style="text-align: center;">
+                    <a href="https://c.konsulence.al/admin" class="button">Review in Admin Panel</a>
+                </p>
+                <p>Please review and approve or reject this registration from the admin dashboard.</p>
+            </div>
+            <div class="footer">
+                <p>Albanian Bank Statement Converter</p>
+                <p>This is an automated notification, please do not reply.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    text_body = f"""
+    New User Registration
+    
+    A new user has registered and is awaiting approval:
+    
+    Name: {user_name}
+    Email: {user_email}
+    Registration Time: {timestamp}
+    
+    Please review and approve or reject this registration from the admin dashboard:
+    https://c.konsulence.al/admin
+    """
+    
+    # Send to all admins
+    for admin_email in admin_emails:
+        try:
+            send_email(admin_email, subject, html_body, text_body)
+        except Exception as e:
+            print(f"Error sending registration notification to {admin_email}: {e}")
+

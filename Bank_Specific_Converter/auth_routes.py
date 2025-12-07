@@ -7,7 +7,7 @@ Routes for login, logout, and registration
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, login_required
 from auth import UserManager
-from email_utils import send_password_reset_email
+from email_utils import send_password_reset_email, send_new_user_registration_notification
 import re
 
 # Create blueprint
@@ -94,6 +94,19 @@ def register():
         if not user:
             flash(message, 'error')
             return render_template('register.html')
+        
+        # Send notification to admins about new registration
+        try:
+            import json
+            users_file = os.path.join(os.path.dirname(__file__), 'users.json')
+            if os.path.exists(users_file):
+                with open(users_file, 'r') as f:
+                    users = json.load(f)
+                    admin_emails = [u['email'] for u in users.values() if u.get('is_admin', False)]
+                    if admin_emails:
+                        send_new_user_registration_notification(admin_emails, email, email.split('@')[0])
+        except Exception as e:
+            print(f"Failed to send admin notification: {e}")
         
         flash('Registration successful! Please log in.', 'success')
         return redirect(url_for('auth.login'))

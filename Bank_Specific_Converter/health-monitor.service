@@ -1,0 +1,16 @@
+[Unit]
+Description=Bank Converter Health Monitor
+After=network.target bank-converter.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/home/converter/web/c.konsulence.al/public_html/Bank_Specific_Converter
+Environment="PATH=/home/converter/web/c.konsulence.al/public_html/.venv/bin"
+ExecStart=/home/converter/web/c.konsulence.al/public_html/.venv/bin/python3 health_monitor.py
+Restart=always
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target
