@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Settings - Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #33cc66;
+            --primary-hover: #2eb85c;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --success-color: #28a745;
+            --header-bg: #2b2b38;
+            --text-dark: #1a1a1a;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --bg-gradient: linear-gradient(135deg, #f8fff8 0%, #e8f5ee 100%);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-dark);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        .header {
+            background: var(--header-bg);
+            color: white;
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .alert {
+            padding: 14px 20px;
+            border-radius: var(--radius-md);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .section {
+            background: #f8f9fa;
+            border-radius: var(--radius-md);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+        }
+
+        .form-group .help-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(51, 204, 102, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 15px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid var(--border-color);
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-test {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-test:hover {
+            background: #138496;
+            transform: translateY(-2px);
+        }
+
+        .test-result {
+            margin-top: 15px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .provider-presets {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--primary-color);
+            background: #f0fff5;
+        }
+
+        .preset-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .info-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            display: flex;
+            align-items: start;
+            gap: 12px;
+        }
+
+        .info-box i {
+            color: #856404;
+            font-size: 20px;
+            margin-top: 2px;
+        }
+
+        .info-box .content {
+            flex: 1;
+        }
+
+        .info-box h4 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #856404;
+        }
+
+        .info-box p {
+            font-size: 14px;
+            color: #856404;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <i class="fas fa-envelope"></i>
+                Email Settings
+            </h1>
+            <a href="{{ url_for('admin.dashboard') }}" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                Back to Dashboard
+            </a>
+        </div>
+
+        <div class="content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' }}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('admin.save_email_settings') }}">
+                <div class="section">
+                    <div class="section-title">
+                        <i class="fas fa-cog"></i>
+                        SMTP Configuration
+                    </div>
+
+                    <div class="provider-presets">
+                        <button type="button" class="preset-btn" onclick="setPreset('office365')">
+                            <i class="fab fa-microsoft"></i>
+                            Office 365
+                        </button>
+                        <button type="button" class="preset-btn" onclick="setPreset('gmail')">
+                            <i class="fab fa-google"></i>
+                            Gmail
+                        </button>
+                        <button type="button" class="preset-btn" onclick="setPreset('custom')">
+                            <i class="fas fa-server"></i>
+                            Custom
+                        </button>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="smtp_server">SMTP Server</label>
+                            <input type="text" id="smtp_server" name="smtp_server" class="form-control" 
+                                   value="{{ config.smtp_server }}" placeholder="smtp.office365.com" required>
+                            <div class="help-text">The SMTP server address for sending emails</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="smtp_port">Port</label>
+                            <input type="number" id="smtp_port" name="smtp_port" class="form-control" 
+                                   value="{{ config.smtp_port }}" placeholder="587" required>
+                            <div class="help-text">Usually 587 for TLS</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="smtp_username">SMTP Username</label>
+                        <input type="text" id="smtp_username" name="smtp_username" class="form-control" 
+                               value="{{ config.smtp_username }}" placeholder="noreply@konsulence.al" required>
+                        <div class="help-text">Email account username (usually the full email address)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="smtp_password">SMTP Password</label>
+                        <input type="password" id="smtp_password" name="smtp_password" class="form-control" 
+                               value="{% if config.smtp_password %}••••••••{% endif %}" placeholder="Enter password" required>
+                        <div class="help-text">Email account password (stored securely)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="from_email">From Email Address</label>
+                        <input type="email" id="from_email" name="from_email" class="form-control" 
+                               value="{{ config.from_email }}" placeholder="noreply@konsulence.al" required>
+                        <div class="help-text">The email address that will appear in the "From" field</div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="enabled" name="enabled" {% if config.enabled %}checked{% endif %}>
+                            <label for="enabled">Enable email notifications</label>
+                        </div>
+                        <div class="help-text">When disabled, the system will use environment variables instead</div>
+                    </div>
+
+                    <div class="info-box">
+                        <i class="fas fa-info-circle"></i>
+                        <div class="content">
+                            <h4>Office 365 Setup Required</h4>
+                            <p>For Office 365 accounts, you must enable SMTP AUTH in the Microsoft 365 admin center. Go to Exchange Admin Center → Recipients → Mailboxes → select your mailbox → enable "Authenticated SMTP".</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">
+                        <i class="fas fa-flask"></i>
+                        Test Configuration
+                    </div>
+
+                    <div class="form-group">
+                        <label for="test_email">Test Email Address</label>
+                        <input type="email" id="test_email" name="test_email" class="form-control" 
+                               value="{{ config.test_email }}" placeholder="admin@konsulence.al">
+                        <div class="help-text">Send a test email to this address to verify settings</div>
+                    </div>
+
+                    <button type="button" class="btn btn-test" onclick="testEmail()">
+                        <i class="fas fa-paper-plane"></i>
+                        Send Test Email
+                    </button>
+
+                    <div id="test-result" class="test-result"></div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Save Settings
+                    </button>
+                    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function setPreset(provider) {
+            const presets = {
+                'office365': {
+                    server: 'smtp.office365.com',
+                    port: 587
+                },
+                'gmail': {
+                    server: 'smtp.gmail.com',
+                    port: 587
+                },
+                'custom': {
+                    server: '',
+                    port: 587
+                }
+            };
+
+            const preset = presets[provider];
+            if (preset) {
+                document.getElementById('smtp_server').value = preset.server;
+                document.getElementById('smtp_port').value = preset.port;
+            }
+
+            // Update active button
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.closest('.preset-btn').classList.add('active');
+        }
+
+        function testEmail() {
+            const testEmail = document.getElementById('test_email').value;
+            const resultDiv = document.getElementById('test-result');
+            const testBtn = event.target;
+            
+            if (!testEmail) {
+                resultDiv.className = 'test-result error';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Please enter a test email address';
+                return;
+            }
+
+            // Disable button and show loading
+            testBtn.disabled = true;
+            testBtn.innerHTML = '<span class="spinner"></span> Sending...';
+
+            // Send test request
+            fetch('{{ url_for("admin.test_email_settings") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'test_email=' + encodeURIComponent(testEmail)
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultDiv.style.display = 'block';
+                if (data.success) {
+                    resultDiv.className = 'test-result success';
+                    resultDiv.innerHTML = '<i class="fas fa-check-circle"></i> ' + data.message;
+                } else {
+                    resultDiv.className = 'test-result error';
+                    resultDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + data.message;
+                }
+            })
+            .catch(error => {
+                resultDiv.className = 'test-result error';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Failed to send test email: ' + error;
+            })
+            .finally(() => {
+                testBtn.disabled = false;
+                testBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Test Email';
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app, jsonify
 from flask_login import login_required, current_user
 from functools import wraps
 from auth import UserManager
@@ -8,9 +8,41 @@ from PIL import Image
 import subprocess
 import os
 import signal
+import json
+import smtplib
+from email.mime.text import MIMEText
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 user_manager = UserManager()
+
+def get_email_config_path():
+    """Get the path to email configuration file"""
+    return os.path.join(os.path.dirname(__file__), 'email_config.json')
+
+def load_email_config():
+    """Load email configuration from JSON file"""
+    config_path = get_email_config_path()
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r') as f:
+                return json.load(f)
+        except:
+            pass
+    return {
+        'smtp_server': 'smtp.office365.com',
+        'smtp_port': 587,
+        'smtp_username': '',
+        'smtp_password': '',
+        'from_email': '',
+        'enabled': False,
+        'test_email': ''
+    }
+
+def save_email_config(config):
+    """Save email configuration to JSON file"""
+    config_path = get_email_config_path()
+    with open(config_path, 'w') as f:
+        json.dump(config, f, indent=4)
 
 def admin_required(f):
     """Decorator to require admin access"""
@@ -351,3 +383,86 @@ def restart_server():
         flash(f'Failed to restart server: {str(e)}', 'error')
     
     return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/email-settings')
+@login_required
+@admin_required
+def email_settings():
+    """Email configuration page"""
+    config = load_email_config()
+    return render_template('email_settings.html', config=config)
+
+@admin_bp.route('/email-settings/save', methods=['POST'])
+@login_required
+@admin_required
+def save_email_settings():
+    """Save email configuration"""
+    try:
+        config = {
+            'smtp_server': request.form.get('smtp_server', '').strip(),
+            'smtp_port': int(request.form.get('smtp_port', 587)),
+            'smtp_username': request.form.get('smtp_username', '').strip(),
+            'smtp_password': request.form.get('smtp_password', '').strip(),
+            'from_email': request.form.get('from_email', '').strip(),
+            'enabled': request.form.get('enabled') == 'on',
+            'test_email': request.form.get('test_email', '').strip()
+        }
+        
+        # Don't overwrite password if it's the placeholder
+        if config['smtp_password'] == '••••••••':
+            old_config = load_email_config()
+            config['smtp_password'] = old_config.get('smtp_password', '')
+        
+        save_email_config(config)
+        
+        # Update environment variables for the current process
+        os.environ['SMTP_SERVER'] = config['smtp_server']
+        os.environ['SMTP_PORT'] = str(config['smtp_port'])
+        os.environ['SMTP_USERNAME'] = config['smtp_username']
+        os.environ['SMTP_PASSWORD'] = config['smtp_password']
+        os.environ['FROM_EMAIL'] = config['from_email']
+        
+        flash('Email settings saved successfully! Note: Restart the server for changes to take full effect.', 'success')
+        return redirect(url_for('admin.email_settings'))
+    except Exception as e:
+        flash(f'Failed to save email settings: {str(e)}', 'error')
+        return redirect(url_for('admin.email_settings'))
+
+@admin_bp.route('/email-settings/test', methods=['POST'])
+@login_required
+@admin_required
+def test_email_settings():
+    """Test email configuration by sending a test email"""
+    try:
+        config = load_email_config()
+        test_email = request.form.get('test_email', '').strip()
+        
+        if not test_email:
+            return jsonify({'success': False, 'message': 'Please enter a test email address'})
+        
+        if not config.get('smtp_username') or not config.get('smtp_password'):
+            return jsonify({'success': False, 'message': 'SMTP credentials are not configured'})
+        
+        # Test SMTP connection
+        try:
+            server = smtplib.SMTP(config['smtp_server'], config['smtp_port'])
+            server.starttls()
+            server.login(config['smtp_username'], config['smtp_password'])
+            
+            # Send test email
+            msg = MIMEText('This is a test email from the Bank Statement Converter admin panel. If you received this, your email configuration is working correctly!')
+            msg['Subject'] = 'Test Email - Bank Statement Converter'
+            msg['From'] = config['from_email']
+            msg['To'] = test_email
+            
+            server.send_message(msg)
+            server.quit()
+            
+            return jsonify({'success': True, 'message': f'Test email sent successfully to {test_email}'})
+        except smtplib.SMTPAuthenticationError as e:
+            return jsonify({'success': False, 'message': f'Authentication failed: {str(e)}. Please check your credentials and ensure SMTP AUTH is enabled.'})
+        except Exception as e:
+            return jsonify({'success': False, 'message': f'Failed to send email: {str(e)}'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'})

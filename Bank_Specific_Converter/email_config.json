@@ -1,0 +1,9 @@
+{
+    "smtp_server": "smtp.office365.com",
+    "smtp_port": 587,
+    "smtp_username": "noreply@konsulence.al",
+    "smtp_password": "",
+    "from_email": "noreply@konsulence.al",
+    "enabled": false,
+    "test_email": ""
+}

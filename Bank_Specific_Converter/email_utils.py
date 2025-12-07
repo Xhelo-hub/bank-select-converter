@@ -8,13 +8,37 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
+import json
 
-# Email configuration (load from environment variables)
-SMTP_SERVER = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
-SMTP_PORT = int(os.environ.get('SMTP_PORT', 587))
-SMTP_USERNAME = os.environ.get('SMTP_USERNAME', '')
-SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
-FROM_EMAIL = os.environ.get('FROM_EMAIL', SMTP_USERNAME)
+def load_email_config():
+    """Load email configuration from JSON file or environment variables"""
+    config_path = os.path.join(os.path.dirname(__file__), 'email_config.json')
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+                if config.get('enabled'):
+                    return config
+        except:
+            pass
+    
+    # Fallback to environment variables
+    return {
+        'smtp_server': os.environ.get('SMTP_SERVER', 'smtp.gmail.com'),
+        'smtp_port': int(os.environ.get('SMTP_PORT', 587)),
+        'smtp_username': os.environ.get('SMTP_USERNAME', ''),
+        'smtp_password': os.environ.get('SMTP_PASSWORD', ''),
+        'from_email': os.environ.get('FROM_EMAIL', os.environ.get('SMTP_USERNAME', '')),
+        'enabled': True
+    }
+
+# Email configuration (load from config file or environment variables)
+_config = load_email_config()
+SMTP_SERVER = _config['smtp_server']
+SMTP_PORT = _config['smtp_port']
+SMTP_USERNAME = _config['smtp_username']
+SMTP_PASSWORD = _config['smtp_password']
+FROM_EMAIL = _config['from_email']
 
 def send_email(to_email, subject, html_body, text_body=None):
     """

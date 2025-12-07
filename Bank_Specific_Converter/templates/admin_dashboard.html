@@ -835,15 +835,21 @@
 
         <div class="server-control">
             <div class="info">
-                <i class="fas fa-server"></i>
-                <strong>Server Control:</strong> Restart the application server if you experience issues
+                <i class="fas fa-cog"></i>
+                <strong>System Settings:</strong> Configure email notifications and server settings
             </div>
-            <form method="POST" action="{{ url_for('admin.restart_server') }}" style="margin: 0;" onsubmit="return confirm('Are you sure you want to restart the server? This will briefly interrupt service.');">
-                <button type="submit" class="restart-btn">
-                    <i class="fas fa-sync-alt"></i>
-                    Restart Server
-                </button>
-            </form>
+            <div style="display: flex; gap: 12px;">
+                <a href="{{ url_for('admin.email_settings') }}" class="restart-btn" style="text-decoration: none; background: #17a2b8; flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fas fa-envelope"></i>
+                    Email Settings
+                </a>
+                <form method="POST" action="{{ url_for('admin.restart_server') }}" style="margin: 0; flex: 1;" onsubmit="return confirm('Are you sure you want to restart the server? This will briefly interrupt service.');">
+                    <button type="submit" class="restart-btn" style="width: 100%;">
+                        <i class="fas fa-sync-alt"></i>
+                        Restart Server
+                    </button>
+                </form>
+            </div>
         </div>
 
         <div class="logo-management">
