@@ -221,6 +221,35 @@ def delete_user(user_id):
     
     return redirect(url_for('admin.dashboard'))
 
+@admin_bp.route('/reset-password/<user_id>', methods=['POST'])
+@login_required
+@admin_required
+def reset_user_password(user_id):
+    """Admin reset user password"""
+    new_password = request.form.get('new_password', '').strip()
+    confirm_password = request.form.get('confirm_password', '').strip()
+    
+    if not new_password:
+        flash('Password is required', 'error')
+        return redirect(url_for('admin.dashboard'))
+    
+    if len(new_password) < 6:
+        flash('Password must be at least 6 characters', 'error')
+        return redirect(url_for('admin.dashboard'))
+    
+    if new_password != confirm_password:
+        flash('Passwords do not match', 'error')
+        return redirect(url_for('admin.dashboard'))
+    
+    success, message = user_manager.admin_reset_password(user_id, new_password)
+    
+    if success:
+        flash(f'Password reset successfully for user', 'success')
+    else:
+        flash(message, 'error')
+    
+    return redirect(url_for('admin.dashboard'))
+
 @admin_bp.route('/upload-logo', methods=['POST'])
 @login_required
 @admin_required

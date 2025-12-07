@@ -216,6 +216,21 @@ class UserManager:
         
         return None, "User not found"
     
+    def admin_reset_password(self, user_id, new_password):
+        """Admin reset user password (no token required)"""
+        users = self._load_users()
+        for user in users:
+            if user.id == user_id:
+                # Hash the new password
+                hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+                user.password = hashed_password
+                # Clear any existing reset tokens
+                user.reset_token = None
+                user.reset_token_expiry = None
+                self._save_users(users)
+                return True, "Password reset successfully"
+        return False, "User not found"
+    
     def verify_reset_token(self, email, token):
         """Verify password reset token"""
         from datetime import datetime

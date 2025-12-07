@@ -447,6 +447,126 @@
             color: white;
         }
         
+        /* Dropdown Menu Styles */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-toggle {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-toggle:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            background: white;
+            min-width: 220px;
+            box-shadow: var(--shadow-lg);
+            border-radius: var(--radius-md);
+            z-index: 1000;
+            margin-top: 8px;
+            border: 2px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            color: var(--text-dark);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .dropdown-item:hover {
+            background: #f8f9fa;
+        }
+
+        .dropdown-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 4px 0;
+        }
+
+        .dropdown-item.danger {
+            color: var(--danger-color);
+        }
+
+        .dropdown-item.danger:hover {
+            background: #fee;
+        }
+
+        .dropdown-item.warning {
+            color: var(--warning-color);
+        }
+
+        .dropdown-item.warning:hover {
+            background: #fff9e6;
+        }
+
+        .dropdown-item.success {
+            color: var(--success-color);
+        }
+
+        .dropdown-item.success:hover {
+            background: #f0fff4;
+        }
+
+        .dropdown-item.info {
+            color: #17a2b8;
+        }
+
+        .dropdown-item.info:hover {
+            background: #e7f7f9;
+        }
+        
         /* Mobile responsiveness */
         @media (max-width: 768px) {
             body {
@@ -1005,41 +1125,67 @@
                                     {% if user.id == current_user.id %}
                                         <span style="color: #999; font-style: italic;">You (cannot self-modify)</span>
                                     {% else %}
-                                        <!-- Role Management -->
-                                        {% if user.is_admin %}
-                                            <a href="{{ url_for('admin.demote_user', user_id=user.id) }}" 
-                                               class="btn btn-demote"
-                                               onclick="return confirm('Remove admin rights from {{ user.email }}?')">
-                                                ⬇️ Demote
-                                            </a>
-                                        {% else %}
-                                            <a href="{{ url_for('admin.promote_user', user_id=user.id) }}" 
-                                               class="btn btn-promote"
-                                               onclick="return confirm('Promote {{ user.email }} to admin?')">
-                                                ⬆️ Promote
-                                            </a>
-                                        {% endif %}
-                                        
-                                        <!-- Status Management -->
-                                        {% if user.is_active %}
-                                            <a href="{{ url_for('admin.deactivate_user', user_id=user.id) }}" 
-                                               class="btn btn-deactivate"
-                                               onclick="return confirm('Deactivate {{ user.email }}? They will not be able to login.')">
-                                                ⏸️ Deactivate
-                                            </a>
-                                        {% else %}
-                                            <a href="{{ url_for('admin.activate_user', user_id=user.id) }}" 
-                                               class="btn btn-activate">
-                                                ▶️ Activate
-                                            </a>
-                                        {% endif %}
-                                        
-                                        <!-- Delete -->
-                                        <a href="{{ url_for('admin.delete_user', user_id=user.id) }}" 
-                                           class="btn btn-delete"
-                                           onclick="return confirm('Permanently delete {{ user.email }}? This cannot be undone!')">
-                                            🗑️ Delete
-                                        </a>
+                                        <div class="dropdown">
+                                            <button class="dropdown-toggle" onclick="toggleDropdown(event, 'dropdown-{{ user.id }}')">
+                                                <i class="fas fa-cog"></i>
+                                                Actions
+                                                <i class="fas fa-chevron-down"></i>
+                                            </button>
+                                            <div id="dropdown-{{ user.id }}" class="dropdown-menu">
+                                                <!-- Role Management -->
+                                                {% if user.is_admin %}
+                                                    <a href="{{ url_for('admin.demote_user', user_id=user.id) }}" 
+                                                       class="dropdown-item warning"
+                                                       onclick="return confirm('Remove admin rights from {{ user.email }}?')">
+                                                        <i class="fas fa-user-minus"></i>
+                                                        Remove Admin
+                                                    </a>
+                                                {% else %}
+                                                    <a href="{{ url_for('admin.promote_user', user_id=user.id) }}" 
+                                                       class="dropdown-item success"
+                                                       onclick="return confirm('Promote {{ user.email }} to admin?')">
+                                                        <i class="fas fa-user-shield"></i>
+                                                        Make Admin
+                                                    </a>
+                                                {% endif %}
+                                                
+                                                <div class="dropdown-divider"></div>
+                                                
+                                                <!-- Status Management -->
+                                                {% if user.is_active %}
+                                                    <a href="{{ url_for('admin.deactivate_user', user_id=user.id) }}" 
+                                                       class="dropdown-item warning"
+                                                       onclick="return confirm('Deactivate {{ user.email }}? They will not be able to login.')">
+                                                        <i class="fas fa-pause-circle"></i>
+                                                        Deactivate Account
+                                                    </a>
+                                                {% else %}
+                                                    <a href="{{ url_for('admin.activate_user', user_id=user.id) }}" 
+                                                       class="dropdown-item success">
+                                                        <i class="fas fa-play-circle"></i>
+                                                        Activate Account
+                                                    </a>
+                                                {% endif %}
+                                                
+                                                <div class="dropdown-divider"></div>
+                                                
+                                                <!-- Password Reset -->
+                                                <button type="button" class="dropdown-item info" onclick="showResetPasswordModal('{{ user.id }}', '{{ user.email }}')">
+                                                    <i class="fas fa-key"></i>
+                                                    Reset Password
+                                                </button>
+                                                
+                                                <div class="dropdown-divider"></div>
+                                                
+                                                <!-- Delete -->
+                                                <a href="{{ url_for('admin.delete_user', user_id=user.id) }}" 
+                                                   class="dropdown-item danger"
+                                                   onclick="return confirm('Permanently delete {{ user.email }}? This cannot be undone!')">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                    Delete User
+                                                </a>
+                                            </div>
+                                        </div>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -1151,6 +1297,109 @@
                     // Use placeholder if logo doesn't exist
                 });
         })();
+
+        // Dropdown menu functionality
+        function toggleDropdown(event, dropdownId) {
+            event.stopPropagation();
+            
+            // Close all other dropdowns
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                if (menu.id !== dropdownId) {
+                    menu.classList.remove('show');
+                }
+            });
+            
+            // Toggle current dropdown
+            const dropdown = document.getElementById(dropdownId);
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+            }
+        });
+
+        // Password reset modal functionality
+        function showResetPasswordModal(userId, userEmail) {
+            const modal = document.getElementById('resetPasswordModal');
+            const form = document.getElementById('resetPasswordForm');
+            const emailSpan = document.getElementById('resetUserEmail');
+            
+            emailSpan.textContent = userEmail;
+            form.action = `/admin/reset-password/${userId}`;
+            modal.style.display = 'flex';
+        }
+
+        function closeResetPasswordModal() {
+            const modal = document.getElementById('resetPasswordModal');
+            const form = document.getElementById('resetPasswordForm');
+            modal.style.display = 'none';
+            form.reset();
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('resetPasswordModal');
+            if (event.target == modal) {
+                closeResetPasswordModal();
+            }
+        }
     </script>
+
+    <!-- Password Reset Modal -->
+    <div id="resetPasswordModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+        <div style="background-color: white; margin: auto; padding: 0; border-radius: 16px; width: 90%; max-width: 500px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); animation: slideDown 0.3s ease;">
+            <div style="background: var(--header-bg); color: white; padding: 24px; border-radius: 16px 16px 0 0; display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin: 0; font-size: 22px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-key"></i>
+                    Reset User Password
+                </h2>
+                <button onclick="closeResetPasswordModal()" style="background: none; border: none; color: white; font-size: 28px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;">
+                    &times;
+                </button>
+            </div>
+            <form id="resetPasswordForm" method="POST" style="padding: 30px;">
+                <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 24px; border-left: 4px solid #17a2b8;">
+                    <p style="margin: 0; color: #666; font-size: 14px;">
+                        <i class="fas fa-info-circle" style="color: #17a2b8;"></i>
+                        Resetting password for: <strong id="resetUserEmail" style="color: var(--text-dark);"></strong>
+                    </p>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label for="new_password" style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-dark);">
+                        <i class="fas fa-lock"></i> New Password
+                    </label>
+                    <input type="password" id="new_password" name="new_password" required minlength="6"
+                           style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 15px; font-family: inherit;"
+                           placeholder="Enter new password (min 6 characters)">
+                </div>
+                
+                <div style="margin-bottom: 24px;">
+                    <label for="confirm_password" style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-dark);">
+                        <i class="fas fa-lock"></i> Confirm Password
+                    </label>
+                    <input type="password" id="confirm_password" name="confirm_password" required minlength="6"
+                           style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 15px; font-family: inherit;"
+                           placeholder="Confirm new password">
+                </div>
+                
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" onclick="closeResetPasswordModal()"
+                            style="padding: 12px 24px; border: 2px solid var(--border-color); border-radius: 8px; background: white; color: var(--text-dark); font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit"
+                            style="padding: 12px 24px; border: none; border-radius: 8px; background: var(--primary-color); color: white; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+                        <i class="fas fa-key"></i> Reset Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
