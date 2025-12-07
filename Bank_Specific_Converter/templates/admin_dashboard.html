@@ -304,11 +304,18 @@
 
         .users-table tbody tr {
             transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
         }
 
         .users-table tbody tr:hover {
             background: linear-gradient(135deg, #f8fff8 0%, #e8f5ee 100%);
             transform: translateX(2px);
+        }
+        
+        /* Elevate row with open dropdown */
+        .users-table tbody tr:has(.dropdown.show) {
+            z-index: 10000;
         }
 
         .users-table tbody tr:last-child td {
