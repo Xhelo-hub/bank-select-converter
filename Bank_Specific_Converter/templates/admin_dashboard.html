@@ -244,6 +244,7 @@
 
         .section {
             margin-bottom: 35px;
+            overflow: visible;
         }
 
         .section h2 {
@@ -280,7 +281,7 @@
             margin-top: 15px;
             background: white;
             border-radius: var(--radius-md);
-            overflow: hidden;
+            overflow: visible;
             box-shadow: var(--shadow-md);
             border: 2px solid var(--border-color);
         }
@@ -488,6 +489,18 @@
             overflow: hidden;
         }
 
+        /* Auto-adjust dropdown position for last 3 rows */
+        tbody tr:nth-last-child(-n+3) .dropdown-menu {
+            top: auto;
+            bottom: 100%;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        tbody tr:nth-last-child(-n+3) .dropdown-menu.show {
+            animation: slideUp 0.3s ease;
+        }
+
         .dropdown-menu.show {
             display: block;
             animation: slideDown 0.3s ease;
@@ -497,6 +510,17 @@
             from {
                 opacity: 0;
                 transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
             }
             to {
                 opacity: 1;
