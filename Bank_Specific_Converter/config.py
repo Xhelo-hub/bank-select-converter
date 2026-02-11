@@ -9,8 +9,16 @@ import os
 from pathlib import Path
 
 class Config:
-    # Security
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'bank-specific-converter-production-key-change-this'
+    # Security - SECRET_KEY MUST be set via environment variable
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    if not SECRET_KEY:
+        raise RuntimeError("SECRET_KEY environment variable is required. Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\"")
+
+    # Secure session settings
+    SESSION_COOKIE_SECURE = True  # Only send cookie over HTTPS
+    SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access
+    SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
+    PERMANENT_SESSION_LIFETIME = 3600  # 1 hour
     
     # File upload settings
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size

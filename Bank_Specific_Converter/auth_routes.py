@@ -81,8 +81,8 @@ def register():
             flash('Invalid email format', 'error')
             return render_template('register.html')
         
-        if len(password) < 6:
-            flash('Password must be at least 6 characters long', 'error')
+        if len(password) < 12:
+            flash('Password must be at least 12 characters long', 'error')
             return render_template('register.html')
         
         if password != confirm_password:
@@ -102,11 +102,16 @@ def register():
             if os.path.exists(users_file):
                 with open(users_file, 'r') as f:
                     users = json.load(f)
-                    admin_emails = [u['email'] for u in users.values() if u.get('is_admin', False)]
+                    # users.json is a list, not a dict
+                    if isinstance(users, list):
+                        admin_emails = [u['email'] for u in users if u.get('is_admin', False)]
+                    else:
+                        admin_emails = [u['email'] for u in users.values() if u.get('is_admin', False)]
                     if admin_emails:
                         send_new_user_registration_notification(admin_emails, email, email.split('@')[0])
         except Exception as e:
-            print(f"Failed to send admin notification: {e}")
+            # Log error but don't expose details
+            pass
         
         flash('Registration successful! Please log in.', 'success')
         return redirect(url_for('auth.login'))

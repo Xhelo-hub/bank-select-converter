@@ -25,11 +25,17 @@ try:
     from config import Config
     app.config.from_object(Config)
 except ImportError:
-    # Fallback configuration
+    # Fallback configuration - SECRET_KEY required
+    secret_key = os.environ.get('SECRET_KEY')
+    if not secret_key:
+        raise RuntimeError("SECRET_KEY environment variable is required")
     app.config.update(
-        SECRET_KEY=os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production'),
+        SECRET_KEY=secret_key,
         MAX_CONTENT_LENGTH=50 * 1024 * 1024,  # 50MB max
         PERMANENT_SESSION_LIFETIME=3600,
+        SESSION_COOKIE_SECURE=True,
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE='Lax',
     )
 
 # Initialize Flask-Login
@@ -1758,26 +1764,37 @@ def manual_cleanup():
     return redirect(url_for('index'))
 
 @app.route('/server-status')
+@login_required
 def server_status():
-    """Health check endpoint (no auth required for monitoring)"""
+    """Health check endpoint - requires authentication"""
     return jsonify({
         'status': 'running',
         'timestamp': datetime.datetime.now().isoformat(),
-        'upload_folder': str(UPLOAD_FOLDER),
-        'converted_folder': str(CONVERTED_FOLDER),
         'banks_configured': len(BANK_CONFIGS)
     })
 
 @app.route('/api/info')
+@login_required
 def api_info():
-    """API information endpoint (no auth required)"""
+    """API information endpoint - requires authentication"""
     return jsonify({
         'name': 'Albanian Bank Statement Converter',
         'version': '2.0.0',
         'banks': list(BANK_CONFIGS.keys()),
-        'max_file_size': '50MB',
         'supported_formats': list(ALLOWED_EXTENSIONS)
     })
+
+# Security headers for all responses
+@app.after_request
+def add_security_headers(response):
+    """Add security headers to all responses"""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    if request.is_secure:
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    return response
 
 if __name__ == '__main__':
     print("=" * 60)

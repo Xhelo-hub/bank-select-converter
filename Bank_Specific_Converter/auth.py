@@ -201,9 +201,9 @@ class UserManager:
         users = self._load_users()
         for user in users:
             if user.email.lower() == email.lower():
-                # Generate 6-digit code
-                import random
-                reset_token = str(random.randint(100000, 999999))
+                # Generate cryptographically secure token
+                import secrets
+                reset_token = secrets.token_urlsafe(32)
                 
                 # Token expires in 30 minutes
                 expiry = (datetime.now() + timedelta(minutes=30)).isoformat()
