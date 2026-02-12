@@ -11,9 +11,25 @@ import signal
 import json
 import smtplib
 from email.mime.text import MIMEText
+from collections import defaultdict
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 user_manager = UserManager()
+
+def get_stats_file_path():
+    """Get the path to conversion stats file"""
+    return os.path.join(os.path.dirname(__file__), 'conversion_stats.json')
+
+def load_stats():
+    """Load conversion stats from JSON file"""
+    stats_path = get_stats_file_path()
+    if os.path.exists(stats_path):
+        try:
+            with open(stats_path, 'r') as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {"total_conversions": 0, "total_downloads": 0, "conversions": [], "downloads": []}
 
 def get_email_config_path():
     """Get the path to email configuration file"""
@@ -64,12 +80,35 @@ def dashboard():
     """Admin dashboard for managing users"""
     pending_users = user_manager.get_pending_users()
     all_users = user_manager.get_all_users()
-    
+
+    # Load conversion/download stats
+    stats = load_stats()
+    total_conversions = stats.get("total_conversions", 0)
+    total_downloads = stats.get("total_downloads", 0)
+
+    # Per-user aggregates
+    user_stats = defaultdict(lambda: {"conversions": 0, "downloads": 0})
+    for c in stats.get("conversions", []):
+        user_stats[c["user_email"]]["conversions"] += 1
+    for d in stats.get("downloads", []):
+        user_stats[d["user_email"]]["downloads"] += 1
+    user_stats = dict(user_stats)
+
+    # Per-bank counts
+    bank_stats = defaultdict(int)
+    for c in stats.get("conversions", []):
+        bank_stats[c.get("bank", "Unknown")] += 1
+    bank_stats = dict(sorted(bank_stats.items(), key=lambda x: x[1], reverse=True))
+
     return render_template('admin_dashboard.html',
                          pending_users=pending_users,
                          all_users=all_users,
                          pending_count=len(pending_users),
-                         total_users=len(all_users))
+                         total_users=len(all_users),
+                         total_conversions=total_conversions,
+                         total_downloads=total_downloads,
+                         user_stats=user_stats,
+                         bank_stats=bank_stats)
 
 @admin_bp.route('/approve/<user_id>')
 @login_required

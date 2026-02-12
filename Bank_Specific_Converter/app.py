@@ -10,6 +10,7 @@ import datetime
 import uuid
 import time
 import threading
+import json
 from pathlib import Path
 
 # Import authentication components
@@ -138,6 +139,58 @@ BANK_CONFIGS = {
 # Job status tracking
 jobs = {}
 jobs_lock = threading.Lock()
+
+# Conversion stats tracking
+STATS_FILE = BASE_DIR / 'conversion_stats.json'
+stats_lock = threading.Lock()
+
+def load_stats():
+    """Load conversion stats from JSON file"""
+    try:
+        if STATS_FILE.exists():
+            with open(STATS_FILE, 'r') as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"Error loading stats: {e}")
+    return {"total_conversions": 0, "total_downloads": 0, "conversions": [], "downloads": []}
+
+def save_stats(stats):
+    """Save conversion stats to JSON file"""
+    try:
+        with open(STATS_FILE, 'w') as f:
+            json.dump(stats, f, indent=2)
+    except Exception as e:
+        print(f"Error saving stats: {e}")
+
+def log_conversion(user_email, user_id, bank, original_filename, output_filename, success):
+    """Log a conversion event"""
+    with stats_lock:
+        stats = load_stats()
+        stats["total_conversions"] += 1
+        stats["conversions"].append({
+            "user_email": user_email,
+            "user_id": user_id,
+            "bank": bank,
+            "original_filename": original_filename,
+            "output_filename": output_filename,
+            "timestamp": datetime.datetime.now().isoformat(),
+            "success": success
+        })
+        save_stats(stats)
+
+def log_download(user_email, user_id, job_id, filename):
+    """Log a download event"""
+    with stats_lock:
+        stats = load_stats()
+        stats["total_downloads"] += 1
+        stats["downloads"].append({
+            "user_email": user_email,
+            "user_id": user_id,
+            "job_id": job_id,
+            "filename": filename,
+            "timestamp": datetime.datetime.now().isoformat()
+        })
+        save_stats(stats)
 
 def allowed_file(filename):
     """Check if file extension is allowed"""
@@ -1418,7 +1471,11 @@ def convert_file():
                     'timestamp': time.time(),
                     'user_id': current_user.id
                 }
-            
+
+            # Log successful conversion
+            log_conversion(current_user.email, current_user.id, bank_id,
+                          original_filename, output_file.name, True)
+
             return jsonify({
                 'success': True,
                 'job_id': job_id,
@@ -1484,7 +1541,10 @@ def download_file(job_id):
         )
         
         print(f"File downloaded for job {job_id}. File will be auto-cleaned after 1 hour.")
-        
+
+        # Log download
+        log_download(current_user.email, current_user.id, job_id, output_filename)
+
         return response
         
     except Exception as e:

@@ -628,6 +628,54 @@
             .upload-btn, .delete-logo-btn { width: 100%; justify-content: center; }
         }
 
+        /* Bank Usage */
+        .bank-usage {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .bank-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .bank-label {
+            width: 80px;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text);
+            flex-shrink: 0;
+        }
+
+        .bank-bar-track {
+            flex: 1;
+            height: 28px;
+            background: var(--surface-alt);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .bank-bar-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 8px;
+            min-width: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .bank-count {
+            width: 40px;
+            text-align: right;
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
         @media (max-width: 600px) {
             .content-wrapper { padding: 16px; }
             .users-table { display: block; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
@@ -766,6 +814,14 @@
             <div class="stat-card">
                 <h3>{{ total_users }}</h3>
                 <p>Total Users</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ total_conversions }}</h3>
+                <p>Total Conversions</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ total_downloads }}</h3>
+                <p>Total Downloads</p>
             </div>
         </div>
 
@@ -923,6 +979,52 @@
                 </div>
             {% endif %}
         </div>
+
+        <div class="section">
+            <h2><i class="fas fa-chart-bar"></i> Conversion Activity</h2>
+            {% if user_stats %}
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>User Email</th>
+                            <th>Conversions</th>
+                            <th>Downloads</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for email, counts in user_stats.items() %}
+                            <tr>
+                                <td data-label="Email">{{ email }}</td>
+                                <td data-label="Conversions">{{ counts.conversions }}</td>
+                                <td data-label="Downloads">{{ counts.downloads }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="no-users">
+                    <p>No conversion activity yet</p>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if bank_stats %}
+        <div class="section">
+            <h2><i class="fas fa-university"></i> Bank Usage</h2>
+            <div class="bank-usage">
+                {% for bank, count in bank_stats.items() %}
+                    <div class="bank-bar-row">
+                        <span class="bank-label">{{ bank }}</span>
+                        <div class="bank-bar-track">
+                            <div class="bank-bar-fill" style="width: {{ (count / total_conversions * 100) | round(1) if total_conversions else 0 }}%"></div>
+                        </div>
+                        <span class="bank-count">{{ count }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
         </div>
     </div>
 
