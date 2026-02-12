@@ -4,817 +4,267 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Bank Statement Converter</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #33cc66;
-            --primary-hover: #2eb85c;
-            --header-bg: #2b2b38;
-            --text-dark: #1a1a1a;
-            --text-secondary: #666666;
-            --border-color: #e0e0e0;
-            --bg-gradient: linear-gradient(135deg, #f8fff8 0%, #e8f5ee 100%);
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
-            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
+            --primary: #4f46e5;
+            --primary-light: #6366f1;
+            --primary-dark: #4338ca;
+            --accent: #06b6d4;
+            --surface: #ffffff;
+            --surface-dim: #f8fafc;
+            --surface-alt: #f1f5f9;
+            --text: #0f172a;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --border-light: #f1f5f9;
+            --success: #10b981;
+            --success-light: #ecfdf5;
+            --error: #ef4444;
+            --error-light: #fef2f2;
+            --warning: #f59e0b;
+            --warning-light: #fffbeb;
+            --info: #3b82f6;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 6px 24px rgba(0,0,0,0.06);
+            --shadow-lg: 0 4px 12px rgba(0,0,0,0.05), 0 20px 48px rgba(0,0,0,0.1);
         }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg-gradient);
+            background: var(--surface-dim);
             min-height: 100vh;
-            padding: 20px;
-            color: var(--text-dark);
+            padding: 24px;
+            color: var(--text);
+        }
+
+        .page-bg {
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(79, 70, 229, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.04) 0%, transparent 50%);
+            z-index: 0;
         }
 
         .container {
+            position: relative;
+            z-index: 1;
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            border-radius: var(--radius-lg);
+            background: var(--surface);
+            border-radius: var(--radius);
             box-shadow: var(--shadow-lg);
-            padding: 0;
             overflow: hidden;
+            border: 1px solid var(--border-light);
         }
 
         .header {
-            background: var(--header-bg);
-            padding: 30px 40px;
-            margin: 0;
-            border-bottom: none;
+            background: var(--primary);
+            padding: 24px 36px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 20px;
         }
-        
+
         .header-left {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 16px;
         }
-        
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
+
         .admin-logo {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-            border-radius: var(--radius-md);
+            width: 48px;
+            height: 48px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 2em;
+            font-size: 18px;
             font-weight: 700;
-            box-shadow: 0 4px 12px rgba(51, 204, 102, 0.3);
         }
-        
+
         .admin-logo img {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
         }
 
-        .header-text {
-            flex: 1;
-        }
-
         .header h1 {
             color: white;
-            font-size: 1.8em;
-            margin-bottom: 5px;
-            font-weight: 600;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
         }
 
-        .header p {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.95em;
-            font-weight: 500;
-            margin: 0;
-        }
-        
         .header-actions {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             align-items: center;
             flex-wrap: wrap;
         }
-        
+
         .user-info-header {
             color: white;
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.12);
             border-radius: var(--radius-sm);
-            font-size: 14px;
-            font-weight: 600;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            white-space: nowrap;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid rgba(255,255,255,0.15);
             display: flex;
             align-items: center;
             gap: 8px;
+            white-space: nowrap;
         }
-        
-        .user-info-header i {
-            font-size: 16px;
-        }
-        
-        .user-info-header strong {
-            font-weight: 700;
-        }
-        
+
+        .user-info-header strong { font-weight: 600; }
+
         .header-actions a {
             color: white;
             text-decoration: none;
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.12);
             border-radius: var(--radius-sm);
-            transition: all 0.3s ease;
-            font-size: 14px;
-            font-weight: 600;
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.2s ease;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid rgba(255,255,255,0.15);
             white-space: nowrap;
-        }
-        
-        .header-actions a:hover {
-            background: var(--primary-color);
-            border-color: var(--primary-color);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-        
-        .content-wrapper {
-            padding: 40px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .flash-messages {
-            margin-bottom: 20px;
+        .header-actions a:hover {
+            background: rgba(255,255,255,0.22);
+            transform: translateY(-1px);
         }
+
+        .content-wrapper { padding: 32px 36px; }
+
+        .flash-messages { margin-bottom: 20px; }
 
         .alert {
-            padding: 14px 20px;
-            border-radius: var(--radius-md);
-            margin-bottom: 12px;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             animation: slideIn 0.3s ease;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
-            border: 2px solid transparent;
         }
 
         @keyframes slideIn {
-            from {
-                transform: translateY(-10px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+            from { transform: translateY(-8px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border-color: #c3e6cb;
+        .alert-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+        .alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .alert-warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+        .alert-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+
+        /* System Settings Bar */
+        .server-control {
+            background: var(--surface-alt);
+            padding: 18px 22px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border);
         }
 
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border-color: #f5c6cb;
-        }
-
-        .alert-warning {
-            background: #fff3cd;
-            color: #856404;
-            border-color: #ffeeba;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 35px;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, #ffffff 0%, #f8fff8 100%);
-            padding: 25px;
-            border-radius: var(--radius-md);
-            text-align: center;
-            border: 2px solid var(--border-color);
-            transition: all 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow-md);
-            border-color: var(--primary-color);
-        }
-
-        .stat-card h3 {
-            font-size: 2.5em;
-            color: var(--primary-color);
-            margin-bottom: 8px;
-            font-weight: 700;
-        }
-
-        .stat-card p {
+        .server-control .info {
             color: var(--text-secondary);
-            font-size: 0.95em;
             font-weight: 500;
-        }
-
-        .section {
-            margin-bottom: 35px;
-            overflow: visible;
-        }
-
-        .section h2 {
-            color: var(--header-bg);
-            font-size: 1.6em;
-            margin-bottom: 20px;
-            font-weight: 600;
-            padding-bottom: 12px;
-            border-bottom: 3px solid var(--primary-color);
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border-color: #c3e6cb;
-        }
-
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border-color: #f5c6cb;
-        }
-
-        .alert-info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border-color: #bee5eb;
-        }
-
-        .users-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            margin-top: 15px;
-            background: white;
-            border-radius: var(--radius-md);
-            overflow: visible;
-            box-shadow: var(--shadow-md);
-            border: 2px solid var(--border-color);
-        }
-
-        .users-table th,
-        .users-table td {
-            padding: 16px 14px;
-            text-align: left;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .users-table th {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-            color: white;
-            font-weight: 600;
             font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .users-table tbody tr {
-            transition: all 0.3s ease;
-            position: relative;
-            z-index: 1;
+        .server-control .info i { color: var(--primary); font-size: 16px; }
+
+        .settings-buttons {
+            display: flex;
+            gap: 10px;
         }
 
-        .users-table tbody tr:hover {
-            background: linear-gradient(135deg, #f8fff8 0%, #e8f5ee 100%);
-            transform: translateX(2px);
-        }
-        
-        /* Elevate row with open dropdown */
-        .users-table tbody tr:has(.dropdown.show) {
-            z-index: 10000;
-        }
-
-        .users-table tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        .btn {
-            padding: 8px 16px;
+        .settings-btn {
+            color: white;
             border: none;
+            padding: 10px 20px;
             border-radius: var(--radius-sm);
             cursor: pointer;
             font-size: 13px;
             font-weight: 600;
-            font-family: 'Inter', sans-serif;
-            text-decoration: none;
-            display: inline-block;
-            margin: 2px;
-            transition: all 0.3s ease;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .btn-approve {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-            color: white;
-        }
-
-        .btn-approve:hover {
-            box-shadow: 0 4px 12px rgba(51, 204, 102, 0.4);
-        }
-
-        .btn-reject {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-            color: white;
-        }
-
-        .btn-reject:hover {
-            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
-        }
-
-        .btn-deactivate {
-            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-            color: white;
-        }
-
-        .btn-deactivate:hover {
-            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
-        }
-
-        .btn-activate {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-            color: white;
-        }
-
-        .btn-activate:hover {
-            box-shadow: 0 4px 12px rgba(51, 204, 102, 0.4);
-        }
-
-        .btn-delete {
-            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-            color: white;
-        }
-
-        .btn-delete:hover {
-            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
-        }
-
-        .btn-promote {
-            background: linear-gradient(135deg, var(--header-bg) 0%, #1a1a24 100%);
-            color: white;
-        }
-
-        .btn-promote:hover {
-            box-shadow: 0 4px 12px rgba(43, 43, 56, 0.4);
-        }
-
-        .btn-demote {
-            background: linear-gradient(135deg, #fd7e14 0%, #e8590c 100%);
-            color: white;
-        }
-
-        .btn-demote:hover {
-            background: #e67e22;
-        }
-
-        .btn-back {
-            background: #667eea;
-            color: white;
-            padding: 12px 30px;
-            display: inline-block;
-            margin-top: 20px;
-        }
-
-        .btn-back:hover {
-            background: #764ba2;
-        }
-
-        .no-users {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 5px 14px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 600;
-        }
-
-        .badge-pending {
-            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
-            color: white;
-        }
-
-        .badge-approved {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-            color: white;
-        }
-
-        .badge-admin {
-            background: linear-gradient(135deg, var(--header-bg) 0%, #1a1a24 100%);
-            color: white;
-        }
-
-        .badge-active {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-            color: white;
-        }
-
-        .badge-inactive {
-            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-            color: white;
-        }
-        
-        /* Dropdown Menu Styles */
-        .dropdown {
-            position: relative;
-            display: inline-block;
-            z-index: 100;
-        }
-        
-        .dropdown.show {
-            z-index: 9999;
-        }
-
-        .dropdown-toggle {
-            background: var(--primary-color);
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .dropdown-toggle:hover {
-            background: var(--primary-hover);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .dropdown-menu {
-            display: none;
-            position: absolute;
-            right: 0;
-            background: white;
-            min-width: 220px;
-            box-shadow: var(--shadow-lg);
-            border-radius: var(--radius-md);
-            z-index: 9999;
-            margin-top: 8px;
-            border: 2px solid var(--border-color);
-            overflow: hidden;
-        }
-
-        /* Auto-adjust dropdown position for last 3 rows */
-        tbody tr:nth-last-child(-n+3) .dropdown-menu {
-            top: auto;
-            bottom: 100%;
-            margin-top: 0;
-            margin-bottom: 8px;
-        }
-
-        tbody tr:nth-last-child(-n+3) .dropdown-menu.show {
-            animation: slideUp 0.3s ease;
-        }
-
-        .dropdown-menu.show {
-            display: block;
-            animation: slideDown 0.3s ease;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .dropdown-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 16px;
-            color: var(--text-dark);
-            text-decoration: none;
+            font-family: inherit;
             transition: all 0.2s ease;
-            cursor: pointer;
-            border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
-            font-size: 14px;
-        }
-
-        .dropdown-item:hover {
-            background: #f8f9fa;
-        }
-
-        .dropdown-item i {
-            width: 20px;
-            text-align: center;
-        }
-
-        .dropdown-divider {
-            height: 1px;
-            background: var(--border-color);
-            margin: 4px 0;
-        }
-
-        .dropdown-item.danger {
-            color: var(--danger-color);
-        }
-
-        .dropdown-item.danger:hover {
-            background: #fee;
-        }
-
-        .dropdown-item.warning {
-            color: var(--warning-color);
-        }
-
-        .dropdown-item.warning:hover {
-            background: #fff9e6;
-        }
-
-        .dropdown-item.success {
-            color: var(--success-color);
-        }
-
-        .dropdown-item.success:hover {
-            background: #f0fff4;
-        }
-
-        .dropdown-item.info {
-            color: #17a2b8;
-        }
-
-        .dropdown-item.info:hover {
-            background: #e7f7f9;
-        }
-        
-        /* Mobile responsiveness */
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-            .container {
-                border-radius: var(--radius-md);
-            }
-            .header {
-                flex-direction: column;
-                padding: 25px 20px;
-                text-align: center;
-            }
-            .header-left {
-                flex-direction: column;
-                width: 100%;
-                text-align: center;
-            }
-            .logo-container {
-                flex-direction: column;
-                gap: 12px;
-            }
-            .header-text {
-                width: 100%;
-            }
-            .header h1 {
-                font-size: 1.6em;
-            }
-            .header p {
-                font-size: 0.9em;
-            }
-            .header-actions {
-                width: 100%;
-                justify-content: center;
-                flex-direction: column;
-            }
-            .user-info-header {
-                width: 100%;
-                order: 3;
-                justify-content: center;
-                text-align: center;
-            }
-            .header-actions a:nth-child(2) {
-                order: 1;
-            }
-            .header-actions a:nth-child(3) {
-                order: 2;
-            }
-            .content-wrapper {
-                padding: 20px;
-            }
-            .stats {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-            .users-table {
-                font-size: 13px;
-            }
-            .users-table th,
-            .users-table td {
-                padding: 10px 8px;
-            }
-            .btn {
-                padding: 8px 12px;
-                font-size: 13px;
-            }
-            .badge {
-                font-size: 0.75em;
-                padding: 3px 8px;
-            }
-        }
-        
-        @media (max-width: 600px) {
-            .content-wrapper {
-                padding: 15px;
-            }
-            .header h1 {
-                font-size: 1.4em;
-            }
-            /* Stack table on mobile */
-            .users-table {
-                display: block;
-                overflow-x: auto;
-                white-space: nowrap;
-                -webkit-overflow-scrolling: touch;
-            }
-            .users-table thead,
-            .users-table tbody,
-            .users-table tr,
-            .users-table th,
-            .users-table td {
-                display: block;
-            }
-            .users-table tr {
-                margin-bottom: 15px;
-                border: 2px solid var(--primary-color);
-                border-radius: var(--radius-md);
-                padding: 10px;
-                background: #f9f9f9;
-            }
-            .users-table thead {
-                display: none;
-            }
-            .users-table td {
-                text-align: left;
-                padding: 8px;
-                position: relative;
-                border: none;
-                white-space: normal;
-            }
-            .users-table td::before {
-                content: attr(data-label);
-                font-weight: bold;
-                display: inline-block;
-                width: 100px;
-                margin-right: 10px;
-                color: var(--primary-color);
-            }
-            .btn {
-                margin: 5px 0;
-                display: inline-block;
-            }
-        }
-
-        .server-control {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
-            padding: 20px 25px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid #ffc107;
-        }
-
-        .server-control .info {
-            color: #856404;
-            font-weight: 500;
-            font-size: 15px;
-        }
-
-        .server-control .info i {
-            margin-right: 8px;
-            font-size: 18px;
-        }
-
-        .restart-btn {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            border: none;
-            padding: 12px 28px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 600;
-            transition: all 0.3s;
             display: flex;
             align-items: center;
             gap: 8px;
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+            text-decoration: none;
         }
 
-        .restart-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
-        }
+        .settings-btn:hover { transform: translateY(-1px); }
 
-        .restart-btn i {
-            font-size: 16px;
-        }
+        .settings-btn.email { background: #0891b2; }
+        .settings-btn.email:hover { background: #0e7490; box-shadow: 0 4px 12px rgba(8,145,178,0.3); }
 
+        .settings-btn.restart { background: var(--success); }
+        .settings-btn.restart:hover { background: #059669; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+
+        /* Logo Management */
         .logo-management {
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-            padding: 25px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            border: 1px solid #2196F3;
+            background: var(--surface-alt);
+            padding: 24px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 28px;
+            border: 1px solid var(--border);
         }
 
         .logo-management h3 {
-            color: #1565C0;
-            font-size: 18px;
-            margin-bottom: 15px;
+            color: var(--text);
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 16px;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .logo-management h3 i {
-            font-size: 20px;
-        }
+        .logo-management h3 i { color: var(--primary); }
 
         .logo-content {
             display: flex;
-            gap: 25px;
+            gap: 24px;
             align-items: flex-start;
         }
 
-        .logo-preview {
-            flex-shrink: 0;
-        }
-
         .logo-preview-box {
-            width: 120px;
-            height: 120px;
-            border: 2px solid #2196F3;
-            border-radius: 8px;
+            width: 100px;
+            height: 100px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
-            background: white;
+            background: var(--surface);
             padding: 10px;
+            flex-shrink: 0;
         }
 
         .logo-preview-box img {
@@ -824,32 +274,34 @@
         }
 
         .logo-placeholder-preview {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #33cc66 0%, #2eb85c 100%);
-            border-radius: 8px;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 2em;
+            font-size: 1.5em;
             font-weight: 700;
-            box-shadow: 0 4px 12px rgba(51, 204, 102, 0.3);
         }
 
-        .logo-controls {
-            flex: 1;
-        }
+        .logo-controls { flex: 1; }
 
         .logo-info {
-            color: #1565C0;
-            font-size: 14px;
-            margin-bottom: 15px;
-            background: white;
-            padding: 12px;
-            border-radius: 6px;
-            border-left: 3px solid #2196F3;
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 14px;
+            background: var(--surface);
+            padding: 10px 14px;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+
+        .logo-info i { color: var(--primary); }
 
         .logo-upload-form {
             display: flex;
@@ -858,121 +310,362 @@
         }
 
         .file-input-wrapper {
-            position: relative;
             display: flex;
             gap: 10px;
             align-items: center;
         }
 
-        .file-input-wrapper input[type="file"] {
-            display: none;
-        }
+        .file-input-wrapper input[type="file"] { display: none; }
 
         .file-input-label {
-            background: white;
-            color: #1565C0;
-            border: 2px solid #2196F3;
-            padding: 10px 20px;
-            border-radius: 8px;
+            background: var(--surface);
+            color: var(--primary);
+            border: 1.5px solid var(--primary);
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.3s;
+            font-size: 13px;
+            transition: all 0.2s;
             display: inline-flex;
             align-items: center;
             gap: 8px;
         }
 
-        .file-input-label:hover {
-            background: #2196F3;
+        .file-input-label:hover { background: var(--primary); color: white; }
+
+        .file-name { color: var(--text-secondary); font-size: 13px; font-weight: 500; }
+
+        .logo-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .upload-btn, .delete-logo-btn {
+            border: none;
+            padding: 8px 18px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: inherit;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             color: white;
         }
 
-        .file-name {
-            color: #1565C0;
-            font-size: 14px;
+        .upload-btn { background: var(--primary); }
+        .upload-btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .upload-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        .delete-logo-btn { background: var(--error); }
+        .delete-logo-btn:hover { background: #dc2626; transform: translateY(-1px); }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            padding: 24px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            border: 1.5px solid var(--border);
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card h3 {
+            font-size: 2.2em;
+            color: var(--primary);
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .stat-card p {
+            color: var(--text-secondary);
+            font-size: 13px;
             font-weight: 500;
         }
 
-        .logo-actions {
+        /* Sections */
+        .section {
+            margin-bottom: 32px;
+            overflow: visible;
+        }
+
+        .section h2 {
+            color: var(--text);
+            font-size: 18px;
+            margin-bottom: 16px;
+            font-weight: 700;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
             display: flex;
+            align-items: center;
             gap: 10px;
-            flex-wrap: wrap;
         }
 
-        .upload-btn {
-            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-            color: white;
+        /* Table */
+        .users-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 12px;
+            background: var(--surface);
+            border-radius: var(--radius-sm);
+            overflow: visible;
+            border: 1px solid var(--border);
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .users-table th {
+            background: var(--surface-alt);
+            color: var(--text);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .users-table tbody tr {
+            transition: all 0.15s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .users-table tbody tr:hover { background: var(--surface-dim); }
+        .users-table tbody tr:has(.dropdown.show) { z-index: 10000; }
+        .users-table tbody tr:last-child td { border-bottom: none; }
+
+        /* Buttons */
+        .btn {
+            padding: 7px 14px;
             border: none;
-            padding: 10px 24px;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
-            transition: all 0.3s;
-            display: flex;
+            font-family: inherit;
+            text-decoration: none;
+            display: inline-flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
-        }
-
-        .upload-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4);
-        }
-
-        .upload-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .delete-logo-btn {
-            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            gap: 4px;
+            margin: 2px;
+            transition: all 0.2s ease;
             color: white;
+        }
+
+        .btn:hover { transform: translateY(-1px); }
+
+        .btn-approve { background: var(--success); }
+        .btn-approve:hover { background: #059669; box-shadow: 0 2px 8px rgba(16,185,129,0.3); }
+
+        .btn-reject { background: var(--error); }
+        .btn-reject:hover { background: #dc2626; box-shadow: 0 2px 8px rgba(239,68,68,0.3); }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-approved { background: #d1fae5; color: #065f46; }
+        .badge-admin { background: #e0e7ff; color: #3730a3; }
+        .badge-active { background: #d1fae5; color: #065f46; }
+        .badge-inactive { background: #f1f5f9; color: #475569; }
+
+        /* Dropdown */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+            z-index: 100;
+        }
+
+        .dropdown.show { z-index: 9999; }
+
+        .dropdown-toggle {
+            background: var(--primary);
+            color: white;
+            padding: 8px 16px;
             border: none;
-            padding: 10px 24px;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
-            transition: all 0.3s;
+            font-family: inherit;
             display: flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+            gap: 6px;
+            transition: all 0.2s ease;
         }
 
-        .delete-logo-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(244, 67, 54, 0.4);
+        .dropdown-toggle:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
         }
 
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            background: var(--surface);
+            min-width: 210px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+            border-radius: var(--radius-sm);
+            z-index: 9999;
+            margin-top: 6px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        tbody tr:nth-last-child(-n+3) .dropdown-menu {
+            top: auto;
+            bottom: 100%;
+            margin-top: 0;
+            margin-bottom: 6px;
+        }
+
+        tbody tr:nth-last-child(-n+3) .dropdown-menu.show {
+            animation: slideUp 0.2s ease;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+            animation: slideDown 0.2s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            color: var(--text);
+            text-decoration: none;
+            transition: background 0.15s ease;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .dropdown-item:hover { background: var(--surface-dim); }
+        .dropdown-item i { width: 18px; text-align: center; font-size: 13px; }
+
+        .dropdown-divider {
+            height: 1px;
+            background: var(--border-light);
+            margin: 4px 0;
+        }
+
+        .dropdown-item.danger { color: var(--error); }
+        .dropdown-item.danger:hover { background: var(--error-light); }
+        .dropdown-item.warning { color: #d97706; }
+        .dropdown-item.warning:hover { background: var(--warning-light); }
+        .dropdown-item.success { color: #059669; }
+        .dropdown-item.success:hover { background: var(--success-light); }
+        .dropdown-item.info { color: var(--info); }
+        .dropdown-item.info:hover { background: #eff6ff; }
+
+        .no-users {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Mobile */
         @media (max-width: 768px) {
-            .logo-content {
+            body { padding: 12px; }
+            .header {
                 flex-direction: column;
+                padding: 20px;
+                text-align: center;
             }
+            .header-left { flex-direction: column; width: 100%; text-align: center; }
+            .header h1 { font-size: 18px; }
+            .header-actions { width: 100%; justify-content: center; flex-direction: column; }
+            .user-info-header { width: 100%; justify-content: center; order: 3; }
+            .content-wrapper { padding: 20px; }
+            .stats { grid-template-columns: 1fr; gap: 12px; }
+            .server-control { flex-direction: column; gap: 12px; }
+            .settings-buttons { width: 100%; }
+            .settings-btn { flex: 1; justify-content: center; }
+            .logo-content { flex-direction: column; }
+            .logo-actions { flex-direction: column; }
+            .upload-btn, .delete-logo-btn { width: 100%; justify-content: center; }
+        }
 
-            .logo-actions {
-                flex-direction: column;
+        @media (max-width: 600px) {
+            .content-wrapper { padding: 16px; }
+            .users-table { display: block; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+            .users-table thead, .users-table tbody, .users-table tr, .users-table th, .users-table td { display: block; }
+            .users-table tr {
+                margin-bottom: 12px;
+                border: 1.5px solid var(--border);
+                border-radius: var(--radius-sm);
+                padding: 10px;
+                background: var(--surface-dim);
             }
-
-            .upload-btn, .delete-logo-btn {
-                width: 100%;
-                justify-content: center;
+            .users-table thead { display: none; }
+            .users-table td {
+                text-align: left;
+                padding: 8px;
+                position: relative;
+                border: none;
+                white-space: normal;
+            }
+            .users-table td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                display: inline-block;
+                width: 100px;
+                margin-right: 10px;
+                color: var(--primary);
+                font-size: 12px;
             }
         }
     </style>
 </head>
 <body>
+    <div class="page-bg"></div>
     <div class="container">
         <div class="header">
             <div class="header-left">
-                <div class="logo-container">
-                    <div class="admin-logo" id="adminHeaderLogo">BS</div>
-                    <div class="header-text">
-                        <h1>Admin Dashboard</h1>
-                    </div>
-                </div>
+                <div class="admin-logo" id="adminHeaderLogo">BS</div>
+                <h1>Admin Dashboard</h1>
             </div>
             <div class="header-actions">
                 <div class="user-info-header">
@@ -994,13 +687,13 @@
                 <i class="fas fa-cog"></i>
                 <strong>System Settings:</strong> Configure email notifications and server settings
             </div>
-            <div style="display: flex; gap: 12px;">
-                <a href="{{ url_for('admin.email_settings') }}" class="restart-btn" style="text-decoration: none; background: #17a2b8; flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <div class="settings-buttons">
+                <a href="{{ url_for('admin.email_settings') }}" class="settings-btn email">
                     <i class="fas fa-envelope"></i>
                     Email Settings
                 </a>
-                <form method="POST" action="{{ url_for('admin.restart_server') }}" style="margin: 0; flex: 1;" onsubmit="return confirm('Are you sure you want to restart the server? This will briefly interrupt service.');">
-                    <button type="submit" class="restart-btn" style="width: 100%;">
+                <form method="POST" action="{{ url_for('admin.restart_server') }}" style="margin: 0;" onsubmit="return confirm('Are you sure you want to restart the server? This will briefly interrupt service.');">
+                    <button type="submit" class="settings-btn restart">
                         <i class="fas fa-sync-alt"></i>
                         Restart Server
                     </button>
@@ -1024,7 +717,7 @@
                         <i class="fas fa-info-circle"></i>
                         Upload a custom 80x80px logo (PNG, JPG, or SVG). The system will automatically resize images to fit.
                     </div>
-                    
+
                     <form method="POST" action="{{ url_for('admin.upload_logo') }}" enctype="multipart/form-data" id="logoUploadForm">
                         <div class="logo-upload-form">
                             <div class="file-input-wrapper">
@@ -1035,13 +728,13 @@
                                 </label>
                                 <span class="file-name" id="fileName">No file chosen</span>
                             </div>
-                            
+
                             <div class="logo-actions">
                                 <button type="submit" class="upload-btn" id="uploadBtn" disabled>
                                     <i class="fas fa-cloud-upload-alt"></i>
                                     Upload Logo
                                 </button>
-                                
+
                                 <button type="button" class="delete-logo-btn" onclick="deleteLogo()">
                                     <i class="fas fa-trash-alt"></i>
                                     Delete Logo
@@ -1095,15 +788,15 @@
                                 <td data-label="Registration Date">{{ user.created_at[:10] }}</td>
                                 <td data-label="Status"><span class="badge badge-pending">Pending</span></td>
                                 <td data-label="Actions">
-                                    <a href="{{ url_for('admin.approve_user', user_id=user.id) }}" 
+                                    <a href="{{ url_for('admin.approve_user', user_id=user.id) }}"
                                        class="btn btn-approve"
                                        onclick="return confirm('Approve user {{ user.email }}?')">
-                                        ✓ Approve
+                                        <i class="fas fa-check"></i> Approve
                                     </a>
-                                    <a href="{{ url_for('admin.reject_user', user_id=user.id) }}" 
+                                    <a href="{{ url_for('admin.reject_user', user_id=user.id) }}"
                                        class="btn btn-reject"
                                        onclick="return confirm('Reject and delete user {{ user.email }}?')">
-                                        ✗ Reject
+                                        <i class="fas fa-times"></i> Reject
                                     </a>
                                 </td>
                             </tr>
@@ -1145,9 +838,9 @@
                                 </td>
                                 <td data-label="Status">
                                     {% if user.is_active %}
-                                        <span class="badge badge-active">🟢 Active</span>
+                                        <span class="badge badge-active">Active</span>
                                     {% else %}
-                                        <span class="badge badge-inactive">⚫ Inactive</span>
+                                        <span class="badge badge-inactive">Inactive</span>
                                     {% endif %}
                                 </td>
                                 <td data-label="Role">
@@ -1159,62 +852,58 @@
                                 </td>
                                 <td data-label="Actions">
                                     {% if user.id == current_user.id %}
-                                        <span style="color: #999; font-style: italic;">You (cannot self-modify)</span>
+                                        <span style="color: var(--text-muted); font-style: italic; font-size: 13px;">You</span>
                                     {% else %}
                                         <div class="dropdown">
                                             <button class="dropdown-toggle" onclick="toggleDropdown(event, 'dropdown-{{ user.id }}')">
-                                                <i class="fas fa-cog"></i>
+                                                <i class="fas fa-ellipsis-h"></i>
                                                 Actions
-                                                <i class="fas fa-chevron-down"></i>
+                                                <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
                                             </button>
                                             <div id="dropdown-{{ user.id }}" class="dropdown-menu">
-                                                <!-- Role Management -->
                                                 {% if user.is_admin %}
-                                                    <a href="{{ url_for('admin.demote_user', user_id=user.id) }}" 
+                                                    <a href="{{ url_for('admin.demote_user', user_id=user.id) }}"
                                                        class="dropdown-item warning"
                                                        onclick="return confirm('Remove admin rights from {{ user.email }}?')">
                                                         <i class="fas fa-user-minus"></i>
                                                         Remove Admin
                                                     </a>
                                                 {% else %}
-                                                    <a href="{{ url_for('admin.promote_user', user_id=user.id) }}" 
+                                                    <a href="{{ url_for('admin.promote_user', user_id=user.id) }}"
                                                        class="dropdown-item success"
                                                        onclick="return confirm('Promote {{ user.email }} to admin?')">
                                                         <i class="fas fa-user-shield"></i>
                                                         Make Admin
                                                     </a>
                                                 {% endif %}
-                                                
+
                                                 <div class="dropdown-divider"></div>
-                                                
-                                                <!-- Status Management -->
+
                                                 {% if user.is_active %}
-                                                    <a href="{{ url_for('admin.deactivate_user', user_id=user.id) }}" 
+                                                    <a href="{{ url_for('admin.deactivate_user', user_id=user.id) }}"
                                                        class="dropdown-item warning"
                                                        onclick="return confirm('Deactivate {{ user.email }}? They will not be able to login.')">
                                                         <i class="fas fa-pause-circle"></i>
                                                         Deactivate Account
                                                     </a>
                                                 {% else %}
-                                                    <a href="{{ url_for('admin.activate_user', user_id=user.id) }}" 
+                                                    <a href="{{ url_for('admin.activate_user', user_id=user.id) }}"
                                                        class="dropdown-item success">
                                                         <i class="fas fa-play-circle"></i>
                                                         Activate Account
                                                     </a>
                                                 {% endif %}
-                                                
+
                                                 <div class="dropdown-divider"></div>
-                                                
-                                                <!-- Password Reset -->
+
                                                 <button type="button" class="dropdown-item info" onclick="showResetPasswordModal('{{ user.id }}', '{{ user.email }}')">
                                                     <i class="fas fa-key"></i>
                                                     Reset Password
                                                 </button>
-                                                
+
                                                 <div class="dropdown-divider"></div>
-                                                
-                                                <!-- Delete -->
-                                                <a href="{{ url_for('admin.delete_user', user_id=user.id) }}" 
+
+                                                <a href="{{ url_for('admin.delete_user', user_id=user.id) }}"
                                                    class="dropdown-item danger"
                                                    onclick="return confirm('Permanently delete {{ user.email }}? This cannot be undone!')">
                                                     <i class="fas fa-trash-alt"></i>
@@ -1234,30 +923,26 @@
                 </div>
             {% endif %}
         </div>
-        </div><!-- End content-wrapper -->
-    </div><!-- End container -->
+        </div>
+    </div>
 
     <script>
-        // Auto-dismiss flash messages after 5 seconds
         setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
+            document.querySelectorAll('.alert').forEach(alert => {
                 alert.style.transition = 'opacity 0.5s';
                 alert.style.opacity = '0';
                 setTimeout(() => alert.remove(), 500);
             });
         }, 5000);
 
-        // Load logo preview on page load
         (function() {
             const logoPreview = document.getElementById('adminLogoPreview');
             const logoPath = '/static/logo.png';
-            
             fetch(logoPath)
                 .then(response => {
                     if (response.ok) {
                         const img = document.createElement('img');
-                        img.src = logoPath + '?' + new Date().getTime(); // Cache bust
+                        img.src = logoPath + '?' + new Date().getTime();
                         img.alt = 'Current Logo';
                         img.style.maxWidth = '100%';
                         img.style.maxHeight = '100%';
@@ -1266,23 +951,17 @@
                         img.id = 'adminLogoPreview';
                     }
                 })
-                .catch(() => {
-                    // Use placeholder if logo doesn't exist
-                });
+                .catch(() => {});
         })();
 
-        // Update file name and enable upload button
         function updateFileName(input) {
             const fileNameSpan = document.getElementById('fileName');
             const uploadBtn = document.getElementById('uploadBtn');
             const logoPreview = document.getElementById('adminLogoPreview');
-            
             if (input.files && input.files[0]) {
                 const file = input.files[0];
                 fileNameSpan.textContent = file.name;
                 uploadBtn.disabled = false;
-                
-                // Show preview
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     if (logoPreview.tagName === 'DIV') {
@@ -1305,7 +984,6 @@
             }
         }
 
-        // Delete logo
         function deleteLogo() {
             if (confirm('Are you sure you want to delete the custom logo and revert to the default placeholder?')) {
                 const form = document.createElement('form');
@@ -1315,45 +993,35 @@
                 form.submit();
             }
         }
-        
-        // Load logo in admin header
+
         (function() {
             const headerLogo = document.getElementById('adminHeaderLogo');
             const logoPath = '/static/logo.png';
-            
             fetch(logoPath)
                 .then(response => {
                     if (response.ok) {
                         headerLogo.style.background = 'white';
-                        headerLogo.style.padding = '10px';
+                        headerLogo.style.padding = '8px';
                         headerLogo.innerHTML = '<img src="' + logoPath + '?' + new Date().getTime() + '" alt="Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">';
                     }
                 })
-                .catch(() => {
-                    // Use placeholder if logo doesn't exist
-                });
+                .catch(() => {});
         })();
 
-        // Dropdown menu functionality
         function toggleDropdown(event, dropdownId) {
             event.stopPropagation();
-            
-            // Close all other dropdowns and remove show class from their containers
             document.querySelectorAll('.dropdown-menu').forEach(menu => {
                 if (menu.id !== dropdownId) {
                     menu.classList.remove('show');
                     menu.closest('.dropdown').classList.remove('show');
                 }
             });
-            
-            // Toggle current dropdown
             const dropdown = document.getElementById(dropdownId);
             const container = dropdown.closest('.dropdown');
             dropdown.classList.toggle('show');
             container.classList.toggle('show');
         }
 
-        // Close dropdowns when clicking outside
         document.addEventListener('click', function(event) {
             if (!event.target.closest('.dropdown')) {
                 document.querySelectorAll('.dropdown-menu').forEach(menu => {
@@ -1363,12 +1031,10 @@
             }
         });
 
-        // Password reset modal functionality
         function showResetPasswordModal(userId, userEmail) {
             const modal = document.getElementById('resetPasswordModal');
             const form = document.getElementById('resetPasswordForm');
             const emailSpan = document.getElementById('resetUserEmail');
-            
             emailSpan.textContent = userEmail;
             form.action = `/admin/reset-password/${userId}`;
             modal.style.display = 'flex';
@@ -1381,7 +1047,6 @@
             form.reset();
         }
 
-        // Close modal when clicking outside
         window.onclick = function(event) {
             const modal = document.getElementById('resetPasswordModal');
             if (event.target == modal) {
@@ -1391,50 +1056,50 @@
     </script>
 
     <!-- Password Reset Modal -->
-    <div id="resetPasswordModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
-        <div style="background-color: white; margin: auto; padding: 0; border-radius: 16px; width: 90%; max-width: 500px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); animation: slideDown 0.3s ease;">
-            <div style="background: var(--header-bg); color: white; padding: 24px; border-radius: 16px 16px 0 0; display: flex; justify-content: space-between; align-items: center;">
-                <h2 style="margin: 0; font-size: 22px; display: flex; align-items: center; gap: 10px;">
+    <div id="resetPasswordModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15,23,42,0.5); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+        <div style="background: var(--surface); margin: auto; padding: 0; border-radius: var(--radius); width: 90%; max-width: 480px; box-shadow: var(--shadow-lg); animation: slideIn 0.3s ease; border: 1px solid var(--border-light);">
+            <div style="background: var(--primary); color: white; padding: 22px 28px; border-radius: var(--radius) var(--radius) 0 0; display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin: 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
                     <i class="fas fa-key"></i>
                     Reset User Password
                 </h2>
-                <button onclick="closeResetPasswordModal()" style="background: none; border: none; color: white; font-size: 28px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;">
+                <button onclick="closeResetPasswordModal()" style="background: rgba(255,255,255,0.15); border: none; color: white; font-size: 18px; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: background 0.2s;">
                     &times;
                 </button>
             </div>
-            <form id="resetPasswordForm" method="POST" style="padding: 30px;">
-                <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 24px; border-left: 4px solid #17a2b8;">
-                    <p style="margin: 0; color: #666; font-size: 14px;">
-                        <i class="fas fa-info-circle" style="color: #17a2b8;"></i>
-                        Resetting password for: <strong id="resetUserEmail" style="color: var(--text-dark);"></strong>
+            <form id="resetPasswordForm" method="POST" style="padding: 28px;">
+                <div style="background: #eff6ff; padding: 14px; border-radius: var(--radius-sm); margin-bottom: 22px; border: 1px solid #bfdbfe;">
+                    <p style="margin: 0; color: #1e40af; font-size: 13px;">
+                        <i class="fas fa-info-circle"></i>
+                        Resetting password for: <strong id="resetUserEmail" style="color: var(--primary);"></strong>
                     </p>
                 </div>
-                
-                <div style="margin-bottom: 20px;">
-                    <label for="new_password" style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-dark);">
+
+                <div style="margin-bottom: 18px;">
+                    <label for="new_password" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text); font-size: 13px;">
                         <i class="fas fa-lock"></i> New Password
                     </label>
                     <input type="password" id="new_password" name="new_password" required minlength="6"
-                           style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 15px; font-family: inherit;"
+                           style="width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-family: inherit;"
                            placeholder="Enter new password (min 6 characters)">
                 </div>
-                
-                <div style="margin-bottom: 24px;">
-                    <label for="confirm_password" style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-dark);">
+
+                <div style="margin-bottom: 22px;">
+                    <label for="confirm_password" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text); font-size: 13px;">
                         <i class="fas fa-lock"></i> Confirm Password
                     </label>
                     <input type="password" id="confirm_password" name="confirm_password" required minlength="6"
-                           style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 15px; font-family: inherit;"
+                           style="width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-family: inherit;"
                            placeholder="Confirm new password">
                 </div>
-                
-                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
                     <button type="button" onclick="closeResetPasswordModal()"
-                            style="padding: 12px 24px; border: 2px solid var(--border-color); border-radius: 8px; background: white; color: var(--text-dark); font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
-                        <i class="fas fa-times"></i> Cancel
+                            style="padding: 10px 20px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-weight: 600; cursor: pointer; font-size: 13px; font-family: inherit;">
+                        Cancel
                     </button>
                     <button type="submit"
-                            style="padding: 12px 24px; border: none; border-radius: 8px; background: var(--primary-color); color: white; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+                            style="padding: 10px 20px; border: none; border-radius: var(--radius-sm); background: var(--primary); color: white; font-weight: 600; cursor: pointer; font-size: 13px; font-family: inherit;">
                         <i class="fas fa-key"></i> Reset Password
                     </button>
                 </div>
