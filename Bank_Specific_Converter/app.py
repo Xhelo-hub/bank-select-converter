@@ -136,9 +136,27 @@ BANK_CONFIGS = {
     }
 }
 
-# Job status tracking
-jobs = {}
+# Job status tracking (file-based for multi-worker gunicorn support)
+JOBS_FILE = BASE_DIR / 'jobs.json'
 jobs_lock = threading.Lock()
+
+def load_jobs():
+    """Load jobs from JSON file (shared across gunicorn workers)"""
+    try:
+        if JOBS_FILE.exists():
+            with open(JOBS_FILE, 'r') as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"Error loading jobs: {e}")
+    return {}
+
+def save_jobs(jobs):
+    """Save jobs to JSON file (shared across gunicorn workers)"""
+    try:
+        with open(JOBS_FILE, 'w') as f:
+            json.dump(jobs, f)
+    except Exception as e:
+        print(f"Error saving jobs: {e}")
 
 # Conversion stats tracking
 STATS_FILE = BASE_DIR / 'conversion_stats.json'
@@ -257,13 +275,16 @@ def cleanup_old_files():
                     except Exception as e:
                         print(f"Error deleting file {item}: {e}")
             
-            # Clean old jobs from memory
+            # Clean old jobs from file
             with jobs_lock:
-                old_jobs = [job_id for job_id, job in jobs.items() 
+                jobs = load_jobs()
+                old_jobs = [job_id for job_id, job in jobs.items()
                            if current_time - job.get('timestamp', current_time) > 7200]  # 2 hours
                 for job_id in old_jobs:
                     del jobs[job_id]
                     print(f"Cleaned up old job: {job_id}")
+                if old_jobs:
+                    save_jobs(jobs)
                     
         except Exception as e:
             print(f"Error in cleanup task: {e}")
@@ -1461,16 +1482,18 @@ def convert_file():
                 # Log but don't fail the conversion
                 print(f"Warning: Failed to delete uploaded file: {cleanup_error}")
             
-            # Store job info
+            # Store job info (file-based for multi-worker support)
             with jobs_lock:
+                jobs = load_jobs()
                 jobs[job_id] = {
                     'bank': bank_id,
-                    'original_filename': original_filename,  # Use original filename
+                    'original_filename': original_filename,
                     'output_filename': output_file.name,
                     'output_path': str(output_file),
                     'timestamp': time.time(),
                     'user_id': current_user.id
                 }
+                save_jobs(jobs)
 
             # Log successful conversion
             log_conversion(current_user.email, current_user.id, bank_id,
@@ -1509,19 +1532,20 @@ def download_file(job_id):
     try:
         print(f"[DEBUG] Download request for job_id: {job_id}")
         with jobs_lock:
+            jobs = load_jobs()
             if job_id not in jobs:
-                print(f"[DEBUG] Job {job_id} not found in jobs dictionary")
+                print(f"[DEBUG] Job {job_id} not found in jobs file")
                 print(f"[DEBUG] Available jobs: {list(jobs.keys())}")
                 return "File not found or has expired", 404
-            
+
             job = jobs[job_id]
             print(f"[DEBUG] Job found: {job}")
-            
+
             # Verify user owns this job
             if job['user_id'] != current_user.id:
                 print(f"[DEBUG] Unauthorized access - job user_id: {job['user_id']}, current user: {current_user.id}")
                 return "Unauthorized access to file", 403
-            
+
             output_path = job['output_path']
             output_filename = job['output_filename']
         
@@ -1556,15 +1580,16 @@ def download_file(job_id):
 def check_status(job_id):
     """Check conversion status"""
     with jobs_lock:
+        jobs = load_jobs()
         if job_id not in jobs:
             return jsonify({'success': False, 'error': 'Job not found'}), 404
-        
+
         job = jobs[job_id]
-        
+
         # Verify user owns this job
         if job['user_id'] != current_user.id:
             return jsonify({'success': False, 'error': 'Unauthorized'}), 403
-        
+
         return jsonify({'success': True, 'job': job})
 
 @app.route('/cleanup')
