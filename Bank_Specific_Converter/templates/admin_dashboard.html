@@ -626,6 +626,164 @@
             .logo-content { flex-direction: column; }
             .logo-actions { flex-direction: column; }
             .upload-btn, .delete-logo-btn { width: 100%; justify-content: center; }
+            .table-controls { flex-direction: column; }
+            .search-box { min-width: 100%; }
+            .filter-select { width: 100%; }
+            .pagination { flex-direction: column; align-items: stretch; text-align: center; }
+            .pagination-buttons { justify-content: center; }
+        }
+
+        /* Table Filters & Pagination */
+        .table-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 14px 10px 38px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-family: inherit;
+            background: var(--surface);
+            color: var(--text);
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .filter-select {
+            padding: 10px 32px 10px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-family: inherit;
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            min-width: 120px;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 16px;
+            padding: 12px 0;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .pagination-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .page-btn {
+            padding: 7px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            min-width: 36px;
+            text-align: center;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(79, 70, 229, 0.04);
+        }
+
+        .page-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-size-select {
+            padding: 7px 28px 7px 10px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+        }
+
+        .filter-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            background: rgba(79, 70, 229, 0.08);
+            color: var(--primary);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .filter-badge i { font-size: 10px; }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-size: 14px;
         }
 
         /* Bank Usage */
@@ -867,9 +1025,33 @@
         </div>
 
         <div class="section">
-            <h2>All Users</h2>
+            <h2><i class="fas fa-users"></i> All Users</h2>
             {% if all_users %}
-                <table class="users-table">
+                <div class="table-controls">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="userSearch" placeholder="Search by email..." oninput="filterUsers()">
+                    </div>
+                    <select class="filter-select" id="filterApproval" onchange="filterUsers()">
+                        <option value="">All Approvals</option>
+                        <option value="approved">Approved</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                    <select class="filter-select" id="filterStatus" onchange="filterUsers()">
+                        <option value="">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                    <select class="filter-select" id="filterRole" onchange="filterUsers()">
+                        <option value="">All Roles</option>
+                        <option value="admin">Admin</option>
+                        <option value="user">User</option>
+                    </select>
+                </div>
+
+                <div id="activeFilters" style="margin-bottom: 12px; display: none;"></div>
+
+                <table class="users-table" id="usersTable">
                     <thead>
                         <tr>
                             <th>Email</th>
@@ -882,7 +1064,10 @@
                     </thead>
                     <tbody>
                         {% for user in all_users %}
-                            <tr>
+                            <tr data-email="{{ user.email|lower }}"
+                                data-approval="{{ 'approved' if user.is_approved else 'pending' }}"
+                                data-status="{{ 'active' if user.is_active else 'inactive' }}"
+                                data-role="{{ 'admin' if user.is_admin else 'user' }}">
                                 <td data-label="Email">{{ user.email }}</td>
                                 <td data-label="Registration Date">{{ user.created_at[:10] }}</td>
                                 <td data-label="Approval">
@@ -973,6 +1158,24 @@
                         {% endfor %}
                     </tbody>
                 </table>
+
+                <div id="noResults" class="no-results" style="display: none;">
+                    <i class="fas fa-search" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+                    <p>No users match your filters</p>
+                </div>
+
+                <div class="pagination" id="paginationControls">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="pagination-info" id="paginationInfo"></span>
+                        <select class="page-size-select" id="pageSize" onchange="filterUsers()">
+                            <option value="10">10 / page</option>
+                            <option value="25">25 / page</option>
+                            <option value="50">50 / page</option>
+                            <option value="100">100 / page</option>
+                        </select>
+                    </div>
+                    <div class="pagination-buttons" id="paginationButtons"></div>
+                </div>
             {% else %}
                 <div class="no-users">
                     <p>No users in system</p>
@@ -1130,6 +1333,144 @@
                     menu.classList.remove('show');
                     menu.closest('.dropdown').classList.remove('show');
                 });
+            }
+        });
+
+        // ---- User Table Filtering & Pagination ----
+        let currentPage = 1;
+
+        function filterUsers() {
+            const search = (document.getElementById('userSearch').value || '').toLowerCase();
+            const approval = document.getElementById('filterApproval').value;
+            const status = document.getElementById('filterStatus').value;
+            const role = document.getElementById('filterRole').value;
+            const pageSize = parseInt(document.getElementById('pageSize').value);
+
+            const table = document.getElementById('usersTable');
+            if (!table) return;
+
+            const rows = Array.from(table.querySelectorAll('tbody tr'));
+            const filtered = [];
+
+            rows.forEach(row => {
+                const email = row.getAttribute('data-email') || '';
+                const rowApproval = row.getAttribute('data-approval') || '';
+                const rowStatus = row.getAttribute('data-status') || '';
+                const rowRole = row.getAttribute('data-role') || '';
+
+                const matchSearch = !search || email.includes(search);
+                const matchApproval = !approval || rowApproval === approval;
+                const matchStatus = !status || rowStatus === status;
+                const matchRole = !role || rowRole === role;
+
+                if (matchSearch && matchApproval && matchStatus && matchRole) {
+                    filtered.push(row);
+                }
+            });
+
+            // Update active filters display
+            const filtersDiv = document.getElementById('activeFilters');
+            const activeFilters = [];
+            if (search) activeFilters.push('<span class="filter-badge"><i class="fas fa-search"></i> "' + search + '"</span>');
+            if (approval) activeFilters.push('<span class="filter-badge"><i class="fas fa-check-circle"></i> ' + approval + '</span>');
+            if (status) activeFilters.push('<span class="filter-badge"><i class="fas fa-circle"></i> ' + status + '</span>');
+            if (role) activeFilters.push('<span class="filter-badge"><i class="fas fa-user-tag"></i> ' + role + '</span>');
+
+            if (activeFilters.length > 0) {
+                filtersDiv.innerHTML = activeFilters.join(' ') + ' <span class="filter-badge" style="cursor:pointer;background:rgba(239,68,68,0.08);color:#ef4444;" onclick="clearFilters()"><i class="fas fa-times"></i> Clear all</span>';
+                filtersDiv.style.display = 'block';
+            } else {
+                filtersDiv.style.display = 'none';
+            }
+
+            // Reset to page 1 when filters change (unless called from pagination)
+            const totalPages = Math.ceil(filtered.length / pageSize) || 1;
+            if (currentPage > totalPages) currentPage = 1;
+
+            // Paginate
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+
+            // Hide all rows first
+            rows.forEach(row => row.style.display = 'none');
+
+            // Show only filtered + paginated rows
+            filtered.forEach((row, i) => {
+                row.style.display = (i >= start && i < end) ? '' : 'none';
+            });
+
+            // Show/hide table and no-results
+            const noResults = document.getElementById('noResults');
+            if (filtered.length === 0) {
+                table.style.display = 'none';
+                noResults.style.display = 'block';
+            } else {
+                table.style.display = '';
+                noResults.style.display = 'none';
+            }
+
+            // Update pagination
+            renderPagination(filtered.length, pageSize, totalPages);
+        }
+
+        function renderPagination(total, pageSize, totalPages) {
+            const info = document.getElementById('paginationInfo');
+            const buttons = document.getElementById('paginationButtons');
+            const start = (currentPage - 1) * pageSize + 1;
+            const end = Math.min(currentPage * pageSize, total);
+
+            info.textContent = total > 0
+                ? 'Showing ' + start + '-' + end + ' of ' + total + ' users'
+                : 'No users found';
+
+            let html = '';
+            html += '<button class="page-btn" onclick="goToPage(' + (currentPage - 1) + ')" ' + (currentPage <= 1 ? 'disabled' : '') + '><i class="fas fa-chevron-left"></i></button>';
+
+            // Show max 7 page buttons with ellipsis
+            const maxButtons = 7;
+            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            if (endPage - startPage < maxButtons - 1) {
+                startPage = Math.max(1, endPage - maxButtons + 1);
+            }
+
+            if (startPage > 1) {
+                html += '<button class="page-btn" onclick="goToPage(1)">1</button>';
+                if (startPage > 2) html += '<span style="color:var(--text-muted);padding:0 4px;">...</span>';
+            }
+
+            for (let p = startPage; p <= endPage; p++) {
+                html += '<button class="page-btn' + (p === currentPage ? ' active' : '') + '" onclick="goToPage(' + p + ')">' + p + '</button>';
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) html += '<span style="color:var(--text-muted);padding:0 4px;">...</span>';
+                html += '<button class="page-btn" onclick="goToPage(' + totalPages + ')">' + totalPages + '</button>';
+            }
+
+            html += '<button class="page-btn" onclick="goToPage(' + (currentPage + 1) + ')" ' + (currentPage >= totalPages ? 'disabled' : '') + '><i class="fas fa-chevron-right"></i></button>';
+
+            buttons.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            filterUsers();
+        }
+
+        function clearFilters() {
+            document.getElementById('userSearch').value = '';
+            document.getElementById('filterApproval').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterRole').value = '';
+            currentPage = 1;
+            filterUsers();
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('usersTable')) {
+                filterUsers();
             }
         });
 

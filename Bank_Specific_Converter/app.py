@@ -13,6 +13,37 @@ import threading
 import json
 from pathlib import Path
 
+# Cross-process file locking for multi-worker gunicorn
+if os.name == 'posix':
+    import fcntl
+    class FileLock:
+        """File-based lock using fcntl.flock - works across gunicorn workers"""
+        def __init__(self, lock_path):
+            self.lock_path = str(lock_path) + '.lock'
+        def __enter__(self):
+            self._fd = open(self.lock_path, 'w')
+            fcntl.flock(self._fd.fileno(), fcntl.LOCK_EX)
+            return self
+        def __exit__(self, *args):
+            fcntl.flock(self._fd.fileno(), fcntl.LOCK_UN)
+            self._fd.close()
+else:
+    class FileLock:
+        """Thread-based lock fallback for Windows development"""
+        _locks = {}
+        _meta_lock = threading.Lock()
+        def __init__(self, lock_path):
+            self.lock_path = str(lock_path)
+            with FileLock._meta_lock:
+                if self.lock_path not in FileLock._locks:
+                    FileLock._locks[self.lock_path] = threading.Lock()
+                self._lock = FileLock._locks[self.lock_path]
+        def __enter__(self):
+            self._lock.acquire()
+            return self
+        def __exit__(self, *args):
+            self._lock.release()
+
 # Import authentication components
 from auth import UserManager
 from auth_routes import auth_bp
@@ -138,7 +169,7 @@ BANK_CONFIGS = {
 
 # Job status tracking (file-based for multi-worker gunicorn support)
 JOBS_FILE = BASE_DIR / 'jobs.json'
-jobs_lock = threading.Lock()
+jobs_lock = FileLock(JOBS_FILE)
 
 def load_jobs():
     """Load jobs from JSON file (shared across gunicorn workers)"""
@@ -151,16 +182,18 @@ def load_jobs():
     return {}
 
 def save_jobs(jobs):
-    """Save jobs to JSON file (shared across gunicorn workers)"""
+    """Save jobs to JSON file (shared across gunicorn workers) - atomic write"""
     try:
-        with open(JOBS_FILE, 'w') as f:
+        tmp_path = str(JOBS_FILE) + '.tmp'
+        with open(tmp_path, 'w') as f:
             json.dump(jobs, f)
+        os.replace(tmp_path, str(JOBS_FILE))
     except Exception as e:
         print(f"Error saving jobs: {e}")
 
 # Conversion stats tracking
 STATS_FILE = BASE_DIR / 'conversion_stats.json'
-stats_lock = threading.Lock()
+stats_lock = FileLock(STATS_FILE)
 
 def load_stats():
     """Load conversion stats from JSON file"""
@@ -173,10 +206,12 @@ def load_stats():
     return {"total_conversions": 0, "total_downloads": 0, "conversions": [], "downloads": []}
 
 def save_stats(stats):
-    """Save conversion stats to JSON file"""
+    """Save conversion stats to JSON file - atomic write"""
     try:
-        with open(STATS_FILE, 'w') as f:
+        tmp_path = str(STATS_FILE) + '.tmp'
+        with open(tmp_path, 'w') as f:
             json.dump(stats, f, indent=2)
+        os.replace(tmp_path, str(STATS_FILE))
     except Exception as e:
         print(f"Error saving stats: {e}")
 
