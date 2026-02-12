@@ -48,6 +48,7 @@ else:
 from auth import UserManager
 from auth_routes import auth_bp
 from admin_routes import admin_bp
+from notification_utils import get_user_notifications, mark_as_read, mark_all_as_read, get_unread_count
 
 # App initialization
 app = Flask(__name__)
@@ -546,6 +547,124 @@ def index():
                 background: rgba(79, 70, 229, 0.04) !important;
             }
 
+            /* Notification Bell */
+            .notification-wrapper {
+                position: relative;
+            }
+
+            .notification-btn {
+                position: relative;
+            }
+
+            .notification-badge {
+                position: absolute;
+                top: 4px;
+                right: 4px;
+                background: #ef4444;
+                color: white;
+                border-radius: 10px;
+                padding: 2px 6px;
+                font-size: 10px;
+                font-weight: 700;
+                min-width: 18px;
+                text-align: center;
+            }
+
+            .notification-dropdown {
+                position: absolute;
+                top: calc(100% + 8px);
+                right: 0;
+                width: 380px;
+                max-height: 480px;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: var(--radius-sm);
+                box-shadow: var(--shadow-lg);
+                z-index: 1000;
+                overflow: hidden;
+                display: none;
+            }
+
+            .notif-header {
+                padding: 14px 18px;
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: var(--surface-dim);
+            }
+
+            .notif-header h4 {
+                font-size: 15px;
+                font-weight: 600;
+                margin: 0;
+            }
+
+            .notif-header button {
+                background: none;
+                border: none;
+                color: var(--primary);
+                font-size: 12px;
+                font-weight: 500;
+                cursor: pointer;
+                padding: 4px 8px;
+                border-radius: 4px;
+            }
+
+            .notif-header button:hover {
+                background: rgba(79, 70, 229, 0.1);
+            }
+
+            .notif-list {
+                max-height: 400px;
+                overflow-y: auto;
+            }
+
+            .notif-item {
+                padding: 14px 18px;
+                border-bottom: 1px solid var(--border-light);
+                cursor: pointer;
+                transition: background 0.2s;
+            }
+
+            .notif-item.unread {
+                background: rgba(79, 70, 229, 0.04);
+                border-left: 3px solid var(--primary);
+            }
+
+            .notif-item:hover {
+                background: var(--surface-dim);
+            }
+
+            .notif-item.type-warning { border-left-color: #f59e0b; }
+            .notif-item.type-important { border-left-color: #ef4444; }
+            .notif-item.type-success { border-left-color: #10b981; }
+
+            .notif-title {
+                font-weight: 600;
+                font-size: 14px;
+                margin-bottom: 4px;
+            }
+
+            .notif-message {
+                font-size: 13px;
+                color: var(--text-secondary);
+                margin-bottom: 6px;
+                line-height: 1.4;
+            }
+
+            .notif-time {
+                font-size: 11px;
+                color: var(--text-muted);
+            }
+
+            .notif-empty {
+                padding: 40px;
+                text-align: center;
+                color: var(--text-muted);
+                font-size: 13px;
+            }
+
             /* Converter Section */
             .converter-section {
                 padding: 32px;
@@ -980,6 +1099,25 @@ def index():
                         <span class="header-title">Bank Statement Converter</span>
                     </div>
                     <div class="header-right">
+                        <!-- Notification Bell -->
+                        <div class="notification-wrapper">
+                            <button class="header-btn notification-btn" onclick="toggleNotifications()" title="Notifications">
+                                <i class="fas fa-bell"></i>
+                                <span class="notification-badge" id="notifBadge" style="display:none;"></span>
+                            </button>
+                            
+                            <!-- Notification Dropdown -->
+                            <div class="notification-dropdown" id="notificationDropdown">
+                                <div class="notif-header">
+                                    <h4>Notifications</h4>
+                                    <button onclick="markAllRead()">Mark all read</button>
+                                </div>
+                                <div class="notif-list" id="notifList">
+                                    <div class="notif-empty">Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="user-badge">
                             <i class="fas fa-user-circle"></i>
                             <span>{{ current_user.email }}</span>
@@ -1326,6 +1464,113 @@ def index():
                     document.getElementById('convertBtn').disabled = false;
                 }
             });
+
+            // ============ Notification System ============
+            let notificationsVisible = false;
+
+            // Poll for unread count
+            function updateNotificationBadge() {
+                fetch('/notifications/unread-count')
+                    .then(r => r.json())
+                    .then(data => {
+                        const badge = document.getElementById('notifBadge');
+                        if (data.count > 0) {
+                            badge.textContent = data.count;
+                            badge.style.display = 'block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    })
+                    .catch(err => console.error('Error fetching unread count:', err));
+            }
+
+            // Load notifications
+            function loadNotifications() {
+                fetch('/notifications/my')
+                    .then(r => r.json())
+                    .then(data => {
+                        const list = document.getElementById('notifList');
+                        if (data.success && data.notifications.length > 0) {
+                            list.innerHTML = data.notifications.map(n => {
+                                const typeIcons = {
+                                    info: '📘',
+                                    warning: '⚠️',
+                                    important: '🚨',
+                                    success: '✅'
+                                };
+                                return `
+                                    <div class="notif-item ${!n.is_read ? 'unread' : ''} type-${n.type}" 
+                                         onclick="markNotificationRead('${n.id}')">
+                                        <div class="notif-title">${typeIcons[n.type]} ${n.title}</div>
+                                        <div class="notif-message">${n.message}</div>
+                                        <div class="notif-time">${formatTime(n.created_at)}</div>
+                                    </div>
+                                `;
+                            }).join('');
+                        } else {
+                            list.innerHTML = '<div class="notif-empty">No notifications</div>';
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error loading notifications:', err);
+                        document.getElementById('notifList').innerHTML = '<div class="notif-empty">Failed to load notifications</div>';
+                    });
+            }
+
+            function toggleNotifications() {
+                notificationsVisible = !notificationsVisible;
+                const dropdown = document.getElementById('notificationDropdown');
+                dropdown.style.display = notificationsVisible ? 'block' : 'none';
+                if (notificationsVisible) {
+                    loadNotifications();
+                }
+            }
+
+            function markNotificationRead(id) {
+                fetch(`/notifications/mark-read/${id}`, {method: 'POST'})
+                    .then(r => r.json())
+                    .then(() => {
+                        updateNotificationBadge();
+                        loadNotifications();
+                    })
+                    .catch(err => console.error('Error marking notification as read:', err));
+            }
+
+            function markAllRead() {
+                fetch('/notifications/mark-all-read', {method: 'POST'})
+                    .then(r => r.json())
+                    .then(() => {
+                        updateNotificationBadge();
+                        loadNotifications();
+                    })
+                    .catch(err => console.error('Error marking all as read:', err));
+            }
+
+            function formatTime(isoString) {
+                const date = new Date(isoString);
+                const now = new Date();
+                const diff = now - date;
+                const minutes = Math.floor(diff / 60000);
+                if (minutes < 1) return 'Just now';
+                if (minutes < 60) return `${minutes}m ago`;
+                const hours = Math.floor(minutes / 60);
+                if (hours < 24) return `${hours}h ago`;
+                const days = Math.floor(hours / 24);
+                if (days < 7) return `${days}d ago`;
+                return date.toLocaleDateString();
+            }
+
+            // Poll every 30 seconds
+            setInterval(updateNotificationBadge, 30000);
+            updateNotificationBadge(); // Initial load
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.notification-wrapper')) {
+                    document.getElementById('notificationDropdown').style.display = 'none';
+                    notificationsVisible = false;
+                }
+            });
         </script>
     </body>
     </html>
@@ -1559,6 +1804,53 @@ def convert_file():
             'success': False,
             'error': f'Server error: {str(e)}'
         }), 500
+
+
+# ============ Notification Routes (User-facing) ============
+
+@app.route('/notifications/my')
+@login_required
+def my_notifications():
+    """Get current user's notifications (JSON)"""
+    try:
+        notifications = get_user_notifications(current_user.email)
+        return jsonify({'success': True, 'notifications': notifications})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/notifications/mark-read/<notification_id>', methods=['POST'])
+@login_required
+def mark_notification_read(notification_id):
+    """Mark a notification as read for current user"""
+    try:
+        success = mark_as_read(notification_id, current_user.email)
+        return jsonify({'success': success})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/notifications/mark-all-read', methods=['POST'])
+@login_required
+def mark_all_notifications_read():
+    """Mark all notifications as read for current user"""
+    try:
+        count = mark_all_as_read(current_user.email)
+        return jsonify({'success': True, 'count': count})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/notifications/unread-count')
+@login_required
+def unread_count():
+    """Get unread notification count for current user"""
+    try:
+        count = get_unread_count(current_user.email)
+        return jsonify({'count': count})
+    except Exception as e:
+        return jsonify({'count': 0, 'error': str(e)})
+
 
 @app.route('/download/<job_id>')
 @login_required

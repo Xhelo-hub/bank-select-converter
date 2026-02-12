@@ -2,7 +2,11 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from functools import wraps
 from auth import UserManager
-from email_utils import send_admin_promotion_notification, send_admin_removal_verification
+from email_utils import send_admin_promotion_notification, send_admin_removal_verification, send_notification_email
+from notification_utils import (
+    create_notification, get_all_notifications, delete_notification, 
+    get_user_notifications, get_unread_count
+)
 from werkzeug.utils import secure_filename
 from PIL import Image
 import subprocess
@@ -534,3 +538,107 @@ def test_email_settings():
             
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error: {str(e)}'})
+
+
+# ============ Notification Management Routes ============
+
+@admin_bp.route('/notifications/send', methods=['POST'])
+@login_required
+@admin_required
+def send_notification():
+    """Send a notification to users"""
+    try:
+        title = request.form.get('title', '').strip()
+        message = request.form.get('message', '').strip()
+        notification_type = request.form.get('type', 'info')
+        recipient_type = request.form.get('recipient_type', 'all')
+        send_email_notification = request.form.get('send_email') == 'true'
+        
+        # Validation
+        if not title or not message:
+            flash('Title and message are required', 'error')
+            return redirect(url_for('admin.dashboard'))
+        
+        if len(title) > 100:
+            flash('Title must be 100 characters or less', 'error')
+            return redirect(url_for('admin.dashboard'))
+        
+        # Determine recipients
+        if recipient_type == 'all':
+            recipients = ['all']
+            recipient_count = len(user_manager.get_all_users())
+        else:
+            recipients = request.form.getlist('recipients[]')
+            if not recipients:
+                flash('Please select at least one recipient', 'error')
+                return redirect(url_for('admin.dashboard'))
+            recipient_count = len(recipients)
+        
+        # Create notification
+        notification_id = create_notification(
+            title=title,
+            message=message,
+            notification_type=notification_type,
+            recipients=recipients,
+            send_email=send_email_notification,
+            created_by=current_user.email
+        )
+        
+        # Send email notifications if requested
+        email_sent_count = 0
+        if send_email_notification:
+            if recipient_type == 'all':
+                all_users = user_manager.get_all_users()
+                recipient_emails = [user.email for user in all_users if user.is_approved and user.is_active]
+            else:
+                recipient_emails = recipients
+            
+            for email in recipient_emails:
+                try:
+                    success, msg = send_notification_email(email, title, message, notification_type)
+                    if success:
+                        email_sent_count += 1
+                except Exception as e:
+                    print(f"Error sending notification email to {email}: {e}")
+        
+        # Success message
+        if send_email_notification:
+            flash(f'Notification sent to {recipient_count} user(s). Email sent to {email_sent_count} recipient(s).', 'success')
+        else:
+            flash(f'Notification sent to {recipient_count} user(s).', 'success')
+        
+        return redirect(url_for('admin.dashboard'))
+        
+    except Exception as e:
+        flash(f'Error sending notification: {str(e)}', 'error')
+        return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/notifications/list')
+@login_required
+@admin_required
+def list_all_notifications():
+    """Get all notifications for admin view (JSON)"""
+    try:
+        notifications = get_all_notifications()
+        return jsonify({'success': True, 'notifications': notifications})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@admin_bp.route('/notifications/delete/<notification_id>', methods=['POST'])
+@login_required
+@admin_required
+def delete_notification_route(notification_id):
+    """Delete a notification"""
+    try:
+        success = delete_notification(notification_id)
+        if success:
+            flash('Notification deleted successfully', 'success')
+        else:
+            flash('Notification not found', 'error')
+    except Exception as e:
+        flash(f'Error deleting notification: {str(e)}', 'error')
+    
+    return redirect(url_for('admin.dashboard'))
+

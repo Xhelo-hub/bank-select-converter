@@ -983,6 +983,24 @@
             </div>
         </div>
 
+        <!-- Notification Management Section -->
+        <div class="section">
+            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <div class="section-title" style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-bell" style="color: var(--primary); font-size: 20px;"></i>
+                    <h2 style="margin: 0; font-size: 20px; font-weight: 700;">Notification Center</h2>
+                    <span style="background: var(--surface-dim); color: var(--text-secondary); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">Send announcements to users</span>
+                </div>
+                <button onclick="showComposeNotificationModal()" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;">
+                    <i class="fas fa-paper-plane"></i> Compose Notification
+                </button>
+            </div>
+
+            <div id="notificationsList" style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 20px; min-height: 200px;">
+                <p style="text-align: center; color: var(--text-muted); margin: 40px 0;">Loading notifications...</p>
+            </div>
+        </div>
+
         <div class="section">
             <h2>Pending User Registrations</h2>
             {% if pending_users %}
@@ -1549,5 +1567,195 @@
             </form>
         </div>
     </div>
+
+    <!-- Compose Notification Modal -->
+    <div id="composeNotificationModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15,23,42,0.5); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+        <div style="background: var(--surface); margin: auto; padding: 0; border-radius: var(--radius); width: 90%; max-width: 600px; box-shadow: var(--shadow-lg); animation: slideIn 0.3s ease; border: 1px solid var(--border-light);">
+            <div style="background: var(--primary); color: white; padding: 22px 28px; border-radius: var(--radius) var(--radius) 0 0; display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin: 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-paper-plane"></i>
+                    Send Notification
+                </h2>
+                <button onclick="closeComposeNotificationModal()" style="background: rgba(255,255,255,0.15); border: none; color: white; font-size: 18px; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: background 0.2s;">
+                    &times;
+                </button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.send_notification') }}" style="padding: 28px;">
+                <div style="margin-bottom: 18px;">
+                    <label for="notif_title" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text); font-size: 13px;">
+                        <i class="fas fa-heading"></i> Title
+                    </label>
+                    <input type="text" id="notif_title" name="title" required maxlength="100"
+                           style="width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-family: inherit;"
+                           placeholder="Notification title (max 100 characters)">
+                </div>
+
+                <div style="margin-bottom: 18px;">
+                    <label for="notif_message" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text); font-size: 13px;">
+                        <i class="fas fa-align-left"></i> Message
+                    </label>
+                    <textarea id="notif_message" name="message" required rows="4"
+                              style="width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-family: inherit; resize: vertical;"
+                              placeholder="Enter your notification message..."></textarea>
+                </div>
+
+                <div style="margin-bottom: 18px;">
+                    <label for="notif_type" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text); font-size: 13px;">
+                        <i class="fas fa-tag"></i> Type
+                    </label>
+                    <select id="notif_type" name="type"
+                            style="width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-family: inherit;">
+                        <option value="info">📘 Info</option>
+                        <option value="warning">⚠️ Warning</option>
+                        <option value="important">🚨 Important</option>
+                        <option value="success">✅ Success</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 18px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 10px; color: var(--text); font-size: 13px;">
+                        <i class="fas fa-users"></i> Recipients
+                    </label>
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--surface-dim); border-radius: var(--radius-sm); cursor: pointer; font-weight: 500;">
+                            <input type="radio" name="recipient_type" value="all" checked onchange="toggleUserSelect()">
+                            <i class="fas fa-users"></i> All Users
+                        </label>
+                    </div>
+                    <div>
+                        <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--surface-dim); border-radius: var(--radius-sm); cursor: pointer; font-weight: 500;">
+                            <input type="radio" name="recipient_type" value="specific" onchange="toggleUserSelect()">
+                            <i class="fas fa-user-check"></i> Select Specific Users
+                        </label>
+                    </div>
+                </div>
+
+                <div id="userSelectList" style="display: none; margin-bottom: 18px; max-height: 200px; overflow-y: auto; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px; background: var(--surface-dim);">
+                    <label style="display: block; font-weight: 600; margin-bottom: 10px; color: var(--text); font-size: 13px;">
+                        <i class="fas fa-check-square"></i> Select Users:
+                    </label>
+                    {% for user in all_users %}
+                        {% if user.is_approved and user.is_active %}
+                        <label style="display: flex; align-items: center; gap: 8px; padding: 6px; cursor: pointer; font-size: 13px;">
+                            <input type="checkbox" name="recipients[]" value="{{ user.email }}">
+                            {{ user.email }}
+                        </label>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <div style="margin-bottom: 22px;">
+                    <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--surface-dim); border-radius: var(--radius-sm); cursor: pointer; font-weight: 500;">
+                        <input type="checkbox" name="send_email" value="true">
+                        <i class="fas fa-envelope"></i> Also send email notification
+                    </label>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" onclick="closeComposeNotificationModal()"
+                            style="padding: 10px 20px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-weight: 600; cursor: pointer; font-size: 13px; font-family: inherit;">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            style="padding: 10px 20px; border: none; border-radius: var(--radius-sm); background: var(--primary); color: white; font-weight: 600; cursor: pointer; font-size: 13px; font-family: inherit;">
+                        <i class="fas fa-paper-plane"></i> Send Notification
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Notification modal functions
+        function showComposeNotificationModal() {
+            document.getElementById('composeNotificationModal').style.display = 'flex';
+        }
+
+        function closeComposeNotificationModal() {
+            document.getElementById('composeNotificationModal').style.display = 'none';
+            document.getElementById('notif_title').value = '';
+            document.getElementById('notif_message').value = '';
+        }
+
+        function toggleUserSelect() {
+            const specificRadio = document.querySelector('input[name="recipient_type"][value="specific"]');
+            const userSelectList = document.getElementById('userSelectList');
+            userSelectList.style.display = specificRadio.checked ? 'block' : 'none';
+        }
+
+        // Load notifications list
+        function loadNotificationsList() {
+            fetch('{{ url_for("admin.list_all_notifications") }}')
+                .then(r => r.json())
+                .then(data => {
+                    const container = document.getElementById('notificationsList');
+                    if (data.success && data.notifications.length > 0) {
+                        container.innerHTML = data.notifications.map(n => {
+                            const typeIcons = {
+                                info: '📘',
+                                warning: '⚠️',
+                                important: '🚨',
+                                success: '✅'
+                            };
+                            const typeColors = {
+                                info: '#3b82f6',
+                                warning: '#f59e0b',
+                                important: '#ef4444',
+                                success: '#10b981'
+                            };
+                            const date = new Date(n.created_at).toLocaleString();
+                            const recipients = n.recipients.includes('all') ? 'All Users' : n.recipients.join(', ');
+                            const readCount = n.read_by ? n.read_by.length : 0;
+                            
+                            return `
+                                <div style="background: var(--surface); border: 1px solid var(--border); border-left: 3px solid ${typeColors[n.type]}; border-radius: var(--radius-sm); padding: 16px; margin-bottom: 12px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                        <div style="flex: 1;">
+                                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                                <span style="font-size: 16px;">${typeIcons[n.type]}</span>
+                                                <strong style="font-size: 15px;">${n.title}</strong>
+                                            </div>
+                                            <p style="margin: 8px 0; color: var(--text-secondary); font-size: 13px; line-height: 1.5;">${n.message}</p>
+                                        </div>
+                                        <form method="POST" action="/admin/notifications/delete/${n.id}" style="margin: 0;" onsubmit="return confirm('Delete this notification?');">
+                                            <button type="submit" style="background: var(--error); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <div style="font-size: 11px; color: var(--text-muted); display: flex; gap: 16px; flex-wrap: wrap;">
+                                        <span><i class="fas fa-clock"></i> ${date}</span>
+                                        <span><i class="fas fa-user"></i> ${n.created_by}</span>
+                                        <span><i class="fas fa-users"></i> ${recipients}</span>
+                                        <span><i class="fas fa-check"></i> ${readCount} read</span>
+                                        ${n.send_email ? '<span><i class="fas fa-envelope"></i> Email sent</span>' : ''}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    } else {
+                        container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 40px 0;">No notifications yet. Click "Compose Notification" to send one.</p>';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error loading notifications:', err);
+                });
+        }
+
+        // Load notifications on page load
+        document.addEventListener('DOMContentLoaded', loadNotificationsList);
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('resetPasswordModal');
+            const notifModal = document.getElementById('composeNotificationModal');
+            if (event.target == modal) {
+                closeResetPasswordModal();
+            }
+            if (event.target == notifModal) {
+                closeComposeNotificationModal();
+            }
+        }
+    </script>
 </body>
 </html>

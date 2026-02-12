@@ -431,3 +431,139 @@ def send_new_user_registration_notification(admin_emails, user_email, user_name)
         except Exception as e:
             print(f"Error sending registration notification to {admin_email}: {e}")
 
+
+def send_notification_email(to_email, title, message, notification_type):
+    """
+    Send notification email with styled HTML
+    
+    Args:
+        to_email: Recipient email address
+        title: Notification title
+        message: Notification message
+        notification_type: Type (info, warning, important, success)
+    
+    Returns:
+        tuple: (success, message)
+    """
+    # Color scheme based on notification type
+    type_colors = {
+        'info': {'primary': '#3b82f6', 'light': '#eff6ff', 'icon': 'fa-info-circle'},
+        'warning': {'primary': '#f59e0b', 'light': '#fffbeb', 'icon': 'fa-exclamation-triangle'},
+        'important': {'primary': '#ef4444', 'light': '#fef2f2', 'icon': 'fa-exclamation-circle'},
+        'success': {'primary': '#10b981', 'light': '#ecfdf5', 'icon': 'fa-check-circle'}
+    }
+    
+    colors = type_colors.get(notification_type, type_colors['info'])
+    timestamp = datetime.now().strftime('%B %d, %Y at %I:%M %p')
+    
+    subject = f"Notification: {title}"
+    
+    html_body = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ 
+                background: {colors['primary']}; 
+                color: white; 
+                padding: 30px 20px; 
+                text-align: center;
+                border-radius: 8px 8px 0 0;
+            }}
+            .header h1 {{ margin: 0; font-size: 24px; font-weight: 700; }}
+            .content {{ 
+                background: white; 
+                padding: 30px; 
+                border: 1px solid #e5e7eb;
+                border-top: none;
+            }}
+            .notification-box {{
+                background: {colors['light']};
+                border-left: 4px solid {colors['primary']};
+                padding: 20px;
+                margin: 20px 0;
+                border-radius: 4px;
+            }}
+            .notification-title {{
+                font-size: 20px;
+                font-weight: 700;
+                color: {colors['primary']};
+                margin-bottom: 12px;
+            }}
+            .notification-message {{
+                font-size: 15px;
+                color: #374151;
+                line-height: 1.6;
+                white-space: pre-wrap;
+            }}
+            .timestamp {{
+                color: #6b7280;
+                font-size: 13px;
+                margin-top: 16px;
+                padding-top: 16px;
+                border-top: 1px solid #e5e7eb;
+            }}
+            .button {{
+                display: inline-block;
+                background: {colors['primary']};
+                color: white;
+                padding: 12px 24px;
+                text-decoration: none;
+                border-radius: 6px;
+                font-weight: 600;
+                margin-top: 20px;
+            }}
+            .footer {{
+                text-align: center;
+                padding: 20px;
+                color: #6b7280;
+                font-size: 12px;
+                border-top: 1px solid #e5e7eb;
+                margin-top: 20px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>📬 System Notification</h1>
+            </div>
+            <div class="content">
+                <div class="notification-box">
+                    <div class="notification-title">{title}</div>
+                    <div class="notification-message">{message}</div>
+                    <div class="timestamp">
+                        <strong>Sent:</strong> {timestamp}
+                    </div>
+                </div>
+                <p style="text-align: center;">
+                    <a href="https://c.konsulence.al" class="button">Open Converter</a>
+                </p>
+            </div>
+            <div class="footer">
+                <p>Albanian Bank Statement Converter</p>
+                <p>This is an automated notification, please do not reply.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    text_body = f"""
+    System Notification
+    
+    {title}
+    
+    {message}
+    
+    Sent: {timestamp}
+    
+    ---
+    Albanian Bank Statement Converter
+    https://c.konsulence.al
+    """
+    
+    return send_email(to_email, subject, html_body, text_body)
+
