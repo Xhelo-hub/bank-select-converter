@@ -233,847 +233,633 @@ def index():
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <style>
             :root {
-                --fa-style-family-classic: "Font Awesome 6 Free";
-                --fa-font-solid: normal 900 1em / 1 "Font Awesome 6 Free";
-                --primary-color: #33cc66;
-                --primary-hover: #2eb85c;
-                --header-bg: #2b2b38;
-                --text-dark: #1a1a1a;
-                --text-secondary: #666666;
-                --bg-light: #f8f9fb;
-                --bg-gradient: linear-gradient(135deg, #f8fff8 0%, #e8f5ee 100%);
-                --border-color: #e0e0e0;
-                --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
-                --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
-                --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
-                --danger-color: #ff4d4d;
-                --radius-sm: 8px;
-                --radius-md: 12px;
-                --radius-lg: 16px;
+                --primary: #4f46e5;
+                --primary-light: #6366f1;
+                --primary-dark: #4338ca;
+                --surface: #ffffff;
+                --surface-dim: #f8fafc;
+                --text: #0f172a;
+                --text-secondary: #64748b;
+                --text-muted: #94a3b8;
+                --border: #e2e8f0;
+                --border-light: #f1f5f9;
+                --success: #10b981;
+                --success-light: #ecfdf5;
+                --error: #ef4444;
+                --error-light: #fef2f2;
+                --radius: 16px;
+                --radius-sm: 10px;
+                --radius-xs: 8px;
+                --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+                --shadow-md: 0 4px 12px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.04);
+                --shadow-lg: 0 4px 12px rgba(0,0,0,0.05), 0 20px 48px rgba(0,0,0,0.1);
             }
-            
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-            
+
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+
             body {
-                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-                background: var(--bg-gradient);
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                background: var(--surface-dim);
                 min-height: 100vh;
-                padding: 20px;
-                color: var(--text-dark);
+                padding: 24px;
+                color: var(--text);
             }
-            
+
+            .page-bg {
+                position: fixed;
+                inset: 0;
+                background:
+                    radial-gradient(ellipse at 20% 50%, rgba(79, 70, 229, 0.04) 0%, transparent 50%),
+                    radial-gradient(ellipse at 80% 20%, rgba(99, 102, 241, 0.03) 0%, transparent 50%);
+                z-index: 0;
+            }
+
             .container {
-                max-width: 900px;
+                position: relative;
+                z-index: 1;
+                max-width: 880px;
                 margin: 0 auto;
-                background: white;
-                border-radius: var(--radius-lg);
+                background: var(--surface);
+                border-radius: var(--radius);
                 box-shadow: var(--shadow-lg);
                 overflow: hidden;
+                border: 1px solid var(--border-light);
             }
-            
+
+            /* Header */
             .header {
-                background: var(--header-bg);
-                border-radius: var(--radius-md);
-                padding: 24px;
-                margin-bottom: 20px;
-                box-shadow: var(--shadow-md);
-                color: white;
+                padding: 24px 32px;
+                border-bottom: 1px solid var(--border-light);
+                background: var(--surface);
             }
-            
+
             .header-top {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                flex-wrap: wrap;
-                gap: 15px;
-                margin-bottom: 15px;
+                gap: 16px;
             }
-            
+
             .header-left {
                 display: flex;
                 align-items: center;
-                gap: 15px;
+                gap: 14px;
                 flex: 1;
+                min-width: 0;
             }
-            
-            .logo-container {
-                display: flex;
-                align-items: center;
-                gap: 15px;
-            }
-            
-            .app-logo {
-                width: 80px;
-                height: 80px;
-                object-fit: contain;
-                background: white;
-                border-radius: var(--radius-sm);
-                padding: 8px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            }
-            
+
             .logo-placeholder {
-                width: 80px;
-                height: 80px;
-                background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-                border-radius: var(--radius-sm);
+                width: 44px;
+                height: 44px;
+                background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+                border-radius: 12px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 2em;
+                font-size: 14px;
                 color: white;
                 font-weight: 700;
-                box-shadow: 0 4px 12px rgba(51, 204, 102, 0.4);
+                flex-shrink: 0;
+                box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
             }
-            
-            .header h1 {
-                font-size: 1.8em;
-                font-weight: 600;
-                margin: 0;
+
+            .app-logo {
+                width: 44px;
+                height: 44px;
+                object-fit: contain;
+                background: white;
+                border-radius: 12px;
+                padding: 4px;
+                box-shadow: var(--shadow-sm);
             }
-            
-            .header h1 i {
-                color: var(--primary-color);
-                font-size: 1.1em;
+
+            .header-title {
+                font-size: 18px;
+                font-weight: 700;
+                color: var(--text);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
-            
+
             .header-right {
                 display: flex;
                 align-items: center;
-                gap: 15px;
+                gap: 12px;
+                flex-shrink: 0;
             }
-            
-            .user-info {
+
+            .user-badge {
                 display: flex;
                 align-items: center;
-                gap: 10px;
-            }
-            
-            .user-info i {
-                color: white;
-                font-size: 1.1em;
-            }
-            
-            .user-email {
-                font-size: 0.9em;
+                gap: 8px;
+                padding: 6px 12px;
+                background: var(--surface-dim);
+                border-radius: var(--radius-xs);
+                border: 1px solid var(--border);
+                font-size: 13px;
+                color: var(--text-secondary);
                 font-weight: 500;
             }
-            
-            .button-row {
-                display: flex;
-                justify-content: flex-end;
-                gap: 8px;
-            }
-            
-            .button-group {
-                display: flex;
-                gap: 8px;
-            }
-            
-            .admin-btn,
-            .logout-btn {
-                background: rgba(255,255,255,0.1);
-                color: white;
-                padding: 10px 20px;
-                border: 2px solid rgba(255,255,255,0.2);
-                border-radius: var(--radius-sm);
-                cursor: pointer;
-                font-size: 0.9em;
-                text-decoration: none;
+
+            .user-badge i { color: var(--primary); font-size: 14px; }
+
+            .header-btn {
                 display: inline-flex;
                 align-items: center;
-                gap: 8px;
-                transition: all 0.2s ease;
+                gap: 6px;
+                padding: 8px 14px;
+                border-radius: var(--radius-xs);
+                font-size: 13px;
                 font-weight: 500;
+                text-decoration: none;
+                transition: all 0.2s ease;
+                border: 1px solid var(--border);
+                color: var(--text-secondary);
+                background: var(--surface);
             }
-            
-            .admin-btn i,
-            .logout-btn i {
-                color: var(--primary-color);
-                font-size: 1.1em;
+
+            .header-btn i { font-size: 13px; }
+
+            .header-btn:hover {
+                background: var(--surface-dim);
+                color: var(--text);
+                border-color: var(--text-muted);
             }
-            
-            .admin-btn:hover,
-            .logout-btn:hover {
-                background: rgba(255,255,255,0.2);
-                border-color: var(--primary-color);
-                transform: translateY(-2px) scale(1.02);
-                box-shadow: 0 4px 12px rgba(51, 204, 102, 0.3);
+
+            .header-btn.admin-btn:hover {
+                color: var(--primary);
+                border-color: var(--primary);
+                background: rgba(79, 70, 229, 0.04);
             }
-            
+
+            .header-btn.logout-btn:hover {
+                color: var(--error);
+                border-color: var(--error);
+                background: rgba(239, 68, 68, 0.04);
+            }
+
+            /* Converter Section */
             .converter-section {
-                padding: 40px;
+                padding: 32px;
             }
-            
+
             .step {
-                margin-bottom: 35px;
+                margin-bottom: 24px;
                 padding: 24px;
-                border: 2px solid var(--border-color);
-                border-radius: var(--radius-md);
+                border: 1.5px solid var(--border);
+                border-radius: var(--radius-sm);
                 transition: all 0.3s ease;
-                background: white;
+                background: var(--surface);
             }
-            
+
             .step.active {
-                border-color: var(--primary-color);
-                background: rgba(51, 204, 102, 0.02);
-                box-shadow: var(--shadow-sm);
+                border-color: var(--primary);
+                background: rgba(79, 70, 229, 0.02);
+                box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.06);
             }
-            
+
             .step-title {
-                font-size: 1.4em;
+                font-size: 16px;
                 font-weight: 600;
-                color: var(--text-dark);
-                margin-bottom: 15px;
+                color: var(--text);
+                margin-bottom: 16px;
                 display: flex;
                 align-items: center;
+                gap: 12px;
             }
-            
+
             .step-number {
-                background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+                background: var(--primary);
                 color: white;
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
+                width: 36px;
+                height: 36px;
+                border-radius: 10px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                margin-right: 15px;
-                font-weight: 600;
-                font-size: 1.1em;
-                box-shadow: 0 4px 12px rgba(51, 204, 102, 0.25);
+                font-size: 15px;
+                flex-shrink: 0;
+                box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
             }
-            
-            .step-number i {
-                font-size: 1em;
-            }
-            
+
+            /* Bank Select */
             .bank-select-wrapper {
-                margin-top: 20px;
                 position: relative;
             }
-            
+
             .bank-select {
                 width: 100%;
-                padding: 18px 50px 18px 20px;
-                font-size: 1.1em;
+                padding: 14px 44px 14px 16px;
+                font-size: 14px;
                 font-weight: 500;
-                border: 2px solid var(--border-color);
-                border-radius: var(--radius-md);
-                background: white;
-                color: var(--text-dark);
+                border: 1.5px solid var(--border);
+                border-radius: var(--radius-sm);
+                background: var(--surface);
+                color: var(--text);
                 cursor: pointer;
-                transition: all 0.3s ease;
+                transition: all 0.2s ease;
                 appearance: none;
                 -webkit-appearance: none;
                 -moz-appearance: none;
                 font-family: 'Inter', sans-serif;
-                box-shadow: var(--shadow-sm);
             }
-            
-            .bank-select:hover {
-                border-color: var(--primary-color);
-                box-shadow: var(--shadow-md), 0 0 0 3px rgba(51, 204, 102, 0.1);
-            }
-            
+
+            .bank-select:hover { border-color: var(--text-muted); }
+
             .bank-select:focus {
                 outline: none;
-                border-color: var(--primary-color);
-                box-shadow: var(--shadow-md), 0 0 0 4px rgba(51, 204, 102, 0.15);
+                border-color: var(--primary);
+                box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
             }
-            
+
             .bank-select-wrapper::after {
-                content: '\f107';
+                content: '\\f107';
                 font-family: 'Font Awesome 6 Free';
                 font-weight: 900;
                 position: absolute;
-                right: 20px;
+                right: 16px;
                 top: 50%;
                 transform: translateY(-50%);
-                color: var(--primary-color);
-                font-size: 1.3em;
+                color: var(--text-muted);
+                font-size: 14px;
                 pointer-events: none;
             }
-            
-            .bank-select option {
-                padding: 15px;
-                font-size: 1em;
-            }
-            
-            .bank-select option:disabled {
-                color: var(--text-secondary);
-            }
-            
+
+            .bank-select option:disabled { color: var(--text-muted); }
+
             .selected-bank-info {
-                margin-top: 20px;
-                padding: 20px 24px;
-                background: linear-gradient(135deg, rgba(52, 152, 219, 0.08) 0%, rgba(41, 128, 185, 0.04) 100%);
-                border: 2px solid rgba(52, 152, 219, 0.3);
-                border-radius: var(--radius-md);
+                margin-top: 14px;
+                padding: 14px 16px;
+                background: rgba(79, 70, 229, 0.04);
+                border: 1px solid rgba(79, 70, 229, 0.15);
+                border-radius: var(--radius-xs);
                 display: none;
-                box-shadow: var(--shadow-sm);
+                font-size: 13px;
             }
-            
+
             .selected-bank-info.show {
-                display: block;
+                display: flex;
+                align-items: center;
+                gap: 10px;
                 animation: slideIn 0.3s ease;
             }
-            
+
             @keyframes slideIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(-10px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
+                from { opacity: 0; transform: translateY(-6px); }
+                to { opacity: 1; transform: translateY(0); }
             }
-            
+
             .selected-bank-info .bank-icon {
-                color: #3498db;
-                font-size: 1.4em;
-                margin-right: 10px;
+                color: var(--primary);
+                font-size: 15px;
+                flex-shrink: 0;
             }
-            
+
             .selected-bank-info strong {
-                color: var(--text-dark);
+                color: var(--text);
                 font-weight: 600;
-                font-size: 1.05em;
             }
-            
+
             .selected-bank-info .formats {
-                color: var(--text-dark);
-                font-size: 1em;
+                color: var(--text-secondary);
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .selected-bank-info .formats i { color: var(--primary); font-size: 13px; }
+
+            /* Upload Area */
+            .upload-area {
+                border: 2px dashed var(--border);
+                border-radius: var(--radius-sm);
+                padding: 40px 24px;
+                text-align: center;
+                transition: all 0.3s ease;
+                background: var(--surface-dim);
+                cursor: pointer;
+            }
+
+            .upload-area.dragover {
+                border-color: var(--primary);
+                background: rgba(79, 70, 229, 0.04);
+            }
+
+            .upload-area:not(.disabled):hover {
+                border-color: var(--primary);
+                background: rgba(79, 70, 229, 0.02);
+            }
+
+            .upload-area .upload-icon {
+                color: var(--primary);
+                font-size: 40px;
+                margin-bottom: 16px;
+                display: block;
+                opacity: 0.8;
+            }
+
+            .upload-area.disabled {
+                opacity: 0.4;
+                pointer-events: none;
+            }
+
+            .upload-area .upload-text {
+                font-size: 15px;
+                color: var(--text-secondary);
                 font-weight: 500;
+                margin-bottom: 8px;
+            }
+
+            .upload-area .upload-hint {
+                font-size: 12px;
+                color: var(--text-muted);
+            }
+
+            .upload-area .upload-hint i { margin-right: 4px; }
+
+            .file-input { display: none; }
+
+            .selected-file {
+                background: var(--success-light);
+                padding: 14px 16px;
+                border-radius: var(--radius-xs);
+                margin-top: 12px;
+                border-left: 3px solid var(--success);
+                font-size: 13px;
                 display: flex;
                 align-items: center;
                 gap: 8px;
             }
-            
-            .selected-bank-info .formats i {
-                color: var(--primary-color);
-            }
-            
-            .selected-bank-info .formats {
-                color: var(--text-secondary);
-                font-size: 0.9em;
-                margin-top: 8px;
-            }
-            
-            .bank-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                gap: 20px;
-                margin-top: 20px;
-                display: none;
-            }
-            
-            .bank-card {
-                border: 2px solid var(--border-color);
-                border-radius: var(--radius-md);
-                padding: 24px;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                background: white;
-                box-shadow: var(--shadow-sm);
-            }
-            
-            .bank-card:hover {
-                border-color: var(--primary-color);
-                transform: translateY(-3px) scale(1.02);
-                box-shadow: var(--shadow-md), 0 0 0 3px rgba(51, 204, 102, 0.1);
-            }
-            
-            .bank-card.selected {
-                border-color: var(--primary-color);
-                background: linear-gradient(135deg, rgba(51, 204, 102, 0.08) 0%, rgba(51, 204, 102, 0.04) 100%);
-                box-shadow: var(--shadow-md), 0 0 0 3px rgba(51, 204, 102, 0.15);
-            }
-            
-            .bank-card i {
-                color: var(--primary-color);
-                font-size: 2em;
-                margin-bottom: 12px;
-                display: block;
-            }
-            
-            .bank-name {
-                font-size: 1.3em;
-                font-weight: 600;
-                color: var(--text-dark);
-                margin-bottom: 8px;
-            }
-            }
-            
-            .bank-formats {
-                color: #7f8c8d;
-                font-size: 0.9em;
-                margin-bottom: 5px;
-            }
-            
-            .bank-description {
-                color: var(--text-secondary);
-                font-size: 0.85em;
-                line-height: 1.4;
-            }
-            
-            .upload-area {
-                border: 3px dashed var(--border-color);
-                border-radius: var(--radius-md);
-                padding: 50px 40px;
-                text-align: center;
-                margin-top: 20px;
-                transition: all 0.3s ease;
-                background: linear-gradient(135deg, #fafbfc 0%, #f5f7fa 100%);
-                cursor: pointer;
-            }
-            
-            .upload-area.dragover {
-                border-color: var(--primary-color);
-                background: linear-gradient(135deg, rgba(51, 204, 102, 0.08) 0%, rgba(51, 204, 102, 0.04) 100%);
-                transform: scale(1.01);
-                border-width: 4px;
-            }
-            
-            .upload-area:not(.disabled):hover {
-                border-color: var(--primary-color);
-                background: linear-gradient(135deg, rgba(51, 204, 102, 0.05) 0%, rgba(51, 204, 102, 0.02) 100%);
-            }
-            
-            .upload-area i {
-                color: var(--primary-color);
-                font-size: 3.5em;
-                margin-bottom: 20px;
-                display: block;
-                filter: drop-shadow(0 4px 8px rgba(51, 204, 102, 0.2));
-            }
-            
-            .upload-area.disabled {
-                opacity: 0.5;
-                pointer-events: none;
-            }
-            
-            .file-input {
-                display: none;
-            }
-            
-            .upload-btn {
-                background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-                color: white;
-                padding: 16px 32px;
-                border: none;
-                border-radius: var(--radius-sm);
-                cursor: pointer;
-                font-size: 1.1em;
-                font-weight: 600;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 12px;
-                transition: all 0.2s ease;
-                box-shadow: 0 4px 12px rgba(51, 204, 102, 0.3);
-                width: 100%;
-                max-width: 400px;
-                margin: 0 auto;
-            }
-            
-            .upload-btn:hover {
-                background: linear-gradient(135deg, var(--primary-hover) 0%, #27a04d 100%);
-                transform: translateY(-2px) scale(1.02);
-                box-shadow: 0 6px 16px rgba(51, 204, 102, 0.4);
-            }
-            
-            .upload-btn:disabled {
-                background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
-                cursor: not-allowed;
-                transform: none;
-                box-shadow: none;
-            }
-            
+
+            .selected-file i { color: var(--success); }
+
+            /* Convert Button */
             .convert-btn {
-                background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+                background: var(--primary);
                 color: white;
-                padding: 18px 40px;
+                padding: 14px 28px;
                 border: none;
-                border-radius: var(--radius-md);
+                border-radius: var(--radius-sm);
                 cursor: pointer;
-                font-size: 1.2em;
+                font-size: 15px;
                 font-weight: 600;
                 width: 100%;
-                margin-top: 25px;
+                margin-top: 8px;
                 transition: all 0.2s ease;
-                box-shadow: var(--shadow-md), 0 0 0 0 rgba(51, 204, 102, 0.4);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                gap: 12px;
+                gap: 10px;
+                font-family: 'Inter', sans-serif;
             }
-            
+
             .convert-btn:hover {
-                background: linear-gradient(135deg, var(--primary-hover) 0%, #27a04d 100%);
-                transform: translateY(-2px) scale(1.01);
-                box-shadow: var(--shadow-lg), 0 0 0 4px rgba(51, 204, 102, 0.15);
+                background: var(--primary-dark);
+                box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+                transform: translateY(-1px);
             }
-            
+
             .convert-btn:disabled {
-                background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+                background: var(--text-muted);
                 cursor: not-allowed;
                 transform: none;
                 box-shadow: none;
             }
-            
+
+            .convert-btn i { color: white !important; }
+
+            /* Result Section */
             .result-section {
-                margin-top: 30px;
+                margin-top: 24px;
                 padding: 24px;
-                border-radius: var(--radius-md);
-                display: none;
-                box-shadow: var(--shadow-sm);
-            }
-            
-            .result-section.success {
-                background: linear-gradient(135deg, #d5f4e6 0%, #e8f9f0 100%);
-                border: 2px solid var(--primary-color);
-            }
-            
-            .result-section.error {
-                background: linear-gradient(135deg, #fadbd8 0%, #ffe6e6 100%);
-                border: 2px solid var(--danger-color);
-            }
-            
-            .result-section.processing {
-                background: linear-gradient(135deg, #e8f5e8 0%, #f0f9f0 100%);
-                border: 2px solid #33cc66;
-            }
-            
-            .download-btn {
-                background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-                color: white;
-                padding: 14px 32px;
-                border: none;
                 border-radius: var(--radius-sm);
+                display: none;
+            }
+
+            .result-section.success {
+                background: var(--success-light);
+                border: 1px solid #a7f3d0;
+            }
+
+            .result-section.error {
+                background: var(--error-light);
+                border: 1px solid #fecaca;
+            }
+
+            .result-section.processing {
+                background: rgba(79, 70, 229, 0.04);
+                border: 1px solid rgba(79, 70, 229, 0.15);
+            }
+
+            /* Download Button */
+            .download-btn {
+                background: var(--primary);
+                color: white;
+                padding: 12px 24px;
+                border: none;
+                border-radius: var(--radius-xs);
                 cursor: pointer;
-                font-size: 1.05em;
+                font-size: 14px;
                 font-weight: 600;
                 text-decoration: none;
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                gap: 10px;
-                margin-top: 15px;
+                gap: 8px;
                 transition: all 0.2s ease;
-                box-shadow: 0 4px 12px rgba(51, 204, 102, 0.3);
-                width: 50%;
+                font-family: 'Inter', sans-serif;
                 min-width: 200px;
             }
-            
-            .download-btn i,
-            .convert-btn i {
-                color: white !important;
-            }
-            
+
+            .download-btn i { color: white !important; }
+
             .download-btn:hover {
-                background: linear-gradient(135deg, var(--primary-hover) 0%, #27a04d 100%);
-                transform: translateY(-2px) scale(1.03);
-                box-shadow: 0 6px 16px rgba(51, 204, 102, 0.4);
+                background: var(--primary-dark);
+                box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+                transform: translateY(-1px);
             }
-            
-            .selected-file {
-                background: linear-gradient(135deg, #e8f5e8 0%, #f0f9f0 100%);
-                padding: 18px;
-                border-radius: var(--radius-sm);
-                margin-top: 15px;
-                border-left: 4px solid var(--primary-color);
-                box-shadow: var(--shadow-sm);
+
+            .download-btn.secondary {
+                background: var(--text-secondary);
             }
-            
+
+            .download-btn.secondary:hover {
+                background: #475569;
+                box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+            }
+
+            /* Animations */
             .spinner {
-                border: 4px solid rgba(51, 204, 102, 0.1);
-                border-top: 4px solid var(--primary-color);
+                border: 3px solid rgba(79, 70, 229, 0.1);
+                border-top: 3px solid var(--primary);
                 border-radius: 50%;
-                width: 50px;
-                height: 50px;
+                width: 44px;
+                height: 44px;
                 animation: spin 0.8s linear infinite;
-                margin: 20px auto;
+                margin: 16px auto;
             }
-            
+
             @keyframes spin {
                 0% { transform: rotate(0deg); }
                 100% { transform: rotate(360deg); }
             }
-            
+
             .hourglass-container {
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                margin: 30px auto 20px;
+                margin: 20px auto 16px;
             }
-            
+
             .hourglass-spin {
                 animation: hourglass-rotate 2s ease-in-out infinite;
             }
-            
+
             @keyframes hourglass-rotate {
                 0% { transform: rotate(0deg); }
                 50% { transform: rotate(180deg); }
                 100% { transform: rotate(180deg); }
             }
-            
+
             .success-animation {
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
-                padding: 40px 20px;
+                padding: 32px 20px;
             }
-            
+
             .success-icon {
                 animation: success-pop 0.6s ease-out;
             }
-            
+
             @keyframes success-pop {
-                0% {
-                    transform: scale(0);
-                    opacity: 0;
-                }
-                50% {
-                    transform: scale(1.2);
-                }
-                100% {
-                    transform: scale(1);
-                    opacity: 1;
-                }
+                0% { transform: scale(0); opacity: 0; }
+                50% { transform: scale(1.2); }
+                100% { transform: scale(1); opacity: 1; }
             }
-            
+
+            /* Footer */
             .footer {
-                background: linear-gradient(135deg, #2b2b38 0%, #1f1f29 100%);
-                padding: 25px;
+                padding: 20px 32px;
                 text-align: center;
-                color: rgba(255, 255, 255, 0.7);
-                border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+                border-top: 1px solid var(--border-light);
+                background: var(--surface-dim);
+                font-size: 12px;
+                color: var(--text-muted);
             }
-            
-            .footer strong {
-                color: var(--primary-color);
-                font-weight: 600;
+
+            .footer i { color: var(--primary); }
+
+            .footer .banks-list {
+                margin-top: 4px;
+                font-size: 11px;
+                color: var(--text-muted);
             }
-            
+
+            /* Hidden bank grid/card styles (kept for JS compatibility) */
+            .bank-grid { display: none; }
+
             /* Mobile Responsiveness */
             @media (max-width: 768px) {
-                body {
-                    padding: 10px;
-                }
+                body { padding: 12px; }
+                .container { border-radius: 12px; }
+                .header { padding: 16px 20px; }
 
-                .container {
-                    border-radius: 10px;
-                }
-
-                .header {
-                    padding: 20px 15px;
-                }
-                
                 .header-top {
                     flex-direction: column;
-                    text-align: center;
-                }
-                
-                .header-left {
-                    flex-direction: column;
-                    width: 100%;
-                    text-align: center;
-                }
-                
-                .logo-container {
-                    flex-direction: column;
                     gap: 12px;
                 }
 
-                .header h1 {
-                    font-size: 1.5em;
-                    text-align: center;
-                }
+                .header-left { justify-content: center; }
 
-                .header p {
-                    font-size: 1em;
-                }
-                
                 .header-right {
                     width: 100%;
-                    justify-content: center;
-                }
-
-                .user-info {
-                    flex-direction: column;
-                    gap: 12px;
-                    align-items: stretch;
-                }
-
-                .user-email {
-                    text-align: center;
-                }
-
-                .button-group {
                     justify-content: center;
                     flex-wrap: wrap;
                 }
 
-                .converter-section {
-                    padding: 25px 15px;
-                }
+                .user-badge { font-size: 12px; }
 
-                .step-title {
-                    font-size: 1.3em;
-                }
+                .converter-section { padding: 20px 16px; }
+                .step { padding: 20px 16px; }
+                .step-title { font-size: 15px; }
 
-                .bank-grid {
-                    grid-template-columns: 1fr;
-                    gap: 12px;
-                }
+                .upload-area { padding: 28px 16px; }
 
-                .bank-card {
-                    padding: 18px;
-                }
-
-                .bank-name {
-                    font-size: 1.2em;
-                }
-
-                .upload-area {
-                    padding: 25px 15px;
-                }
-
-                .upload-area p {
-                    font-size: 1em !important;
-                }
-
-                .upload-btn,
                 .download-btn {
-                    padding: 10px 20px;
-                    font-size: 1em;
                     width: 100%;
-                    max-width: 100%;
-                    margin-left: 0 !important;
-                    margin-bottom: 10px;
-                }
-
-                .convert-btn {
-                    padding: 14px 25px;
-                    font-size: 1.1em;
-                }
-
-                .result-section {
-                    padding: 15px;
-                    font-size: 0.95em;
-                }
-
-                .footer {
-                    padding: 15px;
-                    font-size: 0.9em;
+                    min-width: unset;
                 }
             }
 
             @media (max-width: 480px) {
-                .header h1 {
-                    font-size: 1.5em;
+                body { padding: 8px; }
+                .header-title { font-size: 16px; }
+
+                .header-btn {
+                    padding: 6px 10px;
+                    font-size: 12px;
                 }
 
-                .header p {
-                    font-size: 0.9em;
-                }
-
-                .admin-btn,
-                .logout-btn {
-                    padding: 8px 12px;
-                    font-size: 0.8em;
-                }
-
-                .step-title {
-                    font-size: 1.1em;
-                }
+                .step-title { font-size: 14px; }
 
                 .step-number {
-                    width: 35px;
-                    height: 35px;
-                    font-size: 1.1em;
-                }
-
-                .bank-card {
-                    padding: 15px;
-                }
-
-                .bank-name {
-                    font-size: 1.1em;
-                }
-
-                .bank-formats,
-                .bank-description {
-                    font-size: 0.85em;
-                }
-
-                .upload-area {
-                    padding: 20px 10px;
+                    width: 32px;
+                    height: 32px;
+                    font-size: 13px;
+                    border-radius: 8px;
                 }
 
                 .convert-btn {
                     padding: 12px 20px;
-                    font-size: 1em;
+                    font-size: 14px;
                 }
 
-                .converter-section {
-                    padding: 20px 10px;
-                }
+                .converter-section { padding: 16px 12px; }
+                .step { padding: 16px 12px; margin-bottom: 16px; }
             }
         </style>
     </head>
     <body>
+        <div class="page-bg"></div>
         <div class="container">
             <div class="header">
                 <div class="header-top">
                     <div class="header-left">
-                        <div class="logo-container">
-                            <div class="logo-placeholder" id="appLogo">
-                                BS
-                            </div>
-                            <h1>Bank Statement Converter</h1>
-                        </div>
+                        <div class="logo-placeholder" id="appLogo">BS</div>
+                        <span class="header-title">Bank Statement Converter</span>
                     </div>
                     <div class="header-right">
-                        <div class="user-info">
+                        <div class="user-badge">
                             <i class="fas fa-user-circle"></i>
-                            <span class="user-email">{{ current_user.email }}</span>
+                            <span>{{ current_user.email }}</span>
                         </div>
-                    </div>
-                </div>
-                <div class="button-row">
-                    <div class="button-group">
                         {% if current_user.is_admin %}
-                        <a href="{{ url_for('admin.dashboard') }}" class="admin-btn">
-                            <i class="fas fa-users-cog"></i> Admin Panel
+                        <a href="{{ url_for('admin.dashboard') }}" class="header-btn admin-btn">
+                            <i class="fas fa-shield-halved"></i> Admin
                         </a>
                         {% endif %}
-                        <a href="{{ url_for('auth.logout') }}" class="logout-btn">
-                            <i class="fas fa-sign-out-alt"></i> Logout
+                        <a href="{{ url_for('auth.logout') }}" class="header-btn logout-btn">
+                            <i class="fas fa-arrow-right-from-bracket"></i> Logout
                         </a>
                     </div>
                 </div>
             </div>
-            
+
             <div class="converter-section">
                 <form id="converterForm" enctype="multipart/form-data">
                     <!-- Step 1: Select Bank -->
                     <div class="step active" id="step1">
                         <div class="step-title">
-                            <div class="step-number"><i class="fas fa-university"></i></div>
+                            <div class="step-number"><i class="fas fa-building-columns"></i></div>
                             Select Your Bank
                         </div>
-                        
+
                         <div class="bank-select-wrapper">
                             <select class="bank-select" id="bankSelect" onchange="selectBankFromDropdown()">
                                 <option value="" disabled selected>Choose your bank...</option>
@@ -1084,66 +870,62 @@ def index():
                                 {% endfor %}
                             </select>
                         </div>
-                        
+
                         <div class="selected-bank-info" id="selectedBankInfo">
-                            <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                                <i class="fas fa-info-circle bank-icon"></i>
-                                <strong>Supported Formats:</strong>
-                            </div>
+                            <i class="fas fa-file-lines bank-icon"></i>
                             <div class="formats">
-                                <i class="fas fa-file-alt"></i> <span id="selectedBankFormats"></span>
+                                <strong>Supported Formats:</strong>&nbsp; <span id="selectedBankFormats"></span>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Step 2: Upload File -->
                     <div class="step" id="step2">
                         <div class="step-title">
-                            <div class="step-number"><i class="fas fa-upload"></i></div>
+                            <div class="step-number"><i class="fas fa-cloud-arrow-up"></i></div>
                             Upload Bank Statement
                         </div>
                         <div class="upload-area disabled" id="uploadArea">
-                            <i class="fas fa-cloud-upload-alt"></i>
+                            <i class="fas fa-cloud-arrow-up upload-icon"></i>
                             <input type="file" id="fileInput" name="file" class="file-input" onchange="handleFileSelect(event)" accept=".pdf,.csv,.txt">
-                            <p style="font-size: 1.2em; color: #7f8c8d; margin-bottom: 15px;">Drag & Drop or Click to Upload</p>
-                            <p style="margin-top: 15px; color: #95a5a6; font-size: 0.9em;"><i class="fas fa-info-circle"></i> Supported: PDF, CSV, TXT (Max 50MB)</p>
+                            <p class="upload-text">Drag & drop or click to upload</p>
+                            <p class="upload-hint"><i class="fas fa-info-circle"></i> Supported: PDF, CSV, TXT (Max 50MB)</p>
                         </div>
                         <div id="selectedFile" class="selected-file" style="display: none;">
-                            <i class="fas fa-check-circle" style="color: var(--primary-color);"></i> <strong>Selected:</strong> <span id="fileName"></span>
+                            <i class="fas fa-check-circle"></i> <strong>Selected:</strong> <span id="fileName"></span>
                         </div>
                     </div>
-                    
+
                     <!-- Step 3: Convert -->
                     <div class="step" id="step3">
                         <div class="step-title">
-                            <div class="step-number"><i class="fas fa-sync-alt"></i></div>
+                            <div class="step-number"><i class="fas fa-arrow-right-arrow-left"></i></div>
                             Convert to QuickBooks Format
                         </div>
                         <button type="submit" class="convert-btn" disabled id="convertBtn">
-                            <i class="fas fa-sync-alt" style="color: white;"></i> Convert Statement
+                            <i class="fas fa-arrow-right-arrow-left"></i> Convert Statement
                         </button>
                     </div>
                 </form>
-                
+
                 <!-- Results Section -->
                 <div class="result-section" id="resultSection">
                     <div id="resultContent"></div>
                 </div>
             </div>
-            
+
             <div class="footer">
-                <p><i class="fas fa-shield-alt" style="color: var(--primary-color);"></i> Albanian Bank Statement Converter | QuickBooks Compatible</p>
-                <p style="margin-top: 5px; font-size: 0.9em;">Supports: BKT, OTP, Raiffeisen, Tirana Bank, Union Bank, Credins, Intesa, ProCredit, Paysera, E-Bill</p>
+                <p><i class="fas fa-shield-halved"></i> Albanian Bank Statement Converter &middot; QuickBooks Compatible</p>
+                <p class="banks-list">BKT &middot; OTP &middot; Raiffeisen &middot; Tirana Bank &middot; Union Bank &middot; Credins &middot; Intesa &middot; ProCredit &middot; Paysera &middot; E-Bill</p>
             </div>
         </div>
-        
+
         <script>
             // Load custom logo if exists
             (function() {
                 const logoContainer = document.getElementById('appLogo');
                 const logoPath = '/static/logo.png';
-                
-                // Try to load custom logo
+
                 fetch(logoPath)
                     .then(response => {
                         if (response.ok) {
@@ -1154,49 +936,35 @@ def index():
                             logoContainer.replaceWith(img);
                         }
                     })
-                    .catch(() => {
-                        // Use placeholder if logo doesn't exist
-                    });
+                    .catch(() => {});
             })();
-            
-            // Immediate debug on page load
-            console.log('=== PAGE LOADED ===');
-            console.log('bankSelect element:', document.getElementById('bankSelect'));
-            console.log('uploadArea element:', document.getElementById('uploadArea'));
-            
+
             let selectedBank = null;
             let selectedFile = null;
-            
+
             async function downloadFile(jobId) {
                 try {
-                    // Fetch the file
                     const response = await fetch('/download/' + jobId);
-                    
-                    // Check if request was successful
+
                     if (!response.ok) {
                         const errorText = await response.text();
                         alert('Download error: ' + errorText);
                         return;
                     }
-                    
-                    // Get the blob data
+
                     const blob = await response.blob();
-                    
-                    // Extract filename from Content-Disposition header or use default
+
                     let filename = 'converted_statement.csv';
                     const contentDisposition = response.headers.get('Content-Disposition');
                     if (contentDisposition) {
-                        // More robust filename extraction
                         const filenameMatch = contentDisposition.match(/filename[^;=\\n]*=((['"]).*?\\2|[^;\\n]*)/);
                         if (filenameMatch && filenameMatch[1]) {
                             filename = filenameMatch[1].replace(/['"]/g, '');
                         }
                     }
-                    
-                    // Ensure filename ends with .csv (remove any trailing characters)
+
                     filename = filename.trim();
                     if (!filename.endsWith('.csv')) {
-                        // If there's extra stuff after .csv, remove it
                         const csvIndex = filename.indexOf('.csv');
                         if (csvIndex > -1) {
                             filename = filename.substring(0, csvIndex + 4);
@@ -1204,8 +972,7 @@ def index():
                             filename = filename + '.csv';
                         }
                     }
-                    
-                    // Create a download link and click it
+
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
@@ -1213,145 +980,106 @@ def index():
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-                    
-                    // Clean up the blob URL
                     window.URL.revokeObjectURL(url);
-                    
+
                 } catch (error) {
                     console.error('Download error:', error);
                     alert('Download failed: ' + error.message);
                 }
             }
-            
+
             function selectBankFromDropdown() {
-                console.log('selectBankFromDropdown called');
                 const selectElement = document.getElementById('bankSelect');
                 const selectedOption = selectElement.options[selectElement.selectedIndex];
-                
+
                 selectedBank = selectElement.value;
-                console.log('Selected bank:', selectedBank);
-                
+
                 if (selectedBank) {
-                    // Show selected bank formats
                     const bankFormats = selectedOption.getAttribute('data-formats');
-                    console.log('Bank formats:', bankFormats);
-                    
+
                     document.getElementById('selectedBankFormats').textContent = bankFormats;
                     document.getElementById('selectedBankInfo').classList.add('show');
-                    
-                    // Enable upload - remove disabled class first, then clear inline style
+
                     document.getElementById('step2').classList.add('active');
                     const uploadArea = document.getElementById('uploadArea');
-                    console.log('Upload area before:', uploadArea.classList, uploadArea.style.pointerEvents);
                     uploadArea.classList.remove('disabled');
-                    uploadArea.style.pointerEvents = ''; // Clear inline style to allow CSS to work
-                    console.log('Upload area after:', uploadArea.classList, uploadArea.style.pointerEvents);
-                    
-                    // Reset file selection and step 3
+                    uploadArea.style.pointerEvents = '';
+
                     document.getElementById('fileInput').value = '';
                     selectedFile = null;
                     document.getElementById('selectedFile').style.display = 'none';
                     document.getElementById('step3').classList.remove('active');
                     document.getElementById('convertBtn').disabled = true;
-                    console.log('Upload area should now be clickable');
-                } else {
-                    console.log('No bank selected (empty value)');
                 }
             }
-            
+
             function selectBank(bankId) {
                 selectedBank = bankId;
-                
-                // Update UI
+
                 document.querySelectorAll('.bank-card').forEach(card => {
                     card.classList.remove('selected');
                 });
-                const selectedCard = document.querySelector(`[data-bank="${bankId}"]`);
+                const selectedCard = document.querySelector('[data-bank="' + bankId + '"]');
                 if (selectedCard) {
                     selectedCard.classList.add('selected');
                 }
-                
-                // Enable upload - remove disabled class first, then clear inline style
+
                 document.getElementById('step2').classList.add('active');
                 const uploadArea = document.getElementById('uploadArea');
                 uploadArea.classList.remove('disabled');
-                uploadArea.style.pointerEvents = ''; // Clear inline style to allow CSS to work
-                
-                // Reset file selection and step 3
+                uploadArea.style.pointerEvents = '';
+
                 document.getElementById('fileInput').value = '';
                 selectedFile = null;
                 document.getElementById('selectedFile').style.display = 'none';
                 document.getElementById('step3').classList.remove('active');
                 document.getElementById('convertBtn').disabled = true;
             }
-            
+
             function resetForm() {
-                console.log('Resetting form for new conversion');
-                
-                // Reset file selection
                 document.getElementById('fileInput').value = '';
                 selectedFile = null;
                 document.getElementById('selectedFile').style.display = 'none';
-                
-                // Re-enable upload area
+
                 const uploadArea = document.getElementById('uploadArea');
                 uploadArea.style.pointerEvents = '';
-                
-                // Reset steps
+
                 document.getElementById('step3').classList.remove('active');
                 document.getElementById('convertBtn').disabled = true;
-                
-                // Hide result section
+
                 document.getElementById('resultSection').style.display = 'none';
-                
-                console.log('Form reset complete - ready for new file');
             }
-            
+
             function handleFileSelect(event) {
                 const file = event.target.files[0];
                 if (file) {
                     selectedFile = file;
                     document.getElementById('fileName').textContent = file.name;
-                    document.getElementById('selectedFile').style.display = 'block';
+                    document.getElementById('selectedFile').style.display = 'flex';
                     document.getElementById('step3').classList.add('active');
                     document.getElementById('convertBtn').disabled = false;
-                    
-                    // Disable upload area clicks to prevent reopening file dialog
+
                     document.getElementById('uploadArea').style.pointerEvents = 'none';
                 }
             }
-            
+
             // Drag and drop
             const uploadArea = document.getElementById('uploadArea');
             const fileInput = document.getElementById('fileInput');
-            
-            // Add event listener to dropdown as fallback (in case onchange attr doesn't work)
+
             const bankSelectElement = document.getElementById('bankSelect');
             if (bankSelectElement) {
-                console.log('Adding change event listener to dropdown');
                 bankSelectElement.addEventListener('change', function() {
-                    console.log('Dropdown changed via addEventListener');
                     selectBankFromDropdown();
                 });
-            } else {
-                console.error('bankSelect element not found!');
             }
-            
-            // Make entire upload area clickable (only when no file is selected)
+
             uploadArea.addEventListener('click', (e) => {
-                console.log('Upload area clicked', {
-                    hasDisabled: uploadArea.classList.contains('disabled'),
-                    target: e.target,
-                    selectedFile: selectedFile
-                });
                 if (!uploadArea.classList.contains('disabled') && e.target !== fileInput && !selectedFile) {
-                    console.log('Opening file dialog');
                     fileInput.click();
-                } else {
-                    console.log('Click blocked - disabled:', uploadArea.classList.contains('disabled'), 'selectedFile:', selectedFile);
                 }
             });
-            
+
             uploadArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1359,18 +1087,18 @@ def index():
                     uploadArea.classList.add('dragover');
                 }
             });
-            
+
             uploadArea.addEventListener('dragleave', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 uploadArea.classList.remove('dragover');
             });
-            
+
             uploadArea.addEventListener('drop', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 uploadArea.classList.remove('dragover');
-                
+
                 if (!uploadArea.classList.contains('disabled')) {
                     const file = e.dataTransfer.files[0];
                     if (file) {
@@ -1379,85 +1107,50 @@ def index():
                     }
                 }
             });
-            
+
             // Form submission
             document.getElementById('converterForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                
+
                 if (!selectedBank || !selectedFile) {
                     alert('Please select a bank and upload a file');
                     return;
                 }
-                
-                // Show processing with hourglass animation
+
                 const resultSection = document.getElementById('resultSection');
                 const resultContent = document.getElementById('resultContent');
                 resultSection.className = 'result-section processing';
                 resultSection.style.display = 'block';
-                resultContent.innerHTML = `
-                    <div class="hourglass-container">
-                        <i class="fas fa-hourglass-half fa-3x hourglass-spin" style="color: #33cc66;"></i>
-                    </div>
-                    <p style="text-align: center; margin-top: 20px; color: #33cc66; font-weight: 600; font-size: 1.1em;">
-                        Converting your statement...<br>
-                        <span style="font-size: 0.9em; color: #666;">Please wait, this may take a few moments</span>
-                    </p>
-                `;
-                
-                // Disable form
+                resultContent.innerHTML = '<div class="hourglass-container"><i class="fas fa-hourglass-half fa-3x hourglass-spin" style="color: var(--primary);"></i></div><p style="text-align: center; margin-top: 16px; color: var(--primary); font-weight: 600; font-size: 15px;">Converting your statement...<br><span style="font-size: 13px; color: var(--text-muted); font-weight: 400;">Please wait, this may take a few moments</span></p>';
+
                 document.getElementById('convertBtn').disabled = true;
-                
-                // Prepare form data
+
                 const formData = new FormData();
                 formData.append('bank', selectedBank);
                 formData.append('file', selectedFile);
-                
+
                 try {
                     const response = await fetch('/convert', {
                         method: 'POST',
                         body: formData
                     });
-                    
+
                     const result = await response.json();
-                    
+
                     if (result.success) {
-                        // Show success animation first
                         resultSection.className = 'result-section success';
-                        resultContent.innerHTML = `
-                            <div class="success-animation">
-                                <i class="fas fa-check-circle fa-5x success-icon" style="color: #27ae60;"></i>
-                                <h3 style="color: #27ae60; margin-top: 20px; font-size: 1.5em;">Conversion Successful!</h3>
-                            </div>
-                        `;
-                        
-                        // After animation, show download buttons
+                        resultContent.innerHTML = '<div class="success-animation"><i class="fas fa-check-circle fa-4x success-icon" style="color: #10b981;"></i><h3 style="color: #065f46; margin-top: 16px; font-size: 18px;">Conversion Successful!</h3></div>';
+
                         setTimeout(() => {
-                            resultContent.innerHTML = `
-                                <div style="text-align: center;">
-                                    <i class="fas fa-thumbs-up fa-3x" style="color: #27ae60; margin-bottom: 15px;"></i>
-                                    <h3 style="color: #27ae60; margin-bottom: 15px;">Ready to Download!</h3>
-                                </div>
-                                <p style="margin-bottom: 10px;"><strong>Original File:</strong> ${result.original_filename}</p>
-                                <p style="margin-bottom: 10px;"><strong>Converted File:</strong> ${result.output_filename}</p>
-                                <div style="display: flex; gap: 15px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 20px;">
-                                    <button onclick="downloadFile('${result.job_id}')" class="download-btn"><i class="fas fa-download" style="color: white;"></i> Download QuickBooks CSV</button>
-                                    <button onclick="resetForm()" class="download-btn"><i class="fas fa-redo" style="color: white;"></i> Convert Another File</button>
-                                </div>
-                            `;
-                        }, 1500); // Show success animation for 1.5 seconds
+                            resultContent.innerHTML = '<div style="text-align: center;"><i class="fas fa-circle-check fa-2x" style="color: #10b981; margin-bottom: 12px;"></i><h3 style="color: #065f46; margin-bottom: 16px; font-size: 16px;">Ready to Download</h3></div><p style="margin-bottom: 8px; font-size: 13px; color: var(--text-secondary);"><strong style="color: var(--text);">Original:</strong> ' + result.original_filename + '</p><p style="margin-bottom: 8px; font-size: 13px; color: var(--text-secondary);"><strong style="color: var(--text);">Converted:</strong> ' + result.output_filename + '</p><div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px;"><button onclick="downloadFile(\\''+result.job_id+'\\')\" class="download-btn"><i class="fas fa-download"></i> Download CSV</button><button onclick="resetForm()" class="download-btn secondary"><i class="fas fa-arrow-rotate-right"></i> Convert Another</button></div>';
+                        }, 1500);
                     } else {
                         resultSection.className = 'result-section error';
-                        resultContent.innerHTML = `
-                            <h3 style="color: #e74c3c; margin-bottom: 15px;">❌ Conversion Failed</h3>
-                            <p><strong>Error:</strong> ${result.error || 'Unknown error occurred'}</p>
-                        `;
+                        resultContent.innerHTML = '<div style="text-align: center;"><i class="fas fa-circle-xmark fa-2x" style="color: var(--error); margin-bottom: 12px;"></i><h3 style="color: #991b1b; margin-bottom: 12px; font-size: 16px;">Conversion Failed</h3><p style="font-size: 13px; color: #991b1b;"><strong>Error:</strong> ' + (result.error || 'Unknown error occurred') + '</p></div>';
                     }
                 } catch (error) {
                     resultSection.className = 'result-section error';
-                    resultContent.innerHTML = `
-                        <h3 style="color: #e74c3c; margin-bottom: 15px;">❌ Error</h3>
-                        <p><strong>Error:</strong> ${error.message}</p>
-                    `;
+                    resultContent.innerHTML = '<div style="text-align: center;"><i class="fas fa-circle-xmark fa-2x" style="color: var(--error); margin-bottom: 12px;"></i><h3 style="color: #991b1b; margin-bottom: 12px; font-size: 16px;">Error</h3><p style="font-size: 13px; color: #991b1b;"><strong>Error:</strong> ' + error.message + '</p></div>';
                 } finally {
                     document.getElementById('convertBtn').disabled = false;
                 }
