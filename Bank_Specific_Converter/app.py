@@ -258,6 +258,34 @@ def index():
                 --shadow-lg: 0 4px 12px rgba(0,0,0,0.05), 0 20px 48px rgba(0,0,0,0.1);
             }
 
+            [data-theme="dark"] {
+                --primary: #818cf8;
+                --primary-light: #a5b4fc;
+                --primary-dark: #6366f1;
+                --surface: #1e1e2e;
+                --surface-dim: #181825;
+                --text: #e2e8f0;
+                --text-secondary: #94a3b8;
+                --text-muted: #64748b;
+                --border: #334155;
+                --border-light: #1e293b;
+                --success: #34d399;
+                --success-light: rgba(16, 185, 129, 0.1);
+                --error: #f87171;
+                --error-light: rgba(239, 68, 68, 0.1);
+                --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+                --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+                --shadow-lg: 0 4px 12px rgba(0,0,0,0.3), 0 20px 48px rgba(0,0,0,0.4);
+            }
+
+            [data-theme="dark"] .page-bg {
+                background:
+                    radial-gradient(ellipse at 20% 50%, rgba(129, 140, 248, 0.06) 0%, transparent 50%),
+                    radial-gradient(ellipse at 80% 20%, rgba(165, 180, 252, 0.04) 0%, transparent 50%);
+            }
+
+            [data-theme="dark"] .bank-select option { background: #1e1e2e; color: #e2e8f0; }
+
             * { margin: 0; padding: 0; box-sizing: border-box; }
 
             body {
@@ -400,6 +428,13 @@ def index():
                 color: var(--error);
                 border-color: var(--error);
                 background: rgba(239, 68, 68, 0.04);
+            }
+
+            .theme-toggle { cursor: pointer; font-family: inherit; }
+            .theme-toggle:hover {
+                color: var(--primary) !important;
+                border-color: var(--primary) !important;
+                background: rgba(79, 70, 229, 0.04) !important;
             }
 
             /* Converter Section */
@@ -824,6 +859,7 @@ def index():
                 .step { padding: 16px 12px; margin-bottom: 16px; }
             }
         </style>
+        <script>(function(){var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);})();</script>
     </head>
     <body>
         <div class="page-bg"></div>
@@ -839,6 +875,9 @@ def index():
                             <i class="fas fa-user-circle"></i>
                             <span>{{ current_user.email }}</span>
                         </div>
+                        <button class="header-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark mode">
+                            <i class="fas fa-moon"></i>
+                        </button>
                         {% if current_user.is_admin %}
                         <a href="{{ url_for('admin.dashboard') }}" class="header-btn admin-btn">
                             <i class="fas fa-shield-halved"></i> Admin
@@ -921,6 +960,29 @@ def index():
         </div>
 
         <script>
+            // Theme toggle
+            function toggleTheme() {
+                const html = document.documentElement;
+                const isDark = html.getAttribute('data-theme') === 'dark';
+                const newTheme = isDark ? 'light' : 'dark';
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                updateThemeIcon(newTheme);
+            }
+
+            function updateThemeIcon(theme) {
+                const icon = document.querySelector('#themeToggle i');
+                if (icon) {
+                    icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+                }
+            }
+
+            // Apply saved theme icon on load
+            (function() {
+                const saved = localStorage.getItem('theme') || 'light';
+                updateThemeIcon(saved);
+            })();
+
             // Load custom logo if exists
             (function() {
                 const logoContainer = document.getElementById('appLogo');
