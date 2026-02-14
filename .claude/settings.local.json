@@ -3,7 +3,9 @@
     "allow": [
       "Bash(powershell -Command:*)",
       "Bash(ssh-copy-id:*)",
-      "Bash(ssh root@c.konsulence.al \"cd /home/converter/web/c.konsulence.al/public_html/Bank_Specific_Converter && source ../.venv/bin/activate && python migrate_json_to_sqlite.py\")"
+      "Bash(ssh root@c.konsulence.al \"cd /home/converter/web/c.konsulence.al/public_html/Bank_Specific_Converter && source ../.venv/bin/activate && python migrate_json_to_sqlite.py\")",
+      "Bash(ssh converter@c.konsulence.al \"cd /home/converter/web/c.konsulence.al/public_html/Bank_Specific_Converter && git restore data/app.db-shm && git pull origin main\")",
+      "Bash(FLASK_APP=app.py \"c:/Users/XheladinPalushi/OneDrive - KONSULENCE.AL/Desktop/pdfdemo/.venv/Scripts/python\" -X utf8 -m flask run:*)"
     ]
   }
 }

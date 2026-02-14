@@ -1,0 +1,9 @@
+[
+  {
+    "email": "kontakt@konsulence.al",
+    "password": "$2b$12$ynzCo79dxkWyUh/RIFrwHesPM758Zq99oLmoIvPtPZtRlGTMqCJwe",
+    "is_admin": true,
+    "is_approved": true,
+    "is_active": true
+  }
+]
