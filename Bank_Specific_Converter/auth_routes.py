@@ -7,8 +7,9 @@ Routes for login, logout, and registration
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, login_required
 from auth import UserManager
-from models import User, MarketingMessage
+from models import User
 from email_utils import send_password_reset_email, send_new_user_registration_notification
+import os
 import re
 
 # Create blueprint
@@ -17,24 +18,48 @@ auth_bp = Blueprint('auth', __name__)
 # Initialize UserManager
 user_manager = UserManager()
 
+def get_marketing_content():
+    """Read custom marketing content from file, returns (has_content, title, body) tuple"""
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    content_file = os.path.join(app_dir, 'templates', 'marketing_content.html')
+    if os.path.exists(content_file):
+        try:
+            with open(content_file, 'r', encoding='utf-8') as f:
+                content = f.read().strip()
+            if not content:
+                return False, '', ''
+            # Parse simple mode content
+            if '<!-- SIMPLE_MODE -->' in content:
+                title_match = re.search(r'<h2>(.*?)</h2>', content, re.DOTALL)
+                body_match = re.search(r'<p>(.*?)</p>', content, re.DOTALL)
+                title = title_match.group(1).strip() if title_match else ''
+                body = body_match.group(1).strip() if body_match else ''
+                if title or body:
+                    return True, title, body
+                return False, '', ''
+            # HTML mode - return raw content
+            return True, '', content
+        except Exception:
+            return False, '', ''
+    return False, '', ''
+
+def _login_template_vars():
+    """Build template variables for login page"""
+    has_content, title, body = get_marketing_content()
+    return {
+        'has_marketing_content': has_content,
+        'marketing_title': title,
+        'marketing_body': body,
+    }
+
 def is_valid_email(email):
     """Validate email format"""
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
 
-def get_marketing_messages():
-    """Get active marketing messages for login page"""
-    try:
-        messages = MarketingMessage.query.filter_by(is_active=True).order_by(MarketingMessage.display_order).all()
-        return messages
-    except Exception as e:
-        print(f"Error fetching marketing messages: {e}")
-        return []
-
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """Login page"""
-    marketing_messages = get_marketing_messages()
 
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
@@ -43,28 +68,28 @@ def login():
 
         if not email or not password:
             flash('Please provide both email and password', 'error')
-            return render_template('login.html', marketing_messages=marketing_messages)
+            return render_template('login.html', **_login_template_vars())
 
         # Get user
         user = user_manager.get_user_by_email(email)
         if not user:
             flash('Invalid email or password', 'error')
-            return render_template('login.html', marketing_messages=marketing_messages)
+            return render_template('login.html', **_login_template_vars())
 
         # Verify password
         if not user_manager.verify_password(user, password):
             flash('Invalid email or password', 'error')
-            return render_template('login.html', marketing_messages=marketing_messages)
+            return render_template('login.html', **_login_template_vars())
 
         # Check if user is approved
         if not user.is_approved:
             flash('Your account is pending admin approval. Please wait for approval before logging in.', 'error')
-            return render_template('login.html', marketing_messages=marketing_messages)
+            return render_template('login.html', **_login_template_vars())
 
         # Check if user is active
         if not user.is_active:
             flash('Your user is inactive. Contact customer service at kontakt@konsulence.al or +355692064518.', 'error')
-            return render_template('login.html', marketing_messages=marketing_messages)
+            return render_template('login.html', **_login_template_vars())
 
         # Login user
         login_user(user, remember=remember)
@@ -74,7 +99,7 @@ def login():
         next_page = request.args.get('next')
         return redirect(next_page) if next_page else redirect(url_for('index'))
 
-    return render_template('login.html', marketing_messages=marketing_messages)
+    return render_template('login.html', **_login_template_vars())
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():

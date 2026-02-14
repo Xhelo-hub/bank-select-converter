@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from models import db, User, Job, Conversion, Download
+from models import db, User, Job, Conversion, Download, ContactMessage
 
 # App initialization
 app = Flask(__name__)
@@ -292,6 +292,91 @@ def index():
                          user=current_user,
                          banks=BANK_CONFIGS,
                          logo_exists=logo_exists)
+
+@app.route('/settings', methods=['GET', 'POST'])
+@login_required
+def user_settings():
+    """User settings page - profile and password"""
+    if request.method == 'POST':
+        form_type = request.form.get('form_type', '')
+
+        if form_type == 'profile':
+            # Update personal data
+            current_user.first_name = request.form.get('first_name', '').strip()
+            current_user.last_name = request.form.get('last_name', '').strip()
+            current_user.display_name = request.form.get('display_name', '').strip()
+            db.session.commit()
+            flash('Të dhënat personale u ruajtën me sukses!', 'success')
+            return redirect(url_for('user_settings'))
+
+        elif form_type == 'password':
+            current_password = request.form.get('current_password', '')
+            new_password = request.form.get('new_password', '')
+            confirm_password = request.form.get('confirm_password', '')
+
+            if not current_password or not new_password or not confirm_password:
+                flash('Të gjitha fushat janë të detyrueshme', 'error')
+                return render_template('user_settings.html')
+
+            if not user_manager.verify_password(current_user, current_password):
+                flash('Fjalëkalimi aktual është i gabuar', 'error')
+                return render_template('user_settings.html')
+
+            if len(new_password) < 6:
+                flash('Fjalëkalimi i ri duhet të ketë të paktën 6 karaktere', 'error')
+                return render_template('user_settings.html')
+
+            if new_password != confirm_password:
+                flash('Fjalëkalimet nuk përputhen', 'error')
+                return render_template('user_settings.html')
+
+            success, message = user_manager.admin_reset_password(current_user.id, new_password)
+            if success:
+                flash('Fjalëkalimi u ndryshua me sukses!', 'success')
+            else:
+                flash(f'Gabim: {message}', 'error')
+
+            return redirect(url_for('user_settings'))
+
+    return render_template('user_settings.html')
+
+@app.route('/notifications')
+@login_required
+def notifications_page():
+    """Full notifications page"""
+    return render_template('notifications.html')
+
+@app.route('/contact-admin', methods=['GET', 'POST'])
+@login_required
+def contact_admin():
+    """Contact admin - send a message"""
+    if request.method == 'POST':
+        subject = request.form.get('subject', '').strip()
+        message_text = request.form.get('message', '').strip()
+
+        if not subject or not message_text:
+            flash('Subjekti dhe mesazhi janë të detyrueshme', 'error')
+        elif len(message_text) > 120:
+            flash('Mesazhi nuk mund të jetë më i gjatë se 120 karaktere', 'error')
+        else:
+            msg = ContactMessage(
+                id=str(uuid.uuid4()),
+                user_id=current_user.id,
+                user_email=current_user.email,
+                subject=subject[:200],
+                message=message_text[:120],
+                created_at=datetime.datetime.now().isoformat(),
+                is_read=False
+            )
+            db.session.add(msg)
+            db.session.commit()
+            flash('Mesazhi u dërgua me sukses!', 'success')
+            return redirect(url_for('contact_admin'))
+
+    # Get user's sent messages
+    messages = ContactMessage.query.filter_by(user_id=current_user.id)\
+        .order_by(ContactMessage.created_at.desc()).all()
+    return render_template('contact_admin.html', messages=messages)
 
 @app.route('/_old_converter')
 @login_required

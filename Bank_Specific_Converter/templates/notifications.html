@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Njoftimet - Bank Statement Converter{% endblock %}
+{% block page_title %}Njoftimet{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notifications-container {
+        max-width: 720px;
+    }
+
+    .notifications-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .notifications-header h2 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--gray-900);
+    }
+
+    .btn-mark-all {
+        background: var(--gray-100);
+        border: 1px solid var(--gray-200);
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.8125rem;
+        font-weight: 500;
+        color: var(--gray-700);
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.15s ease;
+    }
+
+    .btn-mark-all:hover {
+        background: var(--gray-200);
+        color: var(--gray-900);
+    }
+
+    .notification-card {
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        padding: 1.25rem;
+        margin-bottom: 0.75rem;
+        transition: all 0.15s ease;
+        cursor: pointer;
+    }
+
+    .notification-card:hover {
+        box-shadow: var(--shadow-sm);
+    }
+
+    .notification-card.unread {
+        border-left: 3px solid var(--gray-700);
+        background: #f8f9ff;
+    }
+
+    .notification-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .notification-card-title {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: var(--gray-900);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .notification-type-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.125rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .notification-type-badge.info { background: #e0e7ff; color: #3730a3; }
+    .notification-type-badge.warning { background: #fef3c7; color: #92400e; }
+    .notification-type-badge.important { background: #fecaca; color: #991b1b; }
+    .notification-type-badge.success { background: #dcfce7; color: #166534; }
+
+    .notification-card-time {
+        font-size: 0.75rem;
+        color: var(--gray-400);
+        white-space: nowrap;
+    }
+
+    .notification-card-message {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        line-height: 1.5;
+    }
+
+    .notification-card-meta {
+        margin-top: 0.5rem;
+        font-size: 0.75rem;
+        color: var(--gray-400);
+    }
+
+    .empty-notifications {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--gray-400);
+    }
+
+    .empty-notifications i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .empty-notifications h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--gray-500);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-notifications p {
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="notifications-container">
+    <div class="notifications-header">
+        <h2>Të gjitha njoftimet</h2>
+        <button class="btn-mark-all" onclick="markAllAndRefresh()">
+            <i class="fas fa-check-double"></i>
+            Lexo të gjitha
+        </button>
+    </div>
+
+    <div id="notificationsContent">
+        <div class="empty-notifications">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Po ngarkohen njoftimet...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadAllNotifications();
+});
+
+function loadAllNotifications() {
+    fetch('/notifications/my')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var container = document.getElementById('notificationsContent');
+            var notifications = data.notifications || [];
+
+            if (notifications.length === 0) {
+                container.innerHTML = '<div class="empty-notifications">' +
+                    '<i class="fas fa-bell-slash"></i>' +
+                    '<h3>Nuk ka njoftime</h3>' +
+                    '<p>Nuk keni asnjë njoftim për momentin.</p>' +
+                    '</div>';
+                return;
+            }
+
+            var html = '';
+            notifications.forEach(function(n) {
+                var isUnread = !n.is_read;
+                var typeLabel = {'info': 'Info', 'warning': 'Paralajmërim', 'important': 'I Rëndësishëm', 'success': 'Sukses'}[n.type] || n.type;
+                var timeStr = formatTime(n.created_at);
+
+                html += '<div class="notification-card ' + (isUnread ? 'unread' : '') + '" data-id="' + n.id + '" onclick="markAndUpdate(\'' + n.id + '\', this)">';
+                html += '<div class="notification-card-header">';
+                html += '<div class="notification-card-title">';
+                html += '<span class="notification-type-badge ' + n.type + '">' + typeLabel + '</span>';
+                html += escapeH(n.title);
+                html += '</div>';
+                html += '<span class="notification-card-time">' + timeStr + '</span>';
+                html += '</div>';
+                html += '<div class="notification-card-message">' + escapeH(n.message) + '</div>';
+                html += '<div class="notification-card-meta">Nga: ' + escapeH(n.created_by) + '</div>';
+                html += '</div>';
+            });
+            container.innerHTML = html;
+        })
+        .catch(function() {
+            document.getElementById('notificationsContent').innerHTML =
+                '<div class="empty-notifications"><p>Gabim në ngarkimin e njoftimeve.</p></div>';
+        });
+}
+
+function markAndUpdate(id, el) {
+    fetch('/notifications/mark-read/' + id, { method: 'POST' })
+        .then(function() {
+            if (el) el.classList.remove('unread');
+        })
+        .catch(function() {});
+}
+
+function markAllAndRefresh() {
+    fetch('/notifications/mark-all-read', { method: 'POST' })
+        .then(function() {
+            var cards = document.querySelectorAll('.notification-card.unread');
+            cards.forEach(function(c) { c.classList.remove('unread'); });
+        })
+        .catch(function() {});
+}
+
+function formatTime(isoString) {
+    if (!isoString) return '';
+    var d = new Date(isoString);
+    var now = new Date();
+    var diff = Math.floor((now - d) / 1000);
+    if (diff < 60) return 'tani';
+    if (diff < 3600) return Math.floor(diff / 60) + ' min më parë';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' orë më parë';
+    if (diff < 604800) return Math.floor(diff / 86400) + ' ditë më parë';
+    return d.toLocaleDateString('sq');
+}
+
+function escapeH(text) {
+    var div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Cilësimet - Bank Statement Converter{% endblock %}
+{% block page_title %}Cilësimet{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-container {
+        max-width: 640px;
+    }
+
+    .settings-section {
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        margin-bottom: 1.5rem;
+    }
+
+    .settings-section-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .settings-section-header h2 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--gray-900);
+        margin: 0;
+    }
+
+    .settings-section-header i {
+        color: var(--gray-500);
+        font-size: 1rem;
+    }
+
+    .settings-section-body {
+        padding: 1.5rem;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+        font-weight: 500;
+    }
+
+    .info-value {
+        font-size: 0.875rem;
+        color: var(--gray-900);
+        font-weight: 500;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--gray-700);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        font-size: 0.875rem;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-sm);
+        font-family: inherit;
+        transition: all 0.15s ease;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .btn-save {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.625rem 1.5rem;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.875rem;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .btn-save:hover {
+        background: var(--primary-hover);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <!-- Account Info -->
+    <div class="settings-section">
+        <div class="settings-section-header">
+            <i class="fas fa-user"></i>
+            <h2>Informacioni i Llogarisë</h2>
+        </div>
+        <div class="settings-section-body">
+            <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value">{{ current_user.email }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Roli</span>
+                <span class="info-value">{{ 'Administrator' if current_user.is_admin else 'Përdorues' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Regjistruar më</span>
+                <span class="info-value">{{ current_user.created_at[:10] if current_user.created_at else '-' }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Personal Data -->
+    <div class="settings-section">
+        <div class="settings-section-header">
+            <i class="fas fa-id-card"></i>
+            <h2>Të Dhënat Personale</h2>
+        </div>
+        <div class="settings-section-body">
+            <form method="POST" action="{{ url_for('user_settings') }}">
+                <input type="hidden" name="form_type" value="profile">
+
+                <div class="form-group">
+                    <label for="first_name" class="form-label">Emri</label>
+                    <input type="text" id="first_name" name="first_name" class="form-input"
+                           placeholder="Vendos emrin tuaj"
+                           value="{{ current_user.first_name or '' }}" maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="last_name" class="form-label">Mbiemri</label>
+                    <input type="text" id="last_name" name="last_name" class="form-input"
+                           placeholder="Vendos mbiemrin tuaj"
+                           value="{{ current_user.last_name or '' }}" maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="display_name" class="form-label">Emri në Sistem</label>
+                    <input type="text" id="display_name" name="display_name" class="form-input"
+                           placeholder="Emri që do të shfaqet në sistem (opsionale)"
+                           value="{{ current_user.display_name or '' }}" maxlength="150">
+                    <small style="color: var(--gray-500); font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+                        Nëse lihet bosh, do të përdoret emri dhe mbiemri
+                    </small>
+                </div>
+
+                <button type="submit" class="btn-save">
+                    <i class="fas fa-save"></i>
+                    Ruaj Të Dhënat
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Password -->
+    <div class="settings-section">
+        <div class="settings-section-header">
+            <i class="fas fa-lock"></i>
+            <h2>Ndrysho Fjalëkalimin</h2>
+        </div>
+        <div class="settings-section-body">
+            <form method="POST" action="{{ url_for('user_settings') }}">
+                <input type="hidden" name="form_type" value="password">
+
+                <div class="form-group">
+                    <label for="current_password" class="form-label">Fjalëkalimi Aktual</label>
+                    <input type="password" id="current_password" name="current_password" class="form-input"
+                           placeholder="Vendos fjalëkalimin aktual" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="new_password" class="form-label">Fjalëkalimi i Ri</label>
+                    <input type="password" id="new_password" name="new_password" class="form-input"
+                           placeholder="Vendos fjalëkalimin e ri (min 6 karaktere)" required minlength="6">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password" class="form-label">Konfirmo Fjalëkalimin e Ri</label>
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-input"
+                           placeholder="Konfirmo fjalëkalimin e ri" required minlength="6">
+                </div>
+
+                <button type="submit" class="btn-save">
+                    <i class="fas fa-save"></i>
+                    Ruaj Fjalëkalimin
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

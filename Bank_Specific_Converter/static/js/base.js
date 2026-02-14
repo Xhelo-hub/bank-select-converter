@@ -209,6 +209,132 @@
     }
 
     // ============================================
+    // Notification Bell System
+    // ============================================
+    function initNotifications() {
+        // Update badge on load
+        updateNotificationBadge();
+
+        // Poll for new notifications every 30 seconds
+        setInterval(updateNotificationBadge, 30000);
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            var dropdown = document.getElementById('notificationDropdown');
+            var wrapper = e.target.closest('.notification-wrapper');
+            if (!wrapper && dropdown) {
+                dropdown.classList.remove('active');
+            }
+        });
+    }
+
+    // Toggle notification dropdown
+    window.toggleNotifications = function() {
+        var dropdown = document.getElementById('notificationDropdown');
+        if (!dropdown) return;
+
+        var isActive = dropdown.classList.toggle('active');
+        if (isActive) {
+            loadNotifications();
+        }
+    };
+
+    // Update unread notification badge
+    function updateNotificationBadge() {
+        fetch('/notifications/unread-count')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var badge = document.getElementById('notifBadge');
+                if (!badge) return;
+                if (data.count > 0) {
+                    badge.textContent = data.count > 99 ? '99+' : data.count;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+            })
+            .catch(function() {});
+    }
+
+    // Load notifications into dropdown
+    function loadNotifications() {
+        var list = document.getElementById('notifList');
+        if (!list) return;
+
+        fetch('/notifications/my')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var notifications = data.notifications || [];
+                if (notifications.length === 0) {
+                    list.innerHTML = '<div class="notif-empty">Nuk ka njoftime</div>';
+                    return;
+                }
+
+                // Show max 5 in dropdown
+                var html = '';
+                var shown = notifications.slice(0, 5);
+                shown.forEach(function(n) {
+                    var isUnread = !n.is_read;
+                    html += '<div class="notif-item ' + (isUnread ? 'unread' : '') + '" onclick="markNotificationRead(\'' + n.id + '\', this)">';
+                    html += '<div class="notif-item-header">';
+                    html += '<span class="notif-title">' + escapeHtml(n.title) + '</span>';
+                    html += '<span class="notif-time">' + formatRelativeTime(n.created_at) + '</span>';
+                    html += '</div>';
+                    html += '<div class="notif-message">' + escapeHtml(n.message) + '</div>';
+                    html += '</div>';
+                });
+                list.innerHTML = html;
+            })
+            .catch(function() {
+                list.innerHTML = '<div class="notif-empty">Gabim në ngarkim</div>';
+            });
+    }
+
+    // Mark single notification as read
+    window.markNotificationRead = function(id, el) {
+        fetch('/notifications/mark-read/' + id, { method: 'POST' })
+            .then(function(r) { return r.json(); })
+            .then(function() {
+                if (el) el.classList.remove('unread');
+                updateNotificationBadge();
+            })
+            .catch(function() {});
+    };
+
+    // Mark all notifications as read
+    window.markAllRead = function() {
+        fetch('/notifications/mark-all-read', { method: 'POST' })
+            .then(function(r) { return r.json(); })
+            .then(function() {
+                var items = document.querySelectorAll('.notif-item.unread');
+                items.forEach(function(item) { item.classList.remove('unread'); });
+                updateNotificationBadge();
+            })
+            .catch(function() {});
+    };
+
+    // Format relative time
+    function formatRelativeTime(isoString) {
+        if (!isoString) return '';
+        var date = new Date(isoString);
+        var now = new Date();
+        var diff = Math.floor((now - date) / 1000);
+
+        if (diff < 60) return 'tani';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'o';
+        if (diff < 604800) return Math.floor(diff / 86400) + 'd';
+        return date.toLocaleDateString('sq');
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
+    }
+
+    // ============================================
     // Initialize All Features
     // ============================================
     function init() {
@@ -225,6 +351,7 @@
         initLogoutConfirmation();
         initTooltips();
         initAdminSectionToggle();
+        initNotifications();
     }
 
     // Start initialization

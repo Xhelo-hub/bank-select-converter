@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+
+{% block title %}Marketing Content Editor - Admin{% endblock %}
+{% block page_title %}Marketing Content{% endblock %}
+
+{% block extra_css %}
+<style>
+    .editor-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .editor-header {
+        margin-bottom: 2rem;
+    }
+
+    .editor-header h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--gray-900);
+        margin-bottom: 0.5rem;
+    }
+
+    .editor-header p {
+        color: var(--gray-600);
+        font-size: 0.875rem;
+    }
+
+    .editor-card {
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius-md);
+        padding: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--gray-900);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-sm);
+        font-family: inherit;
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .form-textarea {
+        width: 100%;
+        min-height: 500px;
+        padding: 1rem;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-sm);
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        resize: vertical;
+    }
+
+    .form-textarea:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .mode-toggle {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .mode-toggle label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-sm);
+        transition: all 0.2s;
+    }
+
+    .mode-toggle label:hover {
+        background: var(--gray-50);
+        border-color: var(--primary-color);
+    }
+
+    .mode-toggle input[type="radio"]:checked + span {
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+
+    .mode-toggle label:has(input:checked) {
+        background: rgba(79, 70, 229, 0.05);
+        border-color: var(--primary-color);
+    }
+
+    .form-help {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        margin-top: 0.5rem;
+    }
+
+    .form-help code {
+        background: var(--gray-100);
+        padding: 0.125rem 0.375rem;
+        border-radius: 0.25rem;
+        font-family: 'Courier New', monospace;
+    }
+
+    .editor-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--gray-200);
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--border-radius-sm);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-hover);
+    }
+
+    .btn-secondary {
+        background: var(--gray-200);
+        color: var(--gray-700);
+    }
+
+    .btn-secondary:hover {
+        background: var(--gray-300);
+    }
+
+    .preview-section {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 2px solid var(--gray-200);
+    }
+
+    .preview-section h3 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--gray-900);
+        margin-bottom: 1rem;
+    }
+
+    .preview-frame {
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-sm);
+        padding: 2rem;
+        background: var(--gray-50);
+        min-height: 300px;
+    }
+
+    .info-box {
+        background: #eff6ff;
+        border: 1px solid #93c5fd;
+        border-radius: var(--border-radius-sm);
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-box h4 {
+        color: #1e40af;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .info-box ul {
+        list-style: disc;
+        margin-left: 1.5rem;
+        color: #1e40af;
+        font-size: 0.875rem;
+    }
+
+    .info-box ul li {
+        margin-bottom: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="editor-container">
+    <div class="editor-header">
+        <h2>Edito Përmbajtjen Marketing</h2>
+        <p>Shkruaj HTML për anën e majtë të login page. Përmbajtja do të shfaqet automatikisht në faqen e login.</p>
+    </div>
+
+    <div class="info-box">
+        <h4>💡 Udhëzime:</h4>
+        <ul>
+            <li><strong>Mënyra e Thjeshtë:</strong> Vendos vetëm titullin dhe përmbajtjen - CSS aplikohet automatikisht</li>
+            <li><strong>Mënyra HTML:</strong> Shkruaj HTML të plotë me stilizim custom</li>
+            <li>Përmbajtja shfaqet në anën e majtë të login page</li>
+            <li>Nëse lë bosh, shfaqet përmbajtja default</li>
+        </ul>
+    </div>
+
+    <div class="editor-card">
+        <form method="POST" action="{{ url_for('admin.save_marketing_content') }}">
+            <!-- Mode Toggle -->
+            <div class="form-group">
+                <label class="form-label">Mënyra e Editimit</label>
+                <div class="mode-toggle">
+                    <label>
+                        <input type="radio" name="mode" value="simple" id="modeSimple" onchange="toggleMode()"
+                               {% if mode == 'simple' %}checked{% endif %}>
+                        <span>📝 E Thjeshtë (Titull + Tekst)</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="mode" value="html" id="modeHtml" onchange="toggleMode()"
+                               {% if mode == 'html' %}checked{% endif %}>
+                        <span>💻 HTML i Plotë</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Simple Mode Fields -->
+            <div id="simpleFields" {% if mode == 'html' %}style="display: none;"{% endif %}>
+                <div class="form-group">
+                    <label for="title" class="form-label">Titulli</label>
+                    <input type="text" id="title" name="title" class="form-input"
+                           placeholder="p.sh. Lajm i Rëndësishëm" value="{{ title }}"
+                           style="width: 100%; padding: 0.75rem; font-size: 1rem; border: 1px solid var(--gray-300); border-radius: var(--border-radius-sm);">
+                    <div class="form-help">Titulli kryesor i mesazhit</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="simple_content" class="form-label">Përmbajtja</label>
+                    <textarea id="simple_content" name="simple_content" class="form-textarea"
+                              placeholder="Shkruaj përmbajtjen e mesazhit këtu. Mund të përdorësh HTML tags si <strong>, <a href='...'>, etj."
+                              style="min-height: 200px;">{{ simple_content }}</textarea>
+                    <div class="form-help">
+                        Përmbajtja e mesazhit. Mund të përdorësh HTML tags bazë: &lt;strong&gt;, &lt;em&gt;, &lt;a href="..."&gt;, &lt;br&gt;
+                    </div>
+                </div>
+            </div>
+
+            <!-- HTML Mode Field -->
+            <div id="htmlField" {% if mode != 'html' %}style="display: none;"{% endif %}>
+                <div class="form-group">
+                    <label for="html_content" class="form-label">Përmbajtja HTML e Plotë</label>
+                    <textarea id="html_content" name="html_content" class="form-textarea"
+                              placeholder="<div class='announcement-card'>
+    <h2>Titulli</h2>
+    <p>Përmbajtja...</p>
+    <a href='https://...' style='...'>Link</a>
+</div>"
+                              style="min-height: 400px;">{{ html_content }}</textarea>
+                    <div class="form-help">
+                        Shkruaj HTML të plotë. Klasat në dispozicion: <code>.announcement-card</code>, <code>.default-marketing</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="editor-actions">
+                <button type="button" class="btn btn-secondary" onclick="resetContent()">Rivendos Default</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Ruaj Ndryshimet
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleMode() {
+    const isSimple = document.getElementById('modeSimple').checked;
+    document.getElementById('simpleFields').style.display = isSimple ? 'block' : 'none';
+    document.getElementById('htmlField').style.display = isSimple ? 'none' : 'block';
+}
+
+function resetContent() {
+    if (confirm('A jeni të sigurt që dëshironi të rivendosni përmbajtjen default?\n\nKjo do të fshijë të gjithë përmbajtjen tuaj.')) {
+        document.getElementById('title').value = '';
+        document.getElementById('simple_content').value = '';
+        document.getElementById('html_content').value = '';
+        document.querySelector('form').submit();
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleMode();
+});
+</script>
+{% endblock %}

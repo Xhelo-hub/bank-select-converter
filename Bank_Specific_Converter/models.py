@@ -17,6 +17,9 @@ class User(UserMixin, db.Model):
     id = db.Column(db.String(36), primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
     password = db.Column(db.String(255), nullable=False)
+    first_name = db.Column(db.String(100), nullable=True, default='')
+    last_name = db.Column(db.String(100), nullable=True, default='')
+    display_name = db.Column(db.String(150), nullable=True, default='')
     created_at = db.Column(db.String(50))
     is_admin = db.Column(db.Boolean, default=False)
     is_approved = db.Column(db.Boolean, default=False)
@@ -32,11 +35,29 @@ class User(UserMixin, db.Model):
     def is_active(self, value):
         self._is_active = value
 
+    @property
+    def full_name(self):
+        """Return full name from first_name + last_name"""
+        parts = [self.first_name or '', self.last_name or '']
+        return ' '.join(p for p in parts if p).strip()
+
+    @property
+    def system_name(self):
+        """Return the name to display in the system (display_name > full_name > email username)"""
+        if self.display_name:
+            return self.display_name
+        if self.full_name:
+            return self.full_name
+        return self.email.split('@')[0]
+
     def to_dict(self):
         return {
             'id': self.id,
             'email': self.email,
             'password': self.password,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'display_name': self.display_name,
             'created_at': self.created_at,
             'is_admin': self.is_admin,
             'is_approved': self.is_approved,
@@ -145,3 +166,41 @@ class MarketingMessage(db.Model):
     display_order = db.Column(db.Integer, default=0, nullable=False)
     created_at = db.Column(db.String(50), nullable=False)
     created_by = db.Column(db.String(255), nullable=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'content': self.content,
+            'image_url': self.image_url,
+            'link_url': self.link_url,
+            'link_text': self.link_text,
+            'is_active': self.is_active,
+            'display_order': self.display_order,
+            'created_at': self.created_at,
+            'created_by': self.created_by
+        }
+
+
+class ContactMessage(db.Model):
+    """User-to-admin contact messages"""
+    __tablename__ = 'contact_messages'
+
+    id = db.Column(db.String(36), primary_key=True)
+    user_id = db.Column(db.String(36), nullable=False, index=True)
+    user_email = db.Column(db.String(255), nullable=False)
+    subject = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.String(120), nullable=False)
+    created_at = db.Column(db.String(50), nullable=False)
+    is_read = db.Column(db.Boolean, default=False, index=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'user_email': self.user_email,
+            'subject': self.subject,
+            'message': self.message,
+            'created_at': self.created_at,
+            'is_read': self.is_read
+        }

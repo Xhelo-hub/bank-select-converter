@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Bank Statement Converter</title>
+    <title>Kyçu - Konvertuesi i Statement-eve Bankare</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -386,51 +386,50 @@
                     <div class="marketing-logo-icon">
                         <i class="fas fa-file-invoice-dollar"></i>
                     </div>
-                    <div class="marketing-logo-text">Bank Converter</div>
+                    <div class="marketing-logo-text">Konvertuesi Bankar</div>
                 </div>
             </div>
 
             <div class="marketing-content">
-                {% if marketing_messages %}
-                    {% for message in marketing_messages %}
-                    <div class="announcement-card" style="animation-delay: {{ loop.index0 * 0.1 }}s">
-                        {% if message.image_url %}
-                        <img src="{{ message.image_url }}" alt="{{ message.title }}" style="width: 100%; border-radius: 12px; margin-bottom: 20px;">
-                        {% endif %}
-                        <h2>{{ message.title }}</h2>
-                        <p>{{ message.content }}</p>
-                        {% if message.link_url %}
-                        <a href="{{ message.link_url }}" target="_blank">
-                            {{ message.link_text or 'Learn More' }}
-                            <i class="fas fa-arrow-right"></i>
-                        </a>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
+                {% if has_marketing_content %}
+                    <!-- Custom marketing content from admin -->
+                    {% if marketing_title or (marketing_body and '<div' not in marketing_body) %}
+                        <div class="announcement-card default-marketing">
+                            {% if marketing_title %}
+                                <h2>{{ marketing_title }}</h2>
+                            {% endif %}
+                            {% if marketing_body %}
+                                <p>{{ marketing_body|safe }}</p>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        {{ marketing_body|safe }}
+                    {% endif %}
                 {% else %}
+                    <!-- Default content (shown when no custom marketing content exists) -->
                     <div class="announcement-card default-marketing">
                         <div class="default-marketing-icon">
                             <i class="fas fa-rocket"></i>
                         </div>
-                        <h2>Welcome Back!</h2>
-                        <p>Convert your Albanian bank statements to QuickBooks format instantly</p>
+                        <h2>Mirë se erdhe!</h2>
+                        <p>Konverto statement-et tuaja bankare shqiptare në formatin QuickBooks menjëherë</p>
 
                         <div class="features-list">
                             <div class="feature-item">
                                 <i class="fas fa-check"></i>
-                                <span>Support for all major Albanian banks</span>
+                                <span>Mbështetje për të gjitha bankat kryesore shqiptare</span>
                             </div>
                             <div class="feature-item">
                                 <i class="fas fa-check"></i>
-                                <span>Fast & secure conversion</span>
+                                <span>Konvertim i shpejtë dhe i sigurt</span>
                             </div>
                             <div class="feature-item">
                                 <i class="fas fa-check"></i>
-                                <span>Download instantly</span>
+                                <span>Shkarko menjëherë</span>
                             </div>
                             <div class="feature-item">
                                 <i class="fas fa-check"></i>
-                                <span>Admin approval for security</span>
+                                <span>Aprovim nga admini për siguri</span>
                             </div>
                         </div>
                     </div>
@@ -442,8 +441,8 @@
         <div class="login-side">
             <div class="login-form-container">
                 <div class="login-header">
-                    <h1>Sign In</h1>
-                    <p>Enter your credentials to access your account</p>
+                    <h1>Kyçu</h1>
+                    <p>Vendos kredencialet tuaja për të hyrë në llogari</p>
                 </div>
 
                 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -459,33 +458,33 @@
 
                 <form method="POST" action="{{ url_for('auth.login') }}">
                     <div class="form-group">
-                        <label for="email" class="form-label">Email Address</label>
+                        <label for="email" class="form-label">Adresa Email</label>
                         <input type="email" id="email" name="email" class="form-input"
-                               placeholder="your@email.com" required autofocus>
+                               placeholder="email@tuaj.com" required autofocus>
                     </div>
 
                     <div class="form-group">
-                        <label for="password" class="form-label">Password</label>
+                        <label for="password" class="form-label">Fjalëkalimi</label>
                         <input type="password" id="password" name="password" class="form-input"
-                               placeholder="Enter your password" required>
+                               placeholder="Vendos fjalëkalimin tuaj" required>
                     </div>
 
                     <div class="form-options">
                         <div class="checkbox-group">
                             <input type="checkbox" id="remember" name="remember" value="true">
-                            <label for="remember">Remember me</label>
+                            <label for="remember">Më mbaj mend</label>
                         </div>
                         <a href="{{ url_for('auth.forgot_password') }}" class="forgot-link">
-                            Forgot password?
+                            Harruat fjalëkalimin?
                         </a>
                     </div>
 
                     <button type="submit" class="btn-primary">
-                        Sign In
+                        Kyçu
                     </button>
 
                     <div class="signup-link">
-                        Don't have an account? <a href="{{ url_for('auth.register') }}">Sign up</a>
+                        Nuk keni llogari? <a href="{{ url_for('auth.register') }}">Regjistrohu</a>
                     </div>
                 </form>
             </div>

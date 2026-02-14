@@ -1,0 +1,585 @@
+{% extends "base.html" %}
+
+{% block title %}Marketing Messages - Admin{% endblock %}
+{% block page_title %}Marketing Messages{% endblock %}
+
+{% block extra_css %}
+<style>
+    .marketing-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .marketing-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .marketing-header h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--gray-900);
+    }
+
+    .btn-create {
+        background: var(--primary-color);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--border-radius-sm);
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-create:hover {
+        background: var(--primary-hover);
+        transform: translateY(-1px);
+    }
+
+    .messages-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .message-card {
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius-md);
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .message-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .message-card.inactive {
+        opacity: 0.6;
+        background: var(--gray-50);
+    }
+
+    .message-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 1rem;
+    }
+
+    .message-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--gray-900);
+        margin-bottom: 0.25rem;
+    }
+
+    .message-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .message-status.active {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+
+    .message-status.inactive {
+        background: var(--gray-200);
+        color: var(--gray-600);
+    }
+
+    .message-content {
+        color: var(--gray-700);
+        font-size: 0.875rem;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+    }
+
+    .message-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        margin-bottom: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--gray-200);
+    }
+
+    .message-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .message-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-sm {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+        border-radius: var(--border-radius-sm);
+        border: 1px solid;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: 500;
+    }
+
+    .btn-toggle {
+        background: white;
+        border-color: var(--gray-300);
+        color: var(--gray-700);
+    }
+
+    .btn-toggle:hover {
+        background: var(--gray-50);
+    }
+
+    .btn-edit {
+        background: white;
+        border-color: var(--info-color);
+        color: var(--info-color);
+    }
+
+    .btn-edit:hover {
+        background: var(--info-color);
+        color: white;
+    }
+
+    .btn-delete {
+        background: white;
+        border-color: var(--danger-color);
+        color: var(--danger-color);
+    }
+
+    .btn-delete:hover {
+        background: var(--danger-color);
+        color: white;
+    }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        overflow-y: auto;
+    }
+
+    .modal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: var(--border-radius-md);
+        padding: 2rem;
+        max-width: 600px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .modal-header h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--gray-900);
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--gray-500);
+        cursor: pointer;
+        padding: 0;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-close:hover {
+        color: var(--gray-900);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--gray-900);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-label.required::after {
+        content: '*';
+        color: var(--danger-color);
+        margin-left: 0.25rem;
+    }
+
+    .form-input, .form-textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-sm);
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+    }
+
+    .form-input:focus, .form-textarea:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .form-textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    .form-help {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        margin-top: 0.25rem;
+    }
+
+    .form-checkbox-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-checkbox {
+        width: 1.125rem;
+        height: 1.125rem;
+        cursor: pointer;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+    }
+
+    .btn-cancel {
+        padding: 0.75rem 1.5rem;
+        border: 1px solid var(--gray-300);
+        background: white;
+        color: var(--gray-700);
+        border-radius: var(--border-radius-sm);
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    .btn-cancel:hover {
+        background: var(--gray-50);
+    }
+
+    .btn-submit {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        background: var(--primary-color);
+        color: white;
+        border-radius: var(--border-radius-sm);
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    .btn-submit:hover {
+        background: var(--primary-hover);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--gray-500);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+
+    .empty-state h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--gray-700);
+    }
+
+    @media (max-width: 768px) {
+        .messages-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .modal-content {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="marketing-container">
+    <div class="marketing-header">
+        <h2>Menaxho Mesazhet Marketing</h2>
+        <button class="btn-create" onclick="openCreateModal()">
+            <i class="fas fa-plus"></i> Krijo Mesazh të Ri
+        </button>
+    </div>
+
+    {% if messages %}
+    <div class="messages-grid">
+        {% for msg in messages %}
+        <div class="message-card {% if not msg.is_active %}inactive{% endif %}">
+            <div class="message-header">
+                <div>
+                    <div class="message-title">{{ msg.title }}</div>
+                    <span class="message-status {% if msg.is_active %}active{% else %}inactive{% endif %}">
+                        <i class="fas fa-circle"></i>
+                        {{ 'Aktiv' if msg.is_active else 'Joaktiv' }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="message-content">
+                {{ msg.content[:150] }}{% if msg.content|length > 150 %}...{% endif %}
+            </div>
+
+            <div class="message-meta">
+                <div class="message-meta-item">
+                    <i class="fas fa-sort-numeric-down"></i>
+                    Rendi: {{ msg.display_order }}
+                </div>
+                <div class="message-meta-item">
+                    <i class="fas fa-user"></i>
+                    {{ msg.created_by }}
+                </div>
+                {% if msg.link_url %}
+                <div class="message-meta-item">
+                    <i class="fas fa-link"></i>
+                    Ka link
+                </div>
+                {% endif %}
+                {% if msg.image_url %}
+                <div class="message-meta-item">
+                    <i class="fas fa-image"></i>
+                    Ka imazh
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="message-actions">
+                <button class="btn-sm btn-toggle" onclick="toggleMessage({{ msg.id }})">
+                    <i class="fas fa-{{ 'eye-slash' if msg.is_active else 'eye' }}"></i>
+                    {{ 'Çaktivizo' if msg.is_active else 'Aktivizo' }}
+                </button>
+                <button class="btn-sm btn-edit" onclick="openEditModal({{ msg.id }}, {{ msg.to_dict()|tojson }})">
+                    <i class="fas fa-edit"></i> Modifiko
+                </button>
+                <button class="btn-sm btn-delete" onclick="deleteMessage({{ msg.id }}, '{{ msg.title }}')">
+                    <i class="fas fa-trash"></i> Fshi
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-bullhorn"></i>
+        <h3>Nuk ka mesazhe marketing</h3>
+        <p>Kliko "Krijo Mesazh të Ri" për të shtuar mesazhin e parë tuaj marketing.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Create/Edit Modal -->
+<div id="messageModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Krijo Mesazh të Ri</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+
+        <form id="messageForm" method="POST">
+            <div class="form-group">
+                <label for="title" class="form-label required">Titulli</label>
+                <input type="text" id="title" name="title" class="form-input"
+                       placeholder="Titulli i mesazhit" maxlength="200" required>
+                <div class="form-help">Maksimumi 200 karaktere</div>
+            </div>
+
+            <div class="form-group">
+                <label for="content" class="form-label required">Përmbajtja</label>
+                <textarea id="content" name="content" class="form-textarea"
+                          placeholder="Përmbajtja e mesazhit..." required></textarea>
+                <div class="form-help">Përmbajtja kryesore e mesazhit që do të shfaqet</div>
+            </div>
+
+            <div class="form-group">
+                <label for="image_url" class="form-label">URL e Imazhit</label>
+                <input type="url" id="image_url" name="image_url" class="form-input"
+                       placeholder="https://example.com/image.jpg">
+                <div class="form-help">URL e imazhit që do të shfaqet në mesazh (opsionale)</div>
+            </div>
+
+            <div class="form-group">
+                <label for="link_url" class="form-label">URL e Linkut</label>
+                <input type="url" id="link_url" name="link_url" class="form-input"
+                       placeholder="https://example.com">
+                <div class="form-help">URL ku do të drejtojë butoni (opsionale)</div>
+            </div>
+
+            <div class="form-group">
+                <label for="link_text" class="form-label">Teksti i Linkut</label>
+                <input type="text" id="link_text" name="link_text" class="form-input"
+                       placeholder="Mëso më shumë">
+                <div class="form-help">Teksti i butonit të linkut (default: "Mëso më shumë")</div>
+            </div>
+
+            <div class="form-group">
+                <label for="display_order" class="form-label">Rendi i Shfaqjes</label>
+                <input type="number" id="display_order" name="display_order" class="form-input"
+                       value="0" min="0">
+                <div class="form-help">Numër më i vogël = prioritet më i lartë</div>
+            </div>
+
+            <div class="form-group">
+                <div class="form-checkbox-wrapper">
+                    <input type="checkbox" id="is_active" name="is_active" class="form-checkbox" checked>
+                    <label for="is_active" class="form-label" style="margin-bottom: 0;">Aktiv</label>
+                </div>
+                <div class="form-help">Mesazhet aktive shfaqen në faqen e login</div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal()">Anulo</button>
+                <button type="submit" class="btn-submit">Ruaj</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Form (hidden) -->
+<form id="deleteForm" method="POST" style="display: none;">
+    <input type="hidden" name="message_id" id="deleteMessageId">
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let editMode = false;
+let editMessageId = null;
+
+function openCreateModal() {
+    editMode = false;
+    editMessageId = null;
+    document.getElementById('modalTitle').textContent = 'Krijo Mesazh të Ri';
+    document.getElementById('messageForm').action = '{{ url_for("admin.create_marketing_message") }}';
+    document.getElementById('messageForm').reset();
+    document.getElementById('is_active').checked = true;
+    document.getElementById('messageModal').classList.add('active');
+}
+
+function openEditModal(id, messageData) {
+    editMode = true;
+    editMessageId = id;
+    document.getElementById('modalTitle').textContent = 'Modifiko Mesazhin';
+    document.getElementById('messageForm').action = '{{ url_for("admin.edit_marketing_message", message_id=0) }}'.replace('0', id);
+
+    // Populate form
+    document.getElementById('title').value = messageData.title;
+    document.getElementById('content').value = messageData.content;
+    document.getElementById('image_url').value = messageData.image_url || '';
+    document.getElementById('link_url').value = messageData.link_url || '';
+    document.getElementById('link_text').value = messageData.link_text || '';
+    document.getElementById('display_order').value = messageData.display_order;
+    document.getElementById('is_active').checked = messageData.is_active;
+
+    document.getElementById('messageModal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('messageModal').classList.remove('active');
+}
+
+function toggleMessage(id) {
+    fetch(`{{ url_for("admin.toggle_marketing_message", message_id=0) }}`.replace('0', id), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Gabim: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Gabim në ndryshimin e statusit');
+    });
+}
+
+function deleteMessage(id, title) {
+    if (confirm(`A jeni të sigurt që dëshironi të fshini mesazhin "${title}"?\n\nKy veprim nuk mund të anulo.`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("admin.delete_marketing_message", message_id=0) }}'.replace('0', id);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Close modal when clicking outside
+document.getElementById('messageModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModal();
+    }
+});
+</script>
+{% endblock %}

@@ -56,6 +56,9 @@
     .settings-btn.email { background: #0891b2; }
     .settings-btn.email:hover { background: #0e7490; box-shadow: 0 4px 12px rgba(8,145,178,0.3); }
 
+    .settings-btn.marketing { background: #7c3aed; }
+    .settings-btn.marketing:hover { background: #6d28d9; box-shadow: 0 4px 12px rgba(124,58,237,0.3); }
+
     .settings-btn.restart { background: var(--success); }
     .settings-btn.restart:hover { background: #059669; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
 
@@ -690,12 +693,16 @@
 <div class="server-control">
     <div class="info">
         <i class="fas fa-cog"></i>
-        <strong>System Settings:</strong> Configure email notifications and server settings
+        <strong>System Settings:</strong> Configure email, marketing content, and server settings
     </div>
     <div class="settings-buttons">
         <a href="{{ url_for('admin.email_settings') }}" class="settings-btn email">
             <i class="fas fa-envelope"></i>
             Email Settings
+        </a>
+        <a href="{{ url_for('admin.marketing_content') }}" class="settings-btn marketing">
+            <i class="fas fa-bullhorn"></i>
+            Marketing Content
         </a>
         <form method="POST" action="{{ url_for('admin.restart_server') }}" style="margin: 0;" onsubmit="return confirm('Are you sure you want to restart the server? This will briefly interrupt service.');">
             <button type="submit" class="settings-btn restart">
@@ -785,6 +792,37 @@
 
     <div id="notificationsList" style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: var(--border-radius-sm); padding: 20px; min-height: 200px;">
         <p style="text-align: center; color: var(--text-muted); margin: 40px 0;">Loading notifications...</p>
+    </div>
+</div>
+
+<!-- User Messages Section -->
+<div class="section">
+    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div class="section-title" style="display: flex; align-items: center; gap: 12px;">
+            <i class="fas fa-envelope" style="color: var(--primary); font-size: 20px;"></i>
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700;">Mesazhet e Përdoruesve</h2>
+            <span id="userMsgBadge" style="background: #ef4444; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: none;">0 të palexuara</span>
+        </div>
+    </div>
+
+    <div id="userMessagesList" style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: var(--border-radius-sm); padding: 20px; min-height: 100px;">
+        <p style="text-align: center; color: var(--text-muted); margin: 20px 0;">Po ngarkohen mesazhet...</p>
+    </div>
+</div>
+
+<!-- Reply Modal -->
+<div id="replyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center; padding:2rem;">
+    <div style="background:white; border-radius:12px; padding:2rem; max-width:500px; width:100%;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <h3 style="margin:0; font-size:1.125rem; font-weight:600;">Përgjigju Mesazhit</h3>
+            <button onclick="closeReplyModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-secondary);">&times;</button>
+        </div>
+        <div id="replyOriginal" style="background:var(--surface-dim); padding:1rem; border-radius:8px; margin-bottom:1rem; font-size:0.875rem;"></div>
+        <textarea id="replyText" placeholder="Shkruaj përgjigjen tuaj..." style="width:100%; padding:0.75rem; border:1px solid var(--border); border-radius:8px; min-height:100px; font-family:inherit; font-size:0.875rem; resize:vertical;"></textarea>
+        <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1rem;">
+            <button onclick="closeReplyModal()" style="padding:0.625rem 1.25rem; border:1px solid var(--border); background:white; border-radius:6px; cursor:pointer; font-family:inherit;">Anulo</button>
+            <button onclick="sendReply()" style="padding:0.625rem 1.25rem; border:none; background:var(--primary); color:white; border-radius:6px; cursor:pointer; font-weight:600; font-family:inherit;">Dërgo Përgjigjen</button>
+        </div>
     </div>
 </div>
 
@@ -1500,15 +1538,127 @@
     // Load notifications on page load
     document.addEventListener('DOMContentLoaded', loadNotificationsList);
 
+    // ============ User Messages Section ============
+    let currentReplyMessageId = null;
+
+    function loadUserMessages() {
+        fetch('/admin/user-messages')
+            .then(r => r.json())
+            .then(data => {
+                const container = document.getElementById('userMessagesList');
+                const badge = document.getElementById('userMsgBadge');
+
+                if (!data.success) {
+                    container.innerHTML = '<p style="text-align:center; color:var(--text-muted);">Gabim në ngarkim</p>';
+                    return;
+                }
+
+                // Update badge
+                if (data.unread_count > 0) {
+                    badge.textContent = data.unread_count + ' të palexuara';
+                    badge.style.display = 'inline';
+                } else {
+                    badge.style.display = 'none';
+                }
+
+                const messages = data.messages || [];
+                if (messages.length === 0) {
+                    container.innerHTML = '<p style="text-align:center; color:var(--text-muted); margin:20px 0;">Nuk ka mesazhe nga përdoruesit.</p>';
+                    return;
+                }
+
+                let html = '';
+                messages.forEach(function(m) {
+                    const isUnread = !m.is_read;
+                    const time = m.created_at ? m.created_at.substring(0, 16).replace('T', ' ') : '';
+                    html += '<div style="padding:16px; border-bottom:1px solid var(--border); ' + (isUnread ? 'background:#f8f9ff; border-left:3px solid var(--primary);' : '') + '">';
+                    html += '<div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:8px;">';
+                    html += '<div>';
+                    html += '<div style="font-weight:600; font-size:14px; color:var(--text);">' + escapeHtmlAdmin(m.subject) + '</div>';
+                    html += '<div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Nga: ' + escapeHtmlAdmin(m.user_email) + ' &middot; ' + time + '</div>';
+                    html += '</div>';
+                    html += '<div style="display:flex; gap:6px;">';
+                    if (isUnread) {
+                        html += '<button onclick="markMsgRead(\'' + m.id + '\')" style="background:var(--surface-dim); border:1px solid var(--border); padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer;" title="Shëno si të lexuar"><i class="fas fa-check"></i></button>';
+                    }
+                    html += '<button onclick="openReplyModal(\'' + m.id + '\', \'' + escapeHtmlAdmin(m.subject).replace(/'/g, "\\'") + '\', \'' + escapeHtmlAdmin(m.user_email).replace(/'/g, "\\'") + '\', \'' + escapeHtmlAdmin(m.message).replace(/'/g, "\\'") + '\')" style="background:var(--primary); color:white; border:none; padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:500;"><i class="fas fa-reply"></i> Përgjigju</button>';
+                    html += '</div></div>';
+                    html += '<div style="font-size:13px; color:var(--text-secondary); line-height:1.5;">' + escapeHtmlAdmin(m.message) + '</div>';
+                    html += '</div>';
+                });
+                container.innerHTML = html;
+            })
+            .catch(function() {
+                document.getElementById('userMessagesList').innerHTML = '<p style="text-align:center; color:var(--text-muted);">Gabim në ngarkim</p>';
+            });
+    }
+
+    function markMsgRead(id) {
+        fetch('/admin/user-messages/mark-read/' + id, { method: 'POST' })
+            .then(r => r.json())
+            .then(function() { loadUserMessages(); })
+            .catch(function() {});
+    }
+
+    function openReplyModal(id, subject, email, message) {
+        currentReplyMessageId = id;
+        document.getElementById('replyOriginal').innerHTML =
+            '<strong>' + subject + '</strong><br>' +
+            '<span style="color:var(--text-secondary);">Nga: ' + email + '</span><br><br>' +
+            message;
+        document.getElementById('replyText').value = '';
+        document.getElementById('replyModal').style.display = 'flex';
+    }
+
+    function closeReplyModal() {
+        document.getElementById('replyModal').style.display = 'none';
+        currentReplyMessageId = null;
+    }
+
+    function sendReply() {
+        if (!currentReplyMessageId) return;
+        const replyText = document.getElementById('replyText').value.trim();
+        if (!replyText) { alert('Shkruaj një përgjigje'); return; }
+
+        fetch('/admin/user-messages/reply/' + currentReplyMessageId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reply: replyText })
+        })
+        .then(r => r.json())
+        .then(function(data) {
+            if (data.success) {
+                closeReplyModal();
+                loadUserMessages();
+                alert('Përgjigja u dërgua me sukses!');
+            } else {
+                alert('Gabim: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(function() { alert('Gabim në dërgimin e përgjigjes'); });
+    }
+
+    function escapeHtmlAdmin(text) {
+        const div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
+    }
+
+    document.addEventListener('DOMContentLoaded', loadUserMessages);
+
     // Close modal when clicking outside
     window.onclick = function(event) {
         const modal = document.getElementById('resetPasswordModal');
         const notifModal = document.getElementById('composeNotificationModal');
+        const replyModal = document.getElementById('replyModal');
         if (event.target == modal) {
             closeResetPasswordModal();
         }
         if (event.target == notifModal) {
             closeComposeNotificationModal();
+        }
+        if (event.target == replyModal) {
+            closeReplyModal();
         }
     }
 </script>

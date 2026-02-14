@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from functools import wraps
 from auth import UserManager
-from models import db, User, Conversion, Download, EmailConfig
+from models import db, User, Conversion, Download, EmailConfig, ContactMessage
 from email_utils import send_admin_promotion_notification, send_admin_removal_verification, send_notification_email
 from notification_utils import (
     create_notification, get_all_notifications, delete_notification,
@@ -15,6 +15,7 @@ import os
 import signal
 import json
 import smtplib
+import re
 from email.mime.text import MIMEText
 from collections import defaultdict
 
@@ -665,6 +666,232 @@ def delete_notification_route(notification_id):
             flash('Notification not found', 'error')
     except Exception as e:
         flash(f'Error deleting notification: {str(e)}', 'error')
-    
+
     return redirect(url_for('admin.dashboard'))
+
+
+# ============ Marketing Content Management (Simple HTML Editor) ============
+
+@admin_bp.route('/marketing-content')
+@login_required
+@admin_required
+def marketing_content():
+    """Marketing content editor page"""
+    import sys
+    sys.stdout.flush()  # Force flush before any output
+
+    # Get the current content from file
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    content_file = os.path.join(app_dir, 'templates', 'marketing_content.html')
+
+    print("\n" + "="*60, flush=True)
+    print("[DEBUG] Loading marketing content...", flush=True)
+    print(f"[DEBUG] App dir: {app_dir}", flush=True)
+    print(f"[DEBUG] Content file path: {content_file}", flush=True)
+    print(f"[DEBUG] File exists: {os.path.exists(content_file)}", flush=True)
+    print("="*60 + "\n", flush=True)
+
+    # Default values
+    mode = 'simple'
+    title = ''
+    simple_content = ''
+    html_content = ''
+
+    if os.path.exists(content_file):
+        try:
+            with open(content_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            print(f"[DEBUG] File size: {len(content)} bytes", flush=True)
+            print(f"[DEBUG] Content preview: {content[:200]}", flush=True)
+
+            # Try to parse if it's in simple format (has our marker comment)
+            if content and '<!-- SIMPLE_MODE -->' in content:
+                mode = 'simple'
+                print(f"[DEBUG] Detected SIMPLE_MODE", flush=True)
+                # Extract title from <h2>
+                title_match = re.search(r'<h2>(.*?)</h2>', content, re.DOTALL)
+                if title_match:
+                    title = title_match.group(1).strip()
+                    print(f"[DEBUG] Extracted title: {title}", flush=True)
+
+                # Extract content from <p>
+                content_match = re.search(r'<p>(.*?)</p>', content, re.DOTALL)
+                if content_match:
+                    simple_content = content_match.group(1).strip()
+                    print(f"[DEBUG] Extracted content: {simple_content[:100]}", flush=True)
+            else:
+                # Raw HTML mode
+                mode = 'html'
+                html_content = content
+                print(f"[DEBUG] Detected HTML mode", flush=True)
+
+        except Exception as e:
+            print(f"[ERROR] Error reading file: {str(e)}", flush=True)
+            flash(f'Gabim në leximin e përmbajtjes: {str(e)}', 'error')
+    else:
+        print(f"[DEBUG] File does not exist - using defaults", flush=True)
+
+    print(f"[DEBUG] Returning mode={mode}, title={title}, content_len={len(simple_content)}", flush=True)
+
+    return render_template('marketing_content_editor.html',
+                         mode=mode,
+                         title=title,
+                         simple_content=simple_content,
+                         html_content=html_content)
+
+
+@admin_bp.route('/marketing-content/save', methods=['POST'])
+@login_required
+@admin_required
+def save_marketing_content():
+    """Save marketing content to file"""
+    import sys
+    sys.stdout.flush()  # Force flush before any output
+
+    try:
+        mode = request.form.get('mode', 'simple')
+
+        # Get the templates directory
+        app_dir = os.path.dirname(os.path.abspath(__file__))
+        templates_dir = os.path.join(app_dir, 'templates')
+        content_file = os.path.join(templates_dir, 'marketing_content.html')
+
+        # Debug logging
+        print("\n" + "="*60, flush=True)
+        print("[DEBUG] Saving marketing content...", flush=True)
+        print(f"[DEBUG] Mode: {mode}", flush=True)
+        print(f"[DEBUG] App dir: {app_dir}", flush=True)
+        print(f"[DEBUG] Templates dir: {templates_dir}", flush=True)
+        print(f"[DEBUG] Content file path: {content_file}", flush=True)
+
+        # Ensure templates directory exists
+        os.makedirs(templates_dir, exist_ok=True)
+
+        if mode == 'simple':
+            # Simple mode - build HTML from title and content
+            title = request.form.get('title', '').strip()
+            simple_content = request.form.get('simple_content', '').strip()
+
+            print(f"[DEBUG] Title: {title}", flush=True)
+            print(f"[DEBUG] Content: {simple_content[:100] if simple_content else 'empty'}", flush=True)
+
+            if not title and not simple_content:
+                # Empty content - delete the file
+                if os.path.exists(content_file):
+                    os.remove(content_file)
+                    print(f"[DEBUG] File deleted: {content_file}", flush=True)
+                flash('Përmbajtja u fshi - do të shfaqet default content.', 'success')
+                return redirect(url_for('admin.marketing_content'))
+
+            # Build HTML with proper structure
+            html = f'''<!-- SIMPLE_MODE -->
+<div class="announcement-card">
+    <h2>{title}</h2>
+    <p>{simple_content}</p>
+</div>'''
+
+            with open(content_file, 'w', encoding='utf-8') as f:
+                f.write(html)
+
+            print(f"[DEBUG] File written successfully!", flush=True)
+            print(f"[DEBUG] File exists after write: {os.path.exists(content_file)}", flush=True)
+            print(f"[DEBUG] File size: {os.path.getsize(content_file) if os.path.exists(content_file) else 'N/A'}", flush=True)
+
+        else:
+            # HTML mode - save as-is
+            html_content = request.form.get('html_content', '').strip()
+
+            print(f"[DEBUG] HTML content length: {len(html_content)}", flush=True)
+
+            if not html_content:
+                # Empty content - delete the file
+                if os.path.exists(content_file):
+                    os.remove(content_file)
+                    print(f"[DEBUG] File deleted: {content_file}", flush=True)
+                flash('Përmbajtja u fshi - do të shfaqet default content.', 'success')
+                return redirect(url_for('admin.marketing_content'))
+
+            with open(content_file, 'w', encoding='utf-8') as f:
+                f.write(html_content)
+
+            print(f"[DEBUG] File written successfully!", flush=True)
+            print(f"[DEBUG] File exists after write: {os.path.exists(content_file)}", flush=True)
+
+        print("="*60 + "\n", flush=True)
+        flash(f'Përmbajtja u ruajt me sukses në: {content_file}', 'success')
+        return redirect(url_for('admin.marketing_content'))
+
+    except Exception as e:
+        print(f"[ERROR] Exception during save: {str(e)}", flush=True)
+        import traceback
+        traceback.print_exc()
+        flash(f'Gabim në ruajtjen e përmbajtjes: {str(e)}', 'error')
+        return redirect(url_for('admin.marketing_content'))
+
+
+# ============ User Contact Messages ============
+
+@admin_bp.route('/user-messages')
+@login_required
+@admin_required
+def user_messages():
+    """Get all user contact messages (JSON)"""
+    try:
+        messages = ContactMessage.query.order_by(ContactMessage.created_at.desc()).all()
+        return jsonify({
+            'success': True,
+            'messages': [m.to_dict() for m in messages],
+            'unread_count': ContactMessage.query.filter_by(is_read=False).count()
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@admin_bp.route('/user-messages/mark-read/<message_id>', methods=['POST'])
+@login_required
+@admin_required
+def mark_message_read(message_id):
+    """Mark a user message as read"""
+    try:
+        msg = db.session.get(ContactMessage, message_id)
+        if msg:
+            msg.is_read = True
+            db.session.commit()
+            return jsonify({'success': True})
+        return jsonify({'success': False, 'message': 'Mesazhi nuk u gjet'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+@admin_bp.route('/user-messages/reply/<message_id>', methods=['POST'])
+@login_required
+@admin_required
+def reply_to_message(message_id):
+    """Reply to a user message by sending them a notification"""
+    try:
+        msg = db.session.get(ContactMessage, message_id)
+        if not msg:
+            return jsonify({'success': False, 'message': 'Mesazhi nuk u gjet'})
+
+        reply_text = request.json.get('reply', '').strip() if request.is_json else request.form.get('reply', '').strip()
+        if not reply_text:
+            return jsonify({'success': False, 'message': 'Përgjigjja nuk mund të jetë bosh'})
+
+        # Mark the original message as read
+        msg.is_read = True
+        db.session.commit()
+
+        # Send a notification to the user
+        from notification_utils import create_notification
+        create_notification(
+            title=f'Përgjigje: {msg.subject}',
+            message=reply_text,
+            notification_type='info',
+            recipients=[msg.user_email],
+            send_email=False,
+            created_by=current_user.email
+        )
+
+        return jsonify({'success': True, 'message': 'Përgjigja u dërgua si njoftim'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
 
