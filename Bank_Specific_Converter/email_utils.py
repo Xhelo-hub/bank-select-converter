@@ -8,20 +8,25 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
-import json
+from datetime import datetime
 
 def load_email_config():
-    """Load email configuration from JSON file or environment variables"""
-    config_path = os.path.join(os.path.dirname(__file__), 'email_config.json')
-    if os.path.exists(config_path):
-        try:
-            with open(config_path, 'r') as f:
-                config = json.load(f)
-                if config.get('enabled'):
-                    return config
-        except:
-            pass
-    
+    """Load email configuration from database or environment variables"""
+    try:
+        from models import db, EmailConfig
+        config = db.session.get(EmailConfig, 1)
+        if config and config.enabled:
+            return {
+                'smtp_server': config.smtp_server,
+                'smtp_port': config.smtp_port,
+                'smtp_username': config.smtp_username,
+                'smtp_password': config.smtp_password,
+                'from_email': config.from_email,
+                'enabled': True
+            }
+    except Exception as e:
+        print(f"Error loading email config from database: {e}")
+
     # Fallback to environment variables
     return {
         'smtp_server': os.environ.get('SMTP_SERVER', 'smtp.gmail.com'),
@@ -32,57 +37,63 @@ def load_email_config():
         'enabled': True
     }
 
-# Email configuration (load from config file or environment variables)
-_config = load_email_config()
-SMTP_SERVER = _config['smtp_server']
-SMTP_PORT = _config['smtp_port']
-SMTP_USERNAME = _config['smtp_username']
-SMTP_PASSWORD = _config['smtp_password']
-FROM_EMAIL = _config['from_email']
+def _get_config():
+    """Get current email configuration (loads fresh each time)"""
+    config = load_email_config()
+    return (
+        config['smtp_server'],
+        config['smtp_port'],
+        config['smtp_username'],
+        config['smtp_password'],
+        config['from_email']
+    )
 
 def send_email(to_email, subject, html_body, text_body=None):
     """
     Send an email
-    
+
     Args:
         to_email: Recipient email address
         subject: Email subject
         html_body: HTML content of the email
         text_body: Plain text fallback (optional)
-    
+
     Returns:
         tuple: (success, message)
     """
+    # Get current config
+    SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, FROM_EMAIL = _get_config()
+
     # Check if email is configured
     if not SMTP_USERNAME or not SMTP_PASSWORD:
         print("Warning: Email not configured. Email would have been sent to:", to_email)
         print("Subject:", subject)
         print("Body:", html_body)
         return True, "Email configuration not set (simulated send)"
-    
+
     try:
         # Create message
         msg = MIMEMultipart('alternative')
         msg['Subject'] = subject
         msg['From'] = FROM_EMAIL
         msg['To'] = to_email
-        
+
         # Add text and HTML parts
         if text_body:
             text_part = MIMEText(text_body, 'plain')
             msg.attach(text_part)
-        
+
         html_part = MIMEText(html_body, 'html')
         msg.attach(html_part)
-        
+
         # Send email
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
             server.send_message(msg)
-        
+
         return True, "Email sent successfully"
-        
+
     except Exception as e:
         print(f"Error sending email: {e}")
         return False, f"Failed to send email: {str(e)}"

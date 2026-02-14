@@ -2,9 +2,10 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from functools import wraps
 from auth import UserManager
+from models import db, User, Conversion, Download, EmailConfig
 from email_utils import send_admin_promotion_notification, send_admin_removal_verification, send_notification_email
 from notification_utils import (
-    create_notification, get_all_notifications, delete_notification, 
+    create_notification, get_all_notifications, delete_notification,
     get_user_notifications, get_unread_count
 )
 from werkzeug.utils import secure_filename
@@ -20,34 +21,44 @@ from collections import defaultdict
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 user_manager = UserManager()
 
-def get_stats_file_path():
-    """Get the path to conversion stats file"""
-    return os.path.join(os.path.dirname(__file__), 'conversion_stats.json')
-
 def load_stats():
-    """Load conversion stats from JSON file"""
-    stats_path = get_stats_file_path()
-    if os.path.exists(stats_path):
-        try:
-            with open(stats_path, 'r') as f:
-                return json.load(f)
-        except Exception:
-            pass
-    return {"total_conversions": 0, "total_downloads": 0, "conversions": [], "downloads": []}
+    """Load conversion and download stats from database"""
+    try:
+        total_conversions = db.session.query(db.func.count(Conversion.id)).scalar() or 0
+        total_downloads = db.session.query(db.func.count(Download.id)).scalar() or 0
 
-def get_email_config_path():
-    """Get the path to email configuration file"""
-    return os.path.join(os.path.dirname(__file__), 'email_config.json')
+        # Get all conversions and downloads for detailed stats
+        conversions = Conversion.query.all()
+        downloads = Download.query.all()
+
+        return {
+            "total_conversions": total_conversions,
+            "total_downloads": total_downloads,
+            "conversions": [{"user_email": c.user_email, "bank": c.bank or "Unknown"} for c in conversions],
+            "downloads": [{"user_email": d.user_email} for d in downloads]
+        }
+    except Exception as e:
+        print(f"Error loading stats: {e}")
+        return {"total_conversions": 0, "total_downloads": 0, "conversions": [], "downloads": []}
 
 def load_email_config():
-    """Load email configuration from JSON file"""
-    config_path = get_email_config_path()
-    if os.path.exists(config_path):
-        try:
-            with open(config_path, 'r') as f:
-                return json.load(f)
-        except:
-            pass
+    """Load email configuration from database"""
+    try:
+        config = db.session.get(EmailConfig, 1)
+        if config:
+            return {
+                'smtp_server': config.smtp_server,
+                'smtp_port': config.smtp_port,
+                'smtp_username': config.smtp_username,
+                'smtp_password': config.smtp_password,
+                'from_email': config.from_email,
+                'enabled': config.enabled,
+                'test_email': config.test_email or ''
+            }
+    except Exception as e:
+        print(f"Error loading email config: {e}")
+
+    # Return defaults
     return {
         'smtp_server': 'smtp.office365.com',
         'smtp_port': 587,
@@ -59,10 +70,25 @@ def load_email_config():
     }
 
 def save_email_config(config):
-    """Save email configuration to JSON file"""
-    config_path = get_email_config_path()
-    with open(config_path, 'w') as f:
-        json.dump(config, f, indent=4)
+    """Save email configuration to database"""
+    try:
+        email_config = db.session.get(EmailConfig, 1)
+        if not email_config:
+            email_config = EmailConfig(id=1)
+            db.session.add(email_config)
+
+        email_config.smtp_server = config['smtp_server']
+        email_config.smtp_port = config['smtp_port']
+        email_config.smtp_username = config['smtp_username']
+        email_config.smtp_password = config['smtp_password']
+        email_config.from_email = config['from_email']
+        email_config.enabled = config['enabled']
+        email_config.test_email = config.get('test_email', '')
+
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 def admin_required(f):
     """Decorator to require admin access"""

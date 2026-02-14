@@ -6,21 +6,25 @@ Monitors system health and sends email alerts to admins when issues are detected
 
 import subprocess
 import time
-import os
-import json
+import sys
+from pathlib import Path
 from datetime import datetime
+
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent))
+
 from email_utils import send_email
 
-# Get admin emails from users.json
+# Get admin emails from database
 def get_admin_emails():
-    """Get list of admin email addresses"""
+    """Get list of admin email addresses from database"""
     try:
-        users_file = os.path.join(os.path.dirname(__file__), 'users.json')
-        if os.path.exists(users_file):
-            with open(users_file, 'r') as f:
-                users = json.load(f)
-                return [user['email'] for user in users.values() if user.get('is_admin', False)]
-        return []
+        from app import app
+        from models import User
+
+        with app.app_context():
+            admin_users = User.query.filter_by(is_admin=True, is_approved=True, _is_active=True).all()
+            return [user.email for user in admin_users]
     except Exception as e:
         print(f"Error getting admin emails: {e}")
         return []

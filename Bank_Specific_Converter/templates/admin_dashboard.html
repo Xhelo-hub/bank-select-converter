@@ -1,1761 +1,1515 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Bank Statement Converter</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #4f46e5;
-            --primary-light: #6366f1;
-            --primary-dark: #4338ca;
-            --accent: #06b6d4;
-            --surface: #ffffff;
-            --surface-dim: #f8fafc;
-            --surface-alt: #f1f5f9;
-            --text: #0f172a;
-            --text-secondary: #64748b;
-            --text-muted: #94a3b8;
-            --border: #e2e8f0;
-            --border-light: #f1f5f9;
-            --success: #10b981;
-            --success-light: #ecfdf5;
-            --error: #ef4444;
-            --error-light: #fef2f2;
-            --warning: #f59e0b;
-            --warning-light: #fffbeb;
-            --info: #3b82f6;
-            --radius: 16px;
-            --radius-sm: 10px;
-            --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 6px 24px rgba(0,0,0,0.06);
-            --shadow-lg: 0 4px 12px rgba(0,0,0,0.05), 0 20px 48px rgba(0,0,0,0.1);
-        }
+{% extends "base.html" %}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+{% block title %}Admin Dashboard - Bank Statement Converter{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--surface-dim);
-            min-height: 100vh;
-            padding: 24px;
-            color: var(--text);
-        }
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    /* Server Control Bar */
+    .server-control {
+        background: var(--surface-alt);
+        padding: 18px 22px;
+        border-radius: var(--border-radius-sm);
+        margin-bottom: 28px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid var(--border);
+    }
 
-        .page-bg {
-            position: fixed;
-            inset: 0;
-            background:
-                radial-gradient(ellipse at 20% 50%, rgba(79, 70, 229, 0.05) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.04) 0%, transparent 50%);
-            z-index: 0;
-        }
+    .server-control .info {
+        color: var(--text-secondary);
+        font-weight: 500;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 
-        .container {
-            position: relative;
-            z-index: 1;
-            max-width: 1200px;
-            margin: 0 auto;
-            background: var(--surface);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-lg);
-            overflow: hidden;
-            border: 1px solid var(--border-light);
-        }
+    .server-control .info i { color: var(--primary); font-size: 16px; }
 
-        .header {
-            background: var(--primary);
-            padding: 24px 36px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-        }
+    .settings-buttons {
+        display: flex;
+        gap: 10px;
+    }
 
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
+    .settings-btn {
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: var(--border-radius-sm);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: inherit;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
 
-        .admin-logo {
-            width: 48px;
-            height: 48px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-            font-weight: 700;
-        }
+    .settings-btn:hover { transform: translateY(-1px); }
 
-        .admin-logo img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
+    .settings-btn.email { background: #0891b2; }
+    .settings-btn.email:hover { background: #0e7490; box-shadow: 0 4px 12px rgba(8,145,178,0.3); }
 
-        .header h1 {
-            color: white;
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-        }
+    .settings-btn.restart { background: var(--success); }
+    .settings-btn.restart:hover { background: #059669; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
 
-        .header-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
+    /* Logo Management */
+    .logo-management {
+        background: var(--surface-alt);
+        padding: 24px;
+        border-radius: var(--border-radius-sm);
+        margin-bottom: 28px;
+        border: 1px solid var(--border);
+    }
 
-        .user-info-header {
-            color: white;
-            padding: 8px 16px;
-            background: rgba(255,255,255,0.12);
-            border-radius: var(--radius-sm);
-            font-size: 13px;
-            font-weight: 500;
-            border: 1px solid rgba(255,255,255,0.15);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            white-space: nowrap;
-        }
+    .logo-management h3 {
+        color: var(--text);
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
 
-        .user-info-header strong { font-weight: 600; }
+    .logo-management h3 i { color: var(--primary); }
 
-        .header-actions a {
-            color: white;
-            text-decoration: none;
-            padding: 8px 16px;
-            background: rgba(255,255,255,0.12);
-            border-radius: var(--radius-sm);
-            transition: all 0.2s ease;
-            font-size: 13px;
-            font-weight: 500;
-            border: 1px solid rgba(255,255,255,0.15);
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
+    .logo-content {
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+    }
 
-        .header-actions a:hover {
-            background: rgba(255,255,255,0.22);
-            transform: translateY(-1px);
-        }
+    .logo-preview-box {
+        width: 100px;
+        height: 100px;
+        border: 1.5px solid var(--border);
+        border-radius: var(--border-radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--surface);
+        padding: 10px;
+        flex-shrink: 0;
+    }
 
-        .content-wrapper { padding: 32px 36px; }
+    .logo-preview-box img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
 
-        .flash-messages { margin-bottom: 20px; }
+    .logo-placeholder-preview {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5em;
+        font-weight: 700;
+    }
 
-        .alert {
-            padding: 12px 16px;
-            border-radius: var(--radius-sm);
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            animation: slideIn 0.3s ease;
-            font-size: 13px;
-            font-weight: 500;
-        }
+    .logo-controls { flex: 1; }
 
-        @keyframes slideIn {
-            from { transform: translateY(-8px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
+    .logo-info {
+        color: var(--text-secondary);
+        font-size: 13px;
+        margin-bottom: 14px;
+        background: var(--surface);
+        padding: 10px 14px;
+        border-radius: 8px;
+        border-left: 3px solid var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 
-        .alert-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
-        .alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-        .alert-warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
-        .alert-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .logo-info i { color: var(--primary); }
 
-        /* System Settings Bar */
-        .server-control {
-            background: var(--surface-alt);
-            padding: 18px 22px;
-            border-radius: var(--radius-sm);
-            margin-bottom: 28px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid var(--border);
-        }
+    .logo-upload-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
 
-        .server-control .info {
-            color: var(--text-secondary);
-            font-weight: 500;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+    .file-input-wrapper {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
 
-        .server-control .info i { color: var(--primary); font-size: 16px; }
+    .file-input-wrapper input[type="file"] { display: none; }
 
-        .settings-buttons {
-            display: flex;
-            gap: 10px;
-        }
+    .file-input-label {
+        background: var(--surface);
+        color: var(--primary);
+        border: 1.5px solid var(--primary);
+        padding: 8px 16px;
+        border-radius: var(--border-radius-sm);
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
 
-        .settings-btn {
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            font-family: inherit;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-        }
+    .file-input-label:hover { background: var(--primary); color: white; }
 
-        .settings-btn:hover { transform: translateY(-1px); }
+    .file-name { color: var(--text-secondary); font-size: 13px; font-weight: 500; }
 
-        .settings-btn.email { background: #0891b2; }
-        .settings-btn.email:hover { background: #0e7490; box-shadow: 0 4px 12px rgba(8,145,178,0.3); }
+    .logo-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
-        .settings-btn.restart { background: var(--success); }
-        .settings-btn.restart:hover { background: #059669; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+    .upload-btn, .delete-logo-btn {
+        border: none;
+        padding: 8px 18px;
+        border-radius: var(--border-radius-sm);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: inherit;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: white;
+    }
 
-        /* Logo Management */
-        .logo-management {
-            background: var(--surface-alt);
-            padding: 24px;
-            border-radius: var(--radius-sm);
-            margin-bottom: 28px;
-            border: 1px solid var(--border);
-        }
+    .upload-btn { background: var(--primary); }
+    .upload-btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .upload-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-        .logo-management h3 {
-            color: var(--text);
-            font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+    .delete-logo-btn { background: var(--error); }
+    .delete-logo-btn:hover { background: #dc2626; transform: translateY(-1px); }
 
-        .logo-management h3 i { color: var(--primary); }
+    /* Stats */
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 32px;
+    }
 
-        .logo-content {
-            display: flex;
-            gap: 24px;
-            align-items: flex-start;
-        }
+    .stat-card {
+        background: var(--surface);
+        padding: 24px;
+        border-radius: var(--border-radius-sm);
+        text-align: center;
+        border: 1.5px solid var(--border);
+        transition: all 0.2s ease;
+    }
 
-        .logo-preview-box {
-            width: 100px;
-            height: 100px;
+    .stat-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+    }
+
+    .stat-card h3 {
+        font-size: 2.2em;
+        color: var(--primary);
+        margin-bottom: 6px;
+        font-weight: 700;
+    }
+
+    .stat-card p {
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    /* Sections */
+    .section {
+        margin-bottom: 32px;
+        overflow: visible;
+    }
+
+    .section h2 {
+        color: var(--text);
+        font-size: 18px;
+        margin-bottom: 16px;
+        font-weight: 700;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Table */
+    .users-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 12px;
+        background: var(--surface);
+        border-radius: var(--border-radius-sm);
+        overflow: visible;
+        border: 1px solid var(--border);
+    }
+
+    .users-table th,
+    .users-table td {
+        padding: 14px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .users-table th {
+        background: var(--surface-alt);
+        color: var(--text);
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .users-table tbody tr {
+        transition: all 0.15s ease;
+        position: relative;
+        z-index: 1;
+    }
+
+    .users-table tbody tr:hover { background: var(--surface-dim); }
+    .users-table tbody tr:has(.dropdown.show) { z-index: 10000; }
+    .users-table tbody tr:last-child td { border-bottom: none; }
+
+    /* Buttons */
+    .btn {
+        padding: 7px 14px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        font-family: inherit;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin: 2px;
+        transition: all 0.2s ease;
+        color: white;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .btn-approve { background: var(--success); }
+    .btn-approve:hover { background: #059669; box-shadow: 0 2px 8px rgba(16,185,129,0.3); }
+
+    .btn-reject { background: var(--error); }
+    .btn-reject:hover { background: #dc2626; box-shadow: 0 2px 8px rgba(239,68,68,0.3); }
+
+    /* Badges */
+    .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+    }
+
+    .badge-pending { background: #fef3c7; color: #92400e; }
+    .badge-approved { background: #d1fae5; color: #065f46; }
+    .badge-admin { background: #e0e7ff; color: #3730a3; }
+    .badge-active { background: #d1fae5; color: #065f46; }
+    .badge-inactive { background: #f1f5f9; color: #475569; }
+
+    /* Dropdown */
+    .dropdown {
+        position: relative;
+        display: inline-block;
+        z-index: 100;
+    }
+
+    .dropdown.show { z-index: 9999; }
+
+    .dropdown-toggle {
+        background: var(--primary);
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: inherit;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+    }
+
+    .dropdown-toggle:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+    }
+
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        background: var(--surface);
+        min-width: 210px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+        border-radius: var(--border-radius-sm);
+        z-index: 9999;
+        margin-top: 6px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+
+    tbody tr:nth-last-child(-n+3) .dropdown-menu {
+        top: auto;
+        bottom: 100%;
+        margin-top: 0;
+        margin-bottom: 6px;
+    }
+
+    tbody tr:nth-last-child(-n+3) .dropdown-menu.show {
+        animation: slideUp 0.2s ease;
+    }
+
+    .dropdown-menu.show {
+        display: block;
+        animation: slideDown 0.2s ease;
+    }
+
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        color: var(--text);
+        text-decoration: none;
+        transition: background 0.15s ease;
+        cursor: pointer;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        font-size: 13px;
+        font-family: inherit;
+    }
+
+    .dropdown-item:hover { background: var(--surface-dim); }
+    .dropdown-item i { width: 18px; text-align: center; font-size: 13px; }
+
+    .dropdown-divider {
+        height: 1px;
+        background: var(--border-light);
+        margin: 4px 0;
+    }
+
+    .dropdown-item.danger { color: var(--error); }
+    .dropdown-item.danger:hover { background: var(--error-light); }
+    .dropdown-item.warning { color: #d97706; }
+    .dropdown-item.warning:hover { background: var(--warning-light); }
+    .dropdown-item.success { color: #059669; }
+    .dropdown-item.success:hover { background: var(--success-light); }
+    .dropdown-item.info { color: var(--info); }
+    .dropdown-item.info:hover { background: #eff6ff; }
+
+    .no-users {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    /* Table Filters & Pagination */
+    .table-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 16px;
+        align-items: center;
+    }
+
+    .search-box {
+        flex: 1;
+        min-width: 200px;
+        position: relative;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 10px 14px 10px 38px;
+        border: 1.5px solid var(--border);
+        border-radius: var(--border-radius-sm);
+        font-size: 13px;
+        font-family: inherit;
+        background: var(--surface);
+        color: var(--text);
+        transition: border-color 0.2s;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    .filter-select {
+        padding: 10px 32px 10px 12px;
+        border: 1.5px solid var(--border);
+        border-radius: var(--border-radius-sm);
+        font-size: 13px;
+        font-family: inherit;
+        background: var(--surface);
+        color: var(--text);
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        min-width: 120px;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 16px;
+        padding: 12px 0;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .pagination-info {
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .pagination-buttons {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .page-btn {
+        padding: 7px 12px;
+        border: 1.5px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 500;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        min-width: 36px;
+        text-align: center;
+    }
+
+    .page-btn:hover:not(:disabled) {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: rgba(79, 70, 229, 0.04);
+    }
+
+    .page-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .page-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .page-size-select {
+        padding: 7px 28px 7px 10px;
+        border: 1.5px solid var(--border);
+        border-radius: 8px;
+        font-size: 13px;
+        font-family: inherit;
+        background: var(--surface);
+        color: var(--text);
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+    }
+
+    .filter-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        background: rgba(79, 70, 229, 0.08);
+        color: var(--primary);
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .filter-badge i { font-size: 10px; }
+
+    .no-results {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    /* Bank Usage */
+    .bank-usage {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 12px;
+    }
+
+    .bank-bar-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .bank-label {
+        width: 80px;
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--text);
+        flex-shrink: 0;
+    }
+
+    .bank-bar-track {
+        flex: 1;
+        height: 28px;
+        background: var(--surface-alt);
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+    }
+
+    .bank-bar-fill {
+        height: 100%;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        border-radius: 8px;
+        min-width: 4px;
+        transition: width 0.5s ease;
+    }
+
+    .bank-count {
+        width: 40px;
+        text-align: right;
+        font-weight: 700;
+        font-size: 14px;
+        color: var(--primary);
+        flex-shrink: 0;
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+        .server-control { flex-direction: column; gap: 12px; }
+        .settings-buttons { width: 100%; }
+        .settings-btn { flex: 1; justify-content: center; }
+        .logo-content { flex-direction: column; }
+        .logo-actions { flex-direction: column; }
+        .upload-btn, .delete-logo-btn { width: 100%; justify-content: center; }
+        .table-controls { flex-direction: column; }
+        .search-box { min-width: 100%; }
+        .filter-select { width: 100%; }
+        .pagination { flex-direction: column; align-items: stretch; text-align: center; }
+        .pagination-buttons { justify-content: center; }
+        .stats { grid-template-columns: 1fr; gap: 12px; }
+    }
+
+    @media (max-width: 600px) {
+        .users-table { display: block; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+        .users-table thead, .users-table tbody, .users-table tr, .users-table th, .users-table td { display: block; }
+        .users-table tr {
+            margin-bottom: 12px;
             border: 1.5px solid var(--border);
-            border-radius: var(--radius-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--surface);
+            border-radius: var(--border-radius-sm);
             padding: 10px;
-            flex-shrink: 0;
+            background: var(--surface-dim);
         }
-
-        .logo-preview-box img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-
-        .logo-placeholder-preview {
-            width: 64px;
-            height: 64px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5em;
-            font-weight: 700;
-        }
-
-        .logo-controls { flex: 1; }
-
-        .logo-info {
-            color: var(--text-secondary);
-            font-size: 13px;
-            margin-bottom: 14px;
-            background: var(--surface);
-            padding: 10px 14px;
-            border-radius: 8px;
-            border-left: 3px solid var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .logo-info i { color: var(--primary); }
-
-        .logo-upload-form {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .file-input-wrapper {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .file-input-wrapper input[type="file"] { display: none; }
-
-        .file-input-label {
-            background: var(--surface);
-            color: var(--primary);
-            border: 1.5px solid var(--primary);
-            padding: 8px 16px;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 13px;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .file-input-label:hover { background: var(--primary); color: white; }
-
-        .file-name { color: var(--text-secondary); font-size: 13px; font-weight: 500; }
-
-        .logo-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-
-        .upload-btn, .delete-logo-btn {
-            border: none;
-            padding: 8px 18px;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            font-family: inherit;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: white;
-        }
-
-        .upload-btn { background: var(--primary); }
-        .upload-btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
-        .upload-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-        .delete-logo-btn { background: var(--error); }
-        .delete-logo-btn:hover { background: #dc2626; transform: translateY(-1px); }
-
-        /* Stats */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-
-        .stat-card {
-            background: var(--surface);
-            padding: 24px;
-            border-radius: var(--radius-sm);
-            text-align: center;
-            border: 1.5px solid var(--border);
-            transition: all 0.2s ease;
-        }
-
-        .stat-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
-        }
-
-        .stat-card h3 {
-            font-size: 2.2em;
-            color: var(--primary);
-            margin-bottom: 6px;
-            font-weight: 700;
-        }
-
-        .stat-card p {
-            color: var(--text-secondary);
-            font-size: 13px;
-            font-weight: 500;
-        }
-
-        /* Sections */
-        .section {
-            margin-bottom: 32px;
-            overflow: visible;
-        }
-
-        .section h2 {
-            color: var(--text);
-            font-size: 18px;
-            margin-bottom: 16px;
-            font-weight: 700;
-            padding-bottom: 12px;
-            border-bottom: 2px solid var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* Table */
-        .users-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            margin-top: 12px;
-            background: var(--surface);
-            border-radius: var(--radius-sm);
-            overflow: visible;
-            border: 1px solid var(--border);
-        }
-
-        .users-table th,
+        .users-table thead { display: none; }
         .users-table td {
-            padding: 14px 16px;
             text-align: left;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        .users-table th {
-            background: var(--surface-alt);
-            color: var(--text);
-            font-weight: 600;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .users-table tbody tr {
-            transition: all 0.15s ease;
+            padding: 8px;
             position: relative;
-            z-index: 1;
-        }
-
-        .users-table tbody tr:hover { background: var(--surface-dim); }
-        .users-table tbody tr:has(.dropdown.show) { z-index: 10000; }
-        .users-table tbody tr:last-child td { border-bottom: none; }
-
-        /* Buttons */
-        .btn {
-            padding: 7px 14px;
             border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            font-family: inherit;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            margin: 2px;
-            transition: all 0.2s ease;
-            color: white;
+            white-space: normal;
         }
-
-        .btn:hover { transform: translateY(-1px); }
-
-        .btn-approve { background: var(--success); }
-        .btn-approve:hover { background: #059669; box-shadow: 0 2px 8px rgba(16,185,129,0.3); }
-
-        .btn-reject { background: var(--error); }
-        .btn-reject:hover { background: #dc2626; box-shadow: 0 2px 8px rgba(239,68,68,0.3); }
-
-        /* Badges */
-        .badge {
+        .users-table td::before {
+            content: attr(data-label);
+            font-weight: 600;
             display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.02em;
-        }
-
-        .badge-pending { background: #fef3c7; color: #92400e; }
-        .badge-approved { background: #d1fae5; color: #065f46; }
-        .badge-admin { background: #e0e7ff; color: #3730a3; }
-        .badge-active { background: #d1fae5; color: #065f46; }
-        .badge-inactive { background: #f1f5f9; color: #475569; }
-
-        /* Dropdown */
-        .dropdown {
-            position: relative;
-            display: inline-block;
-            z-index: 100;
-        }
-
-        .dropdown.show { z-index: 9999; }
-
-        .dropdown-toggle {
-            background: var(--primary);
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            font-family: inherit;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-        }
-
-        .dropdown-toggle:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-        }
-
-        .dropdown-menu {
-            display: none;
-            position: absolute;
-            right: 0;
-            background: var(--surface);
-            min-width: 210px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
-            border-radius: var(--radius-sm);
-            z-index: 9999;
-            margin-top: 6px;
-            border: 1px solid var(--border);
-            overflow: hidden;
-        }
-
-        tbody tr:nth-last-child(-n+3) .dropdown-menu {
-            top: auto;
-            bottom: 100%;
-            margin-top: 0;
-            margin-bottom: 6px;
-        }
-
-        tbody tr:nth-last-child(-n+3) .dropdown-menu.show {
-            animation: slideUp 0.2s ease;
-        }
-
-        .dropdown-menu.show {
-            display: block;
-            animation: slideDown 0.2s ease;
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .dropdown-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 16px;
-            color: var(--text);
-            text-decoration: none;
-            transition: background 0.15s ease;
-            cursor: pointer;
-            border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
-            font-size: 13px;
-            font-family: inherit;
-        }
-
-        .dropdown-item:hover { background: var(--surface-dim); }
-        .dropdown-item i { width: 18px; text-align: center; font-size: 13px; }
-
-        .dropdown-divider {
-            height: 1px;
-            background: var(--border-light);
-            margin: 4px 0;
-        }
-
-        .dropdown-item.danger { color: var(--error); }
-        .dropdown-item.danger:hover { background: var(--error-light); }
-        .dropdown-item.warning { color: #d97706; }
-        .dropdown-item.warning:hover { background: var(--warning-light); }
-        .dropdown-item.success { color: #059669; }
-        .dropdown-item.success:hover { background: var(--success-light); }
-        .dropdown-item.info { color: var(--info); }
-        .dropdown-item.info:hover { background: #eff6ff; }
-
-        .no-users {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-
-        /* Mobile */
-        @media (max-width: 768px) {
-            body { padding: 12px; }
-            .header {
-                flex-direction: column;
-                padding: 20px;
-                text-align: center;
-            }
-            .header-left { flex-direction: column; width: 100%; text-align: center; }
-            .header h1 { font-size: 18px; }
-            .header-actions { width: 100%; justify-content: center; flex-direction: column; }
-            .user-info-header { width: 100%; justify-content: center; order: 3; }
-            .content-wrapper { padding: 20px; }
-            .stats { grid-template-columns: 1fr; gap: 12px; }
-            .server-control { flex-direction: column; gap: 12px; }
-            .settings-buttons { width: 100%; }
-            .settings-btn { flex: 1; justify-content: center; }
-            .logo-content { flex-direction: column; }
-            .logo-actions { flex-direction: column; }
-            .upload-btn, .delete-logo-btn { width: 100%; justify-content: center; }
-            .table-controls { flex-direction: column; }
-            .search-box { min-width: 100%; }
-            .filter-select { width: 100%; }
-            .pagination { flex-direction: column; align-items: stretch; text-align: center; }
-            .pagination-buttons { justify-content: center; }
-        }
-
-        /* Table Filters & Pagination */
-        .table-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 16px;
-            align-items: center;
-        }
-
-        .search-box {
-            flex: 1;
-            min-width: 200px;
-            position: relative;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 10px 14px 10px 38px;
-            border: 1.5px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 13px;
-            font-family: inherit;
-            background: var(--surface);
-            color: var(--text);
-            transition: border-color 0.2s;
-        }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-
-        .search-box i {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-
-        .filter-select {
-            padding: 10px 32px 10px 12px;
-            border: 1.5px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 13px;
-            font-family: inherit;
-            background: var(--surface);
-            color: var(--text);
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 10px center;
-            min-width: 120px;
-        }
-
-        .filter-select:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .pagination {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 16px;
-            padding: 12px 0;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .pagination-info {
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .pagination-buttons {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .page-btn {
-            padding: 7px 12px;
-            border: 1.5px solid var(--border);
-            border-radius: 8px;
-            background: var(--surface);
-            color: var(--text);
-            font-size: 13px;
-            font-weight: 500;
-            font-family: inherit;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            min-width: 36px;
-            text-align: center;
-        }
-
-        .page-btn:hover:not(:disabled) {
-            border-color: var(--primary);
+            width: 100px;
+            margin-right: 10px;
             color: var(--primary);
-            background: rgba(79, 70, 229, 0.04);
-        }
-
-        .page-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .page-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        .page-size-select {
-            padding: 7px 28px 7px 10px;
-            border: 1.5px solid var(--border);
-            border-radius: 8px;
-            font-size: 13px;
-            font-family: inherit;
-            background: var(--surface);
-            color: var(--text);
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 8px center;
-        }
-
-        .filter-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 12px;
-            background: rgba(79, 70, 229, 0.08);
-            color: var(--primary);
-            border-radius: 20px;
             font-size: 12px;
-            font-weight: 600;
         }
+    }
+</style>
+{% endblock %}
 
-        .filter-badge i { font-size: 10px; }
+{% block content %}
+<div class="server-control">
+    <div class="info">
+        <i class="fas fa-cog"></i>
+        <strong>System Settings:</strong> Configure email notifications and server settings
+    </div>
+    <div class="settings-buttons">
+        <a href="{{ url_for('admin.email_settings') }}" class="settings-btn email">
+            <i class="fas fa-envelope"></i>
+            Email Settings
+        </a>
+        <form method="POST" action="{{ url_for('admin.restart_server') }}" style="margin: 0;" onsubmit="return confirm('Are you sure you want to restart the server? This will briefly interrupt service.');">
+            <button type="submit" class="settings-btn restart">
+                <i class="fas fa-sync-alt"></i>
+                Restart Server
+            </button>
+        </form>
+    </div>
+</div>
 
-        .no-results {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-
-        /* Bank Usage */
-        .bank-usage {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 12px;
-        }
-
-        .bank-bar-row {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .bank-label {
-            width: 80px;
-            font-weight: 600;
-            font-size: 13px;
-            color: var(--text);
-            flex-shrink: 0;
-        }
-
-        .bank-bar-track {
-            flex: 1;
-            height: 28px;
-            background: var(--surface-alt);
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-        }
-
-        .bank-bar-fill {
-            height: 100%;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            border-radius: 8px;
-            min-width: 4px;
-            transition: width 0.5s ease;
-        }
-
-        .bank-count {
-            width: 40px;
-            text-align: right;
-            font-weight: 700;
-            font-size: 14px;
-            color: var(--primary);
-            flex-shrink: 0;
-        }
-
-        @media (max-width: 600px) {
-            .content-wrapper { padding: 16px; }
-            .users-table { display: block; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
-            .users-table thead, .users-table tbody, .users-table tr, .users-table th, .users-table td { display: block; }
-            .users-table tr {
-                margin-bottom: 12px;
-                border: 1.5px solid var(--border);
-                border-radius: var(--radius-sm);
-                padding: 10px;
-                background: var(--surface-dim);
-            }
-            .users-table thead { display: none; }
-            .users-table td {
-                text-align: left;
-                padding: 8px;
-                position: relative;
-                border: none;
-                white-space: normal;
-            }
-            .users-table td::before {
-                content: attr(data-label);
-                font-weight: 600;
-                display: inline-block;
-                width: 100px;
-                margin-right: 10px;
-                color: var(--primary);
-                font-size: 12px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="page-bg"></div>
-    <div class="container">
-        <div class="header">
-            <div class="header-left">
-                <div class="admin-logo" id="adminHeaderLogo">BS</div>
-                <h1>Admin Dashboard</h1>
-            </div>
-            <div class="header-actions">
-                <div class="user-info-header">
-                    <i class="fas fa-user-shield"></i> Logged in as: <strong>{{ current_user.email }}</strong> <span class="badge badge-admin">Admin</span>
-                </div>
-                <a href="{{ url_for('index') }}">
-                    <i class="fas fa-arrow-left"></i> Back to Converter
-                </a>
-                <a href="{{ url_for('auth.logout') }}">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </a>
+<div class="logo-management">
+    <h3>
+        <i class="fas fa-image"></i>
+        Logo Management
+    </h3>
+    <div class="logo-content">
+        <div class="logo-preview">
+            <div class="logo-preview-box">
+                <div class="logo-placeholder-preview" id="adminLogoPreview">BS</div>
             </div>
         </div>
-
-        <div class="content-wrapper">
-
-        <div class="server-control">
-            <div class="info">
-                <i class="fas fa-cog"></i>
-                <strong>System Settings:</strong> Configure email notifications and server settings
+        <div class="logo-controls">
+            <div class="logo-info">
+                <i class="fas fa-info-circle"></i>
+                Upload a custom 80x80px logo (PNG, JPG, or SVG). The system will automatically resize images to fit.
             </div>
-            <div class="settings-buttons">
-                <a href="{{ url_for('admin.email_settings') }}" class="settings-btn email">
-                    <i class="fas fa-envelope"></i>
-                    Email Settings
-                </a>
-                <form method="POST" action="{{ url_for('admin.restart_server') }}" style="margin: 0;" onsubmit="return confirm('Are you sure you want to restart the server? This will briefly interrupt service.');">
-                    <button type="submit" class="settings-btn restart">
-                        <i class="fas fa-sync-alt"></i>
-                        Restart Server
-                    </button>
-                </form>
-            </div>
-        </div>
 
-        <div class="logo-management">
-            <h3>
-                <i class="fas fa-image"></i>
-                Logo Management
-            </h3>
-            <div class="logo-content">
-                <div class="logo-preview">
-                    <div class="logo-preview-box">
-                        <div class="logo-placeholder-preview" id="adminLogoPreview">BS</div>
-                    </div>
-                </div>
-                <div class="logo-controls">
-                    <div class="logo-info">
-                        <i class="fas fa-info-circle"></i>
-                        Upload a custom 80x80px logo (PNG, JPG, or SVG). The system will automatically resize images to fit.
+            <form method="POST" action="{{ url_for('admin.upload_logo') }}" enctype="multipart/form-data" id="logoUploadForm">
+                <div class="logo-upload-form">
+                    <div class="file-input-wrapper">
+                        <input type="file" id="logoFile" name="logo" accept=".png,.jpg,.jpeg,.svg" onchange="updateFileName(this)">
+                        <label for="logoFile" class="file-input-label">
+                            <i class="fas fa-upload"></i>
+                            Choose Logo File
+                        </label>
+                        <span class="file-name" id="fileName">No file chosen</span>
                     </div>
 
-                    <form method="POST" action="{{ url_for('admin.upload_logo') }}" enctype="multipart/form-data" id="logoUploadForm">
-                        <div class="logo-upload-form">
-                            <div class="file-input-wrapper">
-                                <input type="file" id="logoFile" name="logo" accept=".png,.jpg,.jpeg,.svg" onchange="updateFileName(this)">
-                                <label for="logoFile" class="file-input-label">
-                                    <i class="fas fa-upload"></i>
-                                    Choose Logo File
-                                </label>
-                                <span class="file-name" id="fileName">No file chosen</span>
-                            </div>
+                    <div class="logo-actions">
+                        <button type="submit" class="upload-btn" id="uploadBtn" disabled>
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            Upload Logo
+                        </button>
 
-                            <div class="logo-actions">
-                                <button type="submit" class="upload-btn" id="uploadBtn" disabled>
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    Upload Logo
-                                </button>
-
-                                <button type="button" class="delete-logo-btn" onclick="deleteLogo()">
-                                    <i class="fas fa-trash-alt"></i>
-                                    Delete Logo
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">
-                            <span>{{ message }}</span>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-
-        <div class="stats">
-            <div class="stat-card">
-                <h3>{{ pending_count }}</h3>
-                <p>Pending Approvals</p>
-            </div>
-            <div class="stat-card">
-                <h3>{{ total_users }}</h3>
-                <p>Total Users</p>
-            </div>
-            <div class="stat-card">
-                <h3>{{ total_conversions }}</h3>
-                <p>Total Conversions</p>
-            </div>
-            <div class="stat-card">
-                <h3>{{ total_downloads }}</h3>
-                <p>Total Downloads</p>
-            </div>
-        </div>
-
-        <!-- Notification Management Section -->
-        <div class="section">
-            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                <div class="section-title" style="display: flex; align-items: center; gap: 12px;">
-                    <i class="fas fa-bell" style="color: var(--primary); font-size: 20px;"></i>
-                    <h2 style="margin: 0; font-size: 20px; font-weight: 700;">Notification Center</h2>
-                    <span style="background: var(--surface-dim); color: var(--text-secondary); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">Send announcements to users</span>
-                </div>
-                <button onclick="showComposeNotificationModal()" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;">
-                    <i class="fas fa-paper-plane"></i> Compose Notification
-                </button>
-            </div>
-
-            <div id="notificationsList" style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 20px; min-height: 200px;">
-                <p style="text-align: center; color: var(--text-muted); margin: 40px 0;">Loading notifications...</p>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>Pending User Registrations</h2>
-            {% if pending_users %}
-                <table class="users-table">
-                    <thead>
-                        <tr>
-                            <th>Email</th>
-                            <th>Registration Date</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in pending_users %}
-                            <tr>
-                                <td data-label="Email">{{ user.email }}</td>
-                                <td data-label="Registration Date">{{ user.created_at[:10] }}</td>
-                                <td data-label="Status"><span class="badge badge-pending">Pending</span></td>
-                                <td data-label="Actions">
-                                    <a href="{{ url_for('admin.approve_user', user_id=user.id) }}"
-                                       class="btn btn-approve"
-                                       onclick="return confirm('Approve user {{ user.email }}?')">
-                                        <i class="fas fa-check"></i> Approve
-                                    </a>
-                                    <a href="{{ url_for('admin.reject_user', user_id=user.id) }}"
-                                       class="btn btn-reject"
-                                       onclick="return confirm('Reject and delete user {{ user.email }}?')">
-                                        <i class="fas fa-times"></i> Reject
-                                    </a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <div class="no-users">
-                    <p>No pending user registrations</p>
-                </div>
-            {% endif %}
-        </div>
-
-        <div class="section">
-            <h2><i class="fas fa-users"></i> All Users</h2>
-            {% if all_users %}
-                <div class="table-controls">
-                    <div class="search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="userSearch" placeholder="Search by email..." oninput="filterUsers()">
+                        <button type="button" class="delete-logo-btn" onclick="deleteLogo()">
+                            <i class="fas fa-trash-alt"></i>
+                            Delete Logo
+                        </button>
                     </div>
-                    <select class="filter-select" id="filterApproval" onchange="filterUsers()">
-                        <option value="">All Approvals</option>
-                        <option value="approved">Approved</option>
-                        <option value="pending">Pending</option>
-                    </select>
-                    <select class="filter-select" id="filterStatus" onchange="filterUsers()">
-                        <option value="">All Statuses</option>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                    </select>
-                    <select class="filter-select" id="filterRole" onchange="filterUsers()">
-                        <option value="">All Roles</option>
-                        <option value="admin">Admin</option>
-                        <option value="user">User</option>
-                    </select>
                 </div>
-
-                <div id="activeFilters" style="margin-bottom: 12px; display: none;"></div>
-
-                <table class="users-table" id="usersTable">
-                    <thead>
-                        <tr>
-                            <th>Email</th>
-                            <th>Registration Date</th>
-                            <th>Approval</th>
-                            <th>Status</th>
-                            <th>Role</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in all_users %}
-                            <tr data-email="{{ user.email|lower }}"
-                                data-approval="{{ 'approved' if user.is_approved else 'pending' }}"
-                                data-status="{{ 'active' if user.is_active else 'inactive' }}"
-                                data-role="{{ 'admin' if user.is_admin else 'user' }}">
-                                <td data-label="Email">{{ user.email }}</td>
-                                <td data-label="Registration Date">{{ user.created_at[:10] }}</td>
-                                <td data-label="Approval">
-                                    {% if user.is_approved %}
-                                        <span class="badge badge-approved">Approved</span>
-                                    {% else %}
-                                        <span class="badge badge-pending">Pending</span>
-                                    {% endif %}
-                                </td>
-                                <td data-label="Status">
-                                    {% if user.is_active %}
-                                        <span class="badge badge-active">Active</span>
-                                    {% else %}
-                                        <span class="badge badge-inactive">Inactive</span>
-                                    {% endif %}
-                                </td>
-                                <td data-label="Role">
-                                    {% if user.is_admin %}
-                                        <span class="badge badge-admin">Admin</span>
-                                    {% else %}
-                                        User
-                                    {% endif %}
-                                </td>
-                                <td data-label="Actions">
-                                    {% if user.id == current_user.id %}
-                                        <span style="color: var(--text-muted); font-style: italic; font-size: 13px;">You</span>
-                                    {% else %}
-                                        <div class="dropdown">
-                                            <button class="dropdown-toggle" onclick="toggleDropdown(event, 'dropdown-{{ user.id }}')">
-                                                <i class="fas fa-ellipsis-h"></i>
-                                                Actions
-                                                <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
-                                            </button>
-                                            <div id="dropdown-{{ user.id }}" class="dropdown-menu">
-                                                {% if user.is_admin %}
-                                                    <a href="{{ url_for('admin.demote_user', user_id=user.id) }}"
-                                                       class="dropdown-item warning"
-                                                       onclick="return confirm('Remove admin rights from {{ user.email }}?')">
-                                                        <i class="fas fa-user-minus"></i>
-                                                        Remove Admin
-                                                    </a>
-                                                {% else %}
-                                                    <a href="{{ url_for('admin.promote_user', user_id=user.id) }}"
-                                                       class="dropdown-item success"
-                                                       onclick="return confirm('Promote {{ user.email }} to admin?')">
-                                                        <i class="fas fa-user-shield"></i>
-                                                        Make Admin
-                                                    </a>
-                                                {% endif %}
-
-                                                <div class="dropdown-divider"></div>
-
-                                                {% if user.is_active %}
-                                                    <a href="{{ url_for('admin.deactivate_user', user_id=user.id) }}"
-                                                       class="dropdown-item warning"
-                                                       onclick="return confirm('Deactivate {{ user.email }}? They will not be able to login.')">
-                                                        <i class="fas fa-pause-circle"></i>
-                                                        Deactivate Account
-                                                    </a>
-                                                {% else %}
-                                                    <a href="{{ url_for('admin.activate_user', user_id=user.id) }}"
-                                                       class="dropdown-item success">
-                                                        <i class="fas fa-play-circle"></i>
-                                                        Activate Account
-                                                    </a>
-                                                {% endif %}
-
-                                                <div class="dropdown-divider"></div>
-
-                                                <button type="button" class="dropdown-item info" onclick="showResetPasswordModal('{{ user.id }}', '{{ user.email }}')">
-                                                    <i class="fas fa-key"></i>
-                                                    Reset Password
-                                                </button>
-
-                                                <div class="dropdown-divider"></div>
-
-                                                <a href="{{ url_for('admin.delete_user', user_id=user.id) }}"
-                                                   class="dropdown-item danger"
-                                                   onclick="return confirm('Permanently delete {{ user.email }}? This cannot be undone!')">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                    Delete User
-                                                </a>
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-
-                <div id="noResults" class="no-results" style="display: none;">
-                    <i class="fas fa-search" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
-                    <p>No users match your filters</p>
-                </div>
-
-                <div class="pagination" id="paginationControls">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span class="pagination-info" id="paginationInfo"></span>
-                        <select class="page-size-select" id="pageSize" onchange="filterUsers()">
-                            <option value="10">10 / page</option>
-                            <option value="25">25 / page</option>
-                            <option value="50">50 / page</option>
-                            <option value="100">100 / page</option>
-                        </select>
-                    </div>
-                    <div class="pagination-buttons" id="paginationButtons"></div>
-                </div>
-            {% else %}
-                <div class="no-users">
-                    <p>No users in system</p>
-                </div>
-            {% endif %}
+            </form>
         </div>
+    </div>
+</div>
 
-        <div class="section">
-            <h2><i class="fas fa-chart-bar"></i> Conversion Activity</h2>
-            {% if user_stats %}
-                <table class="users-table">
-                    <thead>
-                        <tr>
-                            <th>User Email</th>
-                            <th>Conversions</th>
-                            <th>Downloads</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for email, counts in user_stats.items() %}
-                            <tr>
-                                <td data-label="Email">{{ email }}</td>
-                                <td data-label="Conversions">{{ counts.conversions }}</td>
-                                <td data-label="Downloads">{{ counts.downloads }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <div class="no-users">
-                    <p>No conversion activity yet</p>
-                </div>
-            {% endif %}
+<div class="stats">
+    <div class="stat-card">
+        <h3>{{ pending_count }}</h3>
+        <p>Pending Approvals</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ total_users }}</h3>
+        <p>Total Users</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ total_conversions }}</h3>
+        <p>Total Conversions</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ total_downloads }}</h3>
+        <p>Total Downloads</p>
+    </div>
+</div>
+
+<!-- Notification Management Section -->
+<div class="section">
+    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div class="section-title" style="display: flex; align-items: center; gap: 12px;">
+            <i class="fas fa-bell" style="color: var(--primary); font-size: 20px;"></i>
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700;">Notification Center</h2>
+            <span style="background: var(--surface-dim); color: var(--text-secondary); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">Send announcements to users</span>
         </div>
+        <button onclick="showComposeNotificationModal()" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: var(--border-radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;">
+            <i class="fas fa-paper-plane"></i> Compose Notification
+        </button>
+    </div>
 
-        {% if bank_stats %}
-        <div class="section">
-            <h2><i class="fas fa-university"></i> Bank Usage</h2>
-            <div class="bank-usage">
-                {% for bank, count in bank_stats.items() %}
-                    <div class="bank-bar-row">
-                        <span class="bank-label">{{ bank }}</span>
-                        <div class="bank-bar-track">
-                            <div class="bank-bar-fill" style="width: {{ (count / total_conversions * 100) | round(1) if total_conversions else 0 }}%"></div>
-                        </div>
-                        <span class="bank-count">{{ count }}</span>
-                    </div>
+    <div id="notificationsList" style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: var(--border-radius-sm); padding: 20px; min-height: 200px;">
+        <p style="text-align: center; color: var(--text-muted); margin: 40px 0;">Loading notifications...</p>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Pending User Registrations</h2>
+    {% if pending_users %}
+        <table class="users-table">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Registration Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in pending_users %}
+                    <tr>
+                        <td data-label="Email">{{ user.email }}</td>
+                        <td data-label="Registration Date">{{ user.created_at[:10] }}</td>
+                        <td data-label="Status"><span class="badge badge-pending">Pending</span></td>
+                        <td data-label="Actions">
+                            <a href="{{ url_for('admin.approve_user', user_id=user.id) }}"
+                               class="btn btn-approve"
+                               onclick="return confirm('Approve user {{ user.email }}?')">
+                                <i class="fas fa-check"></i> Approve
+                            </a>
+                            <a href="{{ url_for('admin.reject_user', user_id=user.id) }}"
+                               class="btn btn-reject"
+                               onclick="return confirm('Reject and delete user {{ user.email }}?')">
+                                <i class="fas fa-times"></i> Reject
+                            </a>
+                        </td>
+                    </tr>
                 {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="no-users">
+            <p>No pending user registrations</p>
+        </div>
+    {% endif %}
+</div>
+
+<div class="section">
+    <h2><i class="fas fa-users"></i> All Users</h2>
+    {% if all_users %}
+        <div class="table-controls">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="userSearch" placeholder="Search by email..." oninput="filterUsers()">
             </div>
+            <select class="filter-select" id="filterApproval" onchange="filterUsers()">
+                <option value="">All Approvals</option>
+                <option value="approved">Approved</option>
+                <option value="pending">Pending</option>
+            </select>
+            <select class="filter-select" id="filterStatus" onchange="filterUsers()">
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+            <select class="filter-select" id="filterRole" onchange="filterUsers()">
+                <option value="">All Roles</option>
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+            </select>
         </div>
-        {% endif %}
 
-        </div>
-    </div>
+        <div id="activeFilters" style="margin-bottom: 12px; display: none;"></div>
 
-    <script>
-        setTimeout(function() {
-            document.querySelectorAll('.alert').forEach(alert => {
-                alert.style.transition = 'opacity 0.5s';
-                alert.style.opacity = '0';
-                setTimeout(() => alert.remove(), 500);
-            });
-        }, 5000);
+        <table class="users-table" id="usersTable">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Registration Date</th>
+                    <th>Approval</th>
+                    <th>Status</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in all_users %}
+                    <tr data-email="{{ user.email|lower }}"
+                        data-approval="{{ 'approved' if user.is_approved else 'pending' }}"
+                        data-status="{{ 'active' if user.is_active else 'inactive' }}"
+                        data-role="{{ 'admin' if user.is_admin else 'user' }}">
+                        <td data-label="Email">{{ user.email }}</td>
+                        <td data-label="Registration Date">{{ user.created_at[:10] }}</td>
+                        <td data-label="Approval">
+                            {% if user.is_approved %}
+                                <span class="badge badge-approved">Approved</span>
+                            {% else %}
+                                <span class="badge badge-pending">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Status">
+                            {% if user.is_active %}
+                                <span class="badge badge-active">Active</span>
+                            {% else %}
+                                <span class="badge badge-inactive">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Role">
+                            {% if user.is_admin %}
+                                <span class="badge badge-admin">Admin</span>
+                            {% else %}
+                                User
+                            {% endif %}
+                        </td>
+                        <td data-label="Actions">
+                            {% if user.id == current_user.id %}
+                                <span style="color: var(--text-muted); font-style: italic; font-size: 13px;">You</span>
+                            {% else %}
+                                <div class="dropdown">
+                                    <button class="dropdown-toggle" onclick="toggleDropdown(event, 'dropdown-{{ user.id }}')">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                        Actions
+                                        <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+                                    </button>
+                                    <div id="dropdown-{{ user.id }}" class="dropdown-menu">
+                                        {% if user.is_admin %}
+                                            <a href="{{ url_for('admin.demote_user', user_id=user.id) }}"
+                                               class="dropdown-item warning"
+                                               onclick="return confirm('Remove admin rights from {{ user.email }}?')">
+                                                <i class="fas fa-user-minus"></i>
+                                                Remove Admin
+                                            </a>
+                                        {% else %}
+                                            <a href="{{ url_for('admin.promote_user', user_id=user.id) }}"
+                                               class="dropdown-item success"
+                                               onclick="return confirm('Promote {{ user.email }} to admin?')">
+                                                <i class="fas fa-user-shield"></i>
+                                                Make Admin
+                                            </a>
+                                        {% endif %}
 
-        (function() {
-            const logoPreview = document.getElementById('adminLogoPreview');
-            const logoPath = '/static/logo.png';
-            fetch(logoPath)
-                .then(response => {
-                    if (response.ok) {
-                        const img = document.createElement('img');
-                        img.src = logoPath + '?' + new Date().getTime();
-                        img.alt = 'Current Logo';
-                        img.style.maxWidth = '100%';
-                        img.style.maxHeight = '100%';
-                        img.style.objectFit = 'contain';
-                        logoPreview.replaceWith(img);
-                        img.id = 'adminLogoPreview';
-                    }
-                })
-                .catch(() => {});
-        })();
+                                        <div class="dropdown-divider"></div>
 
-        function updateFileName(input) {
-            const fileNameSpan = document.getElementById('fileName');
-            const uploadBtn = document.getElementById('uploadBtn');
-            const logoPreview = document.getElementById('adminLogoPreview');
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                fileNameSpan.textContent = file.name;
-                uploadBtn.disabled = false;
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    if (logoPreview.tagName === 'DIV') {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.alt = 'Preview';
-                        img.style.maxWidth = '100%';
-                        img.style.maxHeight = '100%';
-                        img.style.objectFit = 'contain';
-                        logoPreview.replaceWith(img);
-                        img.id = 'adminLogoPreview';
-                    } else {
-                        logoPreview.src = e.target.result;
-                    }
-                };
-                reader.readAsDataURL(file);
-            } else {
-                fileNameSpan.textContent = 'No file chosen';
-                uploadBtn.disabled = true;
-            }
-        }
+                                        {% if user.is_active %}
+                                            <a href="{{ url_for('admin.deactivate_user', user_id=user.id) }}"
+                                               class="dropdown-item warning"
+                                               onclick="return confirm('Deactivate {{ user.email }}? They will not be able to login.')">
+                                                <i class="fas fa-pause-circle"></i>
+                                                Deactivate Account
+                                            </a>
+                                        {% else %}
+                                            <a href="{{ url_for('admin.activate_user', user_id=user.id) }}"
+                                               class="dropdown-item success">
+                                                <i class="fas fa-play-circle"></i>
+                                                Activate Account
+                                            </a>
+                                        {% endif %}
 
-        function deleteLogo() {
-            if (confirm('Are you sure you want to delete the custom logo and revert to the default placeholder?')) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '{{ url_for("admin.delete_logo") }}';
-                document.body.appendChild(form);
-                form.submit();
-            }
-        }
+                                        <div class="dropdown-divider"></div>
 
-        (function() {
-            const headerLogo = document.getElementById('adminHeaderLogo');
-            const logoPath = '/static/logo.png';
-            fetch(logoPath)
-                .then(response => {
-                    if (response.ok) {
-                        headerLogo.style.background = 'white';
-                        headerLogo.style.padding = '8px';
-                        headerLogo.innerHTML = '<img src="' + logoPath + '?' + new Date().getTime() + '" alt="Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">';
-                    }
-                })
-                .catch(() => {});
-        })();
+                                        <button type="button" class="dropdown-item info" onclick="showResetPasswordModal('{{ user.id }}', '{{ user.email }}')">
+                                            <i class="fas fa-key"></i>
+                                            Reset Password
+                                        </button>
 
-        function toggleDropdown(event, dropdownId) {
-            event.stopPropagation();
-            document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                if (menu.id !== dropdownId) {
-                    menu.classList.remove('show');
-                    menu.closest('.dropdown').classList.remove('show');
-                }
-            });
-            const dropdown = document.getElementById(dropdownId);
-            const container = dropdown.closest('.dropdown');
-            dropdown.classList.toggle('show');
-            container.classList.toggle('show');
-        }
+                                        <div class="dropdown-divider"></div>
 
-        document.addEventListener('click', function(event) {
-            if (!event.target.closest('.dropdown')) {
-                document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                    menu.classList.remove('show');
-                    menu.closest('.dropdown').classList.remove('show');
-                });
-            }
-        });
-
-        // ---- User Table Filtering & Pagination ----
-        let currentPage = 1;
-
-        function filterUsers() {
-            const search = (document.getElementById('userSearch').value || '').toLowerCase();
-            const approval = document.getElementById('filterApproval').value;
-            const status = document.getElementById('filterStatus').value;
-            const role = document.getElementById('filterRole').value;
-            const pageSize = parseInt(document.getElementById('pageSize').value);
-
-            const table = document.getElementById('usersTable');
-            if (!table) return;
-
-            const rows = Array.from(table.querySelectorAll('tbody tr'));
-            const filtered = [];
-
-            rows.forEach(row => {
-                const email = row.getAttribute('data-email') || '';
-                const rowApproval = row.getAttribute('data-approval') || '';
-                const rowStatus = row.getAttribute('data-status') || '';
-                const rowRole = row.getAttribute('data-role') || '';
-
-                const matchSearch = !search || email.includes(search);
-                const matchApproval = !approval || rowApproval === approval;
-                const matchStatus = !status || rowStatus === status;
-                const matchRole = !role || rowRole === role;
-
-                if (matchSearch && matchApproval && matchStatus && matchRole) {
-                    filtered.push(row);
-                }
-            });
-
-            // Update active filters display
-            const filtersDiv = document.getElementById('activeFilters');
-            const activeFilters = [];
-            if (search) activeFilters.push('<span class="filter-badge"><i class="fas fa-search"></i> "' + search + '"</span>');
-            if (approval) activeFilters.push('<span class="filter-badge"><i class="fas fa-check-circle"></i> ' + approval + '</span>');
-            if (status) activeFilters.push('<span class="filter-badge"><i class="fas fa-circle"></i> ' + status + '</span>');
-            if (role) activeFilters.push('<span class="filter-badge"><i class="fas fa-user-tag"></i> ' + role + '</span>');
-
-            if (activeFilters.length > 0) {
-                filtersDiv.innerHTML = activeFilters.join(' ') + ' <span class="filter-badge" style="cursor:pointer;background:rgba(239,68,68,0.08);color:#ef4444;" onclick="clearFilters()"><i class="fas fa-times"></i> Clear all</span>';
-                filtersDiv.style.display = 'block';
-            } else {
-                filtersDiv.style.display = 'none';
-            }
-
-            // Reset to page 1 when filters change (unless called from pagination)
-            const totalPages = Math.ceil(filtered.length / pageSize) || 1;
-            if (currentPage > totalPages) currentPage = 1;
-
-            // Paginate
-            const start = (currentPage - 1) * pageSize;
-            const end = start + pageSize;
-
-            // Hide all rows first
-            rows.forEach(row => row.style.display = 'none');
-
-            // Show only filtered + paginated rows
-            filtered.forEach((row, i) => {
-                row.style.display = (i >= start && i < end) ? '' : 'none';
-            });
-
-            // Show/hide table and no-results
-            const noResults = document.getElementById('noResults');
-            if (filtered.length === 0) {
-                table.style.display = 'none';
-                noResults.style.display = 'block';
-            } else {
-                table.style.display = '';
-                noResults.style.display = 'none';
-            }
-
-            // Update pagination
-            renderPagination(filtered.length, pageSize, totalPages);
-        }
-
-        function renderPagination(total, pageSize, totalPages) {
-            const info = document.getElementById('paginationInfo');
-            const buttons = document.getElementById('paginationButtons');
-            const start = (currentPage - 1) * pageSize + 1;
-            const end = Math.min(currentPage * pageSize, total);
-
-            info.textContent = total > 0
-                ? 'Showing ' + start + '-' + end + ' of ' + total + ' users'
-                : 'No users found';
-
-            let html = '';
-            html += '<button class="page-btn" onclick="goToPage(' + (currentPage - 1) + ')" ' + (currentPage <= 1 ? 'disabled' : '') + '><i class="fas fa-chevron-left"></i></button>';
-
-            // Show max 7 page buttons with ellipsis
-            const maxButtons = 7;
-            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
-            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-            if (endPage - startPage < maxButtons - 1) {
-                startPage = Math.max(1, endPage - maxButtons + 1);
-            }
-
-            if (startPage > 1) {
-                html += '<button class="page-btn" onclick="goToPage(1)">1</button>';
-                if (startPage > 2) html += '<span style="color:var(--text-muted);padding:0 4px;">...</span>';
-            }
-
-            for (let p = startPage; p <= endPage; p++) {
-                html += '<button class="page-btn' + (p === currentPage ? ' active' : '') + '" onclick="goToPage(' + p + ')">' + p + '</button>';
-            }
-
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) html += '<span style="color:var(--text-muted);padding:0 4px;">...</span>';
-                html += '<button class="page-btn" onclick="goToPage(' + totalPages + ')">' + totalPages + '</button>';
-            }
-
-            html += '<button class="page-btn" onclick="goToPage(' + (currentPage + 1) + ')" ' + (currentPage >= totalPages ? 'disabled' : '') + '><i class="fas fa-chevron-right"></i></button>';
-
-            buttons.innerHTML = html;
-        }
-
-        function goToPage(page) {
-            currentPage = page;
-            filterUsers();
-        }
-
-        function clearFilters() {
-            document.getElementById('userSearch').value = '';
-            document.getElementById('filterApproval').value = '';
-            document.getElementById('filterStatus').value = '';
-            document.getElementById('filterRole').value = '';
-            currentPage = 1;
-            filterUsers();
-        }
-
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            if (document.getElementById('usersTable')) {
-                filterUsers();
-            }
-        });
-
-        function showResetPasswordModal(userId, userEmail) {
-            const modal = document.getElementById('resetPasswordModal');
-            const form = document.getElementById('resetPasswordForm');
-            const emailSpan = document.getElementById('resetUserEmail');
-            emailSpan.textContent = userEmail;
-            form.action = `/admin/reset-password/${userId}`;
-            modal.style.display = 'flex';
-        }
-
-        function closeResetPasswordModal() {
-            const modal = document.getElementById('resetPasswordModal');
-            const form = document.getElementById('resetPasswordForm');
-            modal.style.display = 'none';
-            form.reset();
-        }
-
-        window.onclick = function(event) {
-            const modal = document.getElementById('resetPasswordModal');
-            if (event.target == modal) {
-                closeResetPasswordModal();
-            }
-        }
-    </script>
-
-    <!-- Password Reset Modal -->
-    <div id="resetPasswordModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15,23,42,0.5); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
-        <div style="background: var(--surface); margin: auto; padding: 0; border-radius: var(--radius); width: 90%; max-width: 480px; box-shadow: var(--shadow-lg); animation: slideIn 0.3s ease; border: 1px solid var(--border-light);">
-            <div style="background: var(--primary); color: white; padding: 22px 28px; border-radius: var(--radius) var(--radius) 0 0; display: flex; justify-content: space-between; align-items: center;">
-                <h2 style="margin: 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
-                    <i class="fas fa-key"></i>
-                    Reset User Password
-                </h2>
-                <button onclick="closeResetPasswordModal()" style="background: rgba(255,255,255,0.15); border: none; color: white; font-size: 18px; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: background 0.2s;">
-                    &times;
-                </button>
-            </div>
-            <form id="resetPasswordForm" method="POST" style="padding: 28px;">
-                <div style="background: #eff6ff; padding: 14px; border-radius: var(--radius-sm); margin-bottom: 22px; border: 1px solid #bfdbfe;">
-                    <p style="margin: 0; color: #1e40af; font-size: 13px;">
-                        <i class="fas fa-info-circle"></i>
-                        Resetting password for: <strong id="resetUserEmail" style="color: var(--primary);"></strong>
-                    </p>
-                </div>
-
-                <div style="margin-bottom: 18px;">
-                    <label for="new_password" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text); font-size: 13px;">
-                        <i class="fas fa-lock"></i> New Password
-                    </label>
-                    <input type="password" id="new_password" name="new_password" required minlength="6"
-                           style="width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-family: inherit;"
-                           placeholder="Enter new password (min 6 characters)">
-                </div>
-
-                <div style="margin-bottom: 22px;">
-                    <label for="confirm_password" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text); font-size: 13px;">
-                        <i class="fas fa-lock"></i> Confirm Password
-                    </label>
-                    <input type="password" id="confirm_password" name="confirm_password" required minlength="6"
-                           style="width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-family: inherit;"
-                           placeholder="Confirm new password">
-                </div>
-
-                <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                    <button type="button" onclick="closeResetPasswordModal()"
-                            style="padding: 10px 20px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-weight: 600; cursor: pointer; font-size: 13px; font-family: inherit;">
-                        Cancel
-                    </button>
-                    <button type="submit"
-                            style="padding: 10px 20px; border: none; border-radius: var(--radius-sm); background: var(--primary); color: white; font-weight: 600; cursor: pointer; font-size: 13px; font-family: inherit;">
-                        <i class="fas fa-key"></i> Reset Password
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Compose Notification Modal -->
-    <div id="composeNotificationModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15,23,42,0.5); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
-        <div style="background: var(--surface); margin: auto; padding: 0; border-radius: var(--radius); width: 90%; max-width: 600px; box-shadow: var(--shadow-lg); animation: slideIn 0.3s ease; border: 1px solid var(--border-light);">
-            <div style="background: var(--primary); color: white; padding: 22px 28px; border-radius: var(--radius) var(--radius) 0 0; display: flex; justify-content: space-between; align-items: center;">
-                <h2 style="margin: 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
-                    <i class="fas fa-paper-plane"></i>
-                    Send Notification
-                </h2>
-                <button onclick="closeComposeNotificationModal()" style="background: rgba(255,255,255,0.15); border: none; color: white; font-size: 18px; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: background 0.2s;">
-                    &times;
-                </button>
-            </div>
-            <form method="POST" action="{{ url_for('admin.send_notification') }}" style="padding: 28px;">
-                <div style="margin-bottom: 18px;">
-                    <label for="notif_title" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text); font-size: 13px;">
-                        <i class="fas fa-heading"></i> Title
-                    </label>
-                    <input type="text" id="notif_title" name="title" required maxlength="100"
-                           style="width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-family: inherit;"
-                           placeholder="Notification title (max 100 characters)">
-                </div>
-
-                <div style="margin-bottom: 18px;">
-                    <label for="notif_message" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text); font-size: 13px;">
-                        <i class="fas fa-align-left"></i> Message
-                    </label>
-                    <textarea id="notif_message" name="message" required rows="4"
-                              style="width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-family: inherit; resize: vertical;"
-                              placeholder="Enter your notification message..."></textarea>
-                </div>
-
-                <div style="margin-bottom: 18px;">
-                    <label for="notif_type" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text); font-size: 13px;">
-                        <i class="fas fa-tag"></i> Type
-                    </label>
-                    <select id="notif_type" name="type"
-                            style="width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-family: inherit;">
-                        <option value="info">📘 Info</option>
-                        <option value="warning">⚠️ Warning</option>
-                        <option value="important">🚨 Important</option>
-                        <option value="success">✅ Success</option>
-                    </select>
-                </div>
-
-                <div style="margin-bottom: 18px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 10px; color: var(--text); font-size: 13px;">
-                        <i class="fas fa-users"></i> Recipients
-                    </label>
-                    <div style="margin-bottom: 12px;">
-                        <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--surface-dim); border-radius: var(--radius-sm); cursor: pointer; font-weight: 500;">
-                            <input type="radio" name="recipient_type" value="all" checked onchange="toggleUserSelect()">
-                            <i class="fas fa-users"></i> All Users
-                        </label>
-                    </div>
-                    <div>
-                        <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--surface-dim); border-radius: var(--radius-sm); cursor: pointer; font-weight: 500;">
-                            <input type="radio" name="recipient_type" value="specific" onchange="toggleUserSelect()">
-                            <i class="fas fa-user-check"></i> Select Specific Users
-                        </label>
-                    </div>
-                </div>
-
-                <div id="userSelectList" style="display: none; margin-bottom: 18px; max-height: 200px; overflow-y: auto; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px; background: var(--surface-dim);">
-                    <label style="display: block; font-weight: 600; margin-bottom: 10px; color: var(--text); font-size: 13px;">
-                        <i class="fas fa-check-square"></i> Select Users:
-                    </label>
-                    {% for user in all_users %}
-                        {% if user.is_approved and user.is_active %}
-                        <label style="display: flex; align-items: center; gap: 8px; padding: 6px; cursor: pointer; font-size: 13px;">
-                            <input type="checkbox" name="recipients[]" value="{{ user.email }}">
-                            {{ user.email }}
-                        </label>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-
-                <div style="margin-bottom: 22px;">
-                    <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--surface-dim); border-radius: var(--radius-sm); cursor: pointer; font-weight: 500;">
-                        <input type="checkbox" name="send_email" value="true">
-                        <i class="fas fa-envelope"></i> Also send email notification
-                    </label>
-                </div>
-
-                <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                    <button type="button" onclick="closeComposeNotificationModal()"
-                            style="padding: 10px 20px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-weight: 600; cursor: pointer; font-size: 13px; font-family: inherit;">
-                        Cancel
-                    </button>
-                    <button type="submit"
-                            style="padding: 10px 20px; border: none; border-radius: var(--radius-sm); background: var(--primary); color: white; font-weight: 600; cursor: pointer; font-size: 13px; font-family: inherit;">
-                        <i class="fas fa-paper-plane"></i> Send Notification
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        // Notification modal functions
-        function showComposeNotificationModal() {
-            document.getElementById('composeNotificationModal').style.display = 'flex';
-        }
-
-        function closeComposeNotificationModal() {
-            document.getElementById('composeNotificationModal').style.display = 'none';
-            document.getElementById('notif_title').value = '';
-            document.getElementById('notif_message').value = '';
-        }
-
-        function toggleUserSelect() {
-            const specificRadio = document.querySelector('input[name="recipient_type"][value="specific"]');
-            const userSelectList = document.getElementById('userSelectList');
-            userSelectList.style.display = specificRadio.checked ? 'block' : 'none';
-        }
-
-        // Load notifications list
-        function loadNotificationsList() {
-            fetch('{{ url_for("admin.list_all_notifications") }}')
-                .then(r => r.json())
-                .then(data => {
-                    const container = document.getElementById('notificationsList');
-                    if (data.success && data.notifications.length > 0) {
-                        container.innerHTML = data.notifications.map(n => {
-                            const typeIcons = {
-                                info: '📘',
-                                warning: '⚠️',
-                                important: '🚨',
-                                success: '✅'
-                            };
-                            const typeColors = {
-                                info: '#3b82f6',
-                                warning: '#f59e0b',
-                                important: '#ef4444',
-                                success: '#10b981'
-                            };
-                            const date = new Date(n.created_at).toLocaleString();
-                            const recipients = n.recipients.includes('all') ? 'All Users' : n.recipients.join(', ');
-                            const readCount = n.read_by ? n.read_by.length : 0;
-                            
-                            return `
-                                <div style="background: var(--surface); border: 1px solid var(--border); border-left: 3px solid ${typeColors[n.type]}; border-radius: var(--radius-sm); padding: 16px; margin-bottom: 12px;">
-                                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                                        <div style="flex: 1;">
-                                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                                                <span style="font-size: 16px;">${typeIcons[n.type]}</span>
-                                                <strong style="font-size: 15px;">${n.title}</strong>
-                                            </div>
-                                            <p style="margin: 8px 0; color: var(--text-secondary); font-size: 13px; line-height: 1.5;">${n.message}</p>
-                                        </div>
-                                        <form method="POST" action="/admin/notifications/delete/${n.id}" style="margin: 0;" onsubmit="return confirm('Delete this notification?');">
-                                            <button type="submit" style="background: var(--error); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                    <div style="font-size: 11px; color: var(--text-muted); display: flex; gap: 16px; flex-wrap: wrap;">
-                                        <span><i class="fas fa-clock"></i> ${date}</span>
-                                        <span><i class="fas fa-user"></i> ${n.created_by}</span>
-                                        <span><i class="fas fa-users"></i> ${recipients}</span>
-                                        <span><i class="fas fa-check"></i> ${readCount} read</span>
-                                        ${n.send_email ? '<span><i class="fas fa-envelope"></i> Email sent</span>' : ''}
+                                        <a href="{{ url_for('admin.delete_user', user_id=user.id) }}"
+                                           class="dropdown-item danger"
+                                           onclick="return confirm('Permanently delete {{ user.email }}? This cannot be undone!')">
+                                            <i class="fas fa-trash-alt"></i>
+                                            Delete User
+                                        </a>
                                     </div>
                                 </div>
-                            `;
-                        }).join('');
-                    } else {
-                        container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 40px 0;">No notifications yet. Click "Compose Notification" to send one.</p>';
-                    }
-                })
-                .catch(err => {
-                    console.error('Error loading notifications:', err);
-                });
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div id="noResults" class="no-results" style="display: none;">
+            <i class="fas fa-search" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+            <p>No users match your filters</p>
+        </div>
+
+        <div class="pagination" id="paginationControls">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="pagination-info" id="paginationInfo"></span>
+                <select class="page-size-select" id="pageSize" onchange="filterUsers()">
+                    <option value="10">10 / page</option>
+                    <option value="25">25 / page</option>
+                    <option value="50">50 / page</option>
+                    <option value="100">100 / page</option>
+                </select>
+            </div>
+            <div class="pagination-buttons" id="paginationButtons"></div>
+        </div>
+    {% else %}
+        <div class="no-users">
+            <p>No users in system</p>
+        </div>
+    {% endif %}
+</div>
+
+<div class="section">
+    <h2><i class="fas fa-chart-bar"></i> Conversion Activity</h2>
+    {% if user_stats %}
+        <table class="users-table">
+            <thead>
+                <tr>
+                    <th>User Email</th>
+                    <th>Conversions</th>
+                    <th>Downloads</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for email, counts in user_stats.items() %}
+                    <tr>
+                        <td data-label="Email">{{ email }}</td>
+                        <td data-label="Conversions">{{ counts.conversions }}</td>
+                        <td data-label="Downloads">{{ counts.downloads }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="no-users">
+            <p>No conversion activity yet</p>
+        </div>
+    {% endif %}
+</div>
+
+{% if bank_stats %}
+<div class="section">
+    <h2><i class="fas fa-university"></i> Bank Usage</h2>
+    <div class="bank-usage">
+        {% for bank, count in bank_stats.items() %}
+            <div class="bank-bar-row">
+                <span class="bank-label">{{ bank }}</span>
+                <div class="bank-bar-track">
+                    <div class="bank-bar-fill" style="width: {{ (((count / total_conversions * 100) | round(1)) if total_conversions else 0.0) }}%"></div>
+                </div>
+                <span class="bank-count">{{ count }}</span>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Password Reset Modal -->
+<div id="resetPasswordModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15,23,42,0.5); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+    <div style="background: var(--surface); margin: auto; padding: 0; border-radius: var(--border-radius); width: 90%; max-width: 480px; box-shadow: var(--shadow-lg); animation: slideIn 0.3s ease; border: 1px solid var(--border-light);">
+        <div style="background: var(--primary); color: white; padding: 22px 28px; border-radius: var(--border-radius) var(--border-radius) 0 0; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-key"></i>
+                Reset User Password
+            </h2>
+            <button onclick="closeResetPasswordModal()" style="background: rgba(255,255,255,0.15); border: none; color: white; font-size: 18px; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: background 0.2s;">
+                &times;
+            </button>
+        </div>
+        <form id="resetPasswordForm" method="POST" style="padding: 28px;">
+            <div style="background: #eff6ff; padding: 14px; border-radius: var(--border-radius-sm); margin-bottom: 22px; border: 1px solid #bfdbfe;">
+                <p style="margin: 0; color: #1e40af; font-size: 13px;">
+                    <i class="fas fa-info-circle"></i>
+                    Resetting password for: <strong id="resetUserEmail" style="color: var(--primary);"></strong>
+                </p>
+            </div>
+
+            <div style="margin-bottom: 18px;">
+                <label for="new_password" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text); font-size: 13px;">
+                    <i class="fas fa-lock"></i> New Password
+                </label>
+                <input type="password" id="new_password" name="new_password" required minlength="6"
+                       style="width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--border-radius-sm); font-size: 14px; font-family: inherit;"
+                       placeholder="Enter new password (min 6 characters)">
+            </div>
+
+            <div style="margin-bottom: 22px;">
+                <label for="confirm_password" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text); font-size: 13px;">
+                    <i class="fas fa-lock"></i> Confirm Password
+                </label>
+                <input type="password" id="confirm_password" name="confirm_password" required minlength="6"
+                       style="width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--border-radius-sm); font-size: 14px; font-family: inherit;"
+                       placeholder="Confirm new password">
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" onclick="closeResetPasswordModal()"
+                        style="padding: 10px 20px; border: 1.5px solid var(--border); border-radius: var(--border-radius-sm); background: var(--surface); color: var(--text); font-weight: 600; cursor: pointer; font-size: 13px; font-family: inherit;">
+                    Cancel
+                </button>
+                <button type="submit"
+                        style="padding: 10px 20px; border: none; border-radius: var(--border-radius-sm); background: var(--primary); color: white; font-weight: 600; cursor: pointer; font-size: 13px; font-family: inherit;">
+                    <i class="fas fa-key"></i> Reset Password
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Compose Notification Modal -->
+<div id="composeNotificationModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15,23,42,0.5); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+    <div style="background: var(--surface); margin: auto; padding: 0; border-radius: var(--border-radius); width: 90%; max-width: 600px; box-shadow: var(--shadow-lg); animation: slideIn 0.3s ease; border: 1px solid var(--border-light);">
+        <div style="background: var(--primary); color: white; padding: 22px 28px; border-radius: var(--border-radius) var(--border-radius) 0 0; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-paper-plane"></i>
+                Send Notification
+            </h2>
+            <button onclick="closeComposeNotificationModal()" style="background: rgba(255,255,255,0.15); border: none; color: white; font-size: 18px; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: background 0.2s;">
+                &times;
+            </button>
+        </div>
+        <form method="POST" action="{{ url_for('admin.send_notification') }}" style="padding: 28px;">
+            <div style="margin-bottom: 18px;">
+                <label for="notif_title" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text); font-size: 13px;">
+                    <i class="fas fa-heading"></i> Title
+                </label>
+                <input type="text" id="notif_title" name="title" required maxlength="100"
+                       style="width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--border-radius-sm); font-size: 14px; font-family: inherit;"
+                       placeholder="Notification title (max 100 characters)">
+            </div>
+
+            <div style="margin-bottom: 18px;">
+                <label for="notif_message" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text); font-size: 13px;">
+                    <i class="fas fa-align-left"></i> Message
+                </label>
+                <textarea id="notif_message" name="message" required rows="4"
+                          style="width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--border-radius-sm); font-size: 14px; font-family: inherit; resize: vertical;"
+                          placeholder="Enter your notification message..."></textarea>
+            </div>
+
+            <div style="margin-bottom: 18px;">
+                <label for="notif_type" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text); font-size: 13px;">
+                    <i class="fas fa-tag"></i> Type
+                </label>
+                <select id="notif_type" name="type"
+                        style="width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--border-radius-sm); font-size: 14px; font-family: inherit;">
+                    <option value="info">📘 Info</option>
+                    <option value="warning">⚠️ Warning</option>
+                    <option value="important">🚨 Important</option>
+                    <option value="success">✅ Success</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 18px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 10px; color: var(--text); font-size: 13px;">
+                    <i class="fas fa-users"></i> Recipients
+                </label>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--surface-dim); border-radius: var(--border-radius-sm); cursor: pointer; font-weight: 500;">
+                        <input type="radio" name="recipient_type" value="all" checked onchange="toggleUserSelect()">
+                        <i class="fas fa-users"></i> All Users
+                    </label>
+                </div>
+                <div>
+                    <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--surface-dim); border-radius: var(--border-radius-sm); cursor: pointer; font-weight: 500;">
+                        <input type="radio" name="recipient_type" value="specific" onchange="toggleUserSelect()">
+                        <i class="fas fa-user-check"></i> Select Specific Users
+                    </label>
+                </div>
+            </div>
+
+            <div id="userSelectList" style="display: none; margin-bottom: 18px; max-height: 200px; overflow-y: auto; border: 1.5px solid var(--border); border-radius: var(--border-radius-sm); padding: 14px; background: var(--surface-dim);">
+                <label style="display: block; font-weight: 600; margin-bottom: 10px; color: var(--text); font-size: 13px;">
+                    <i class="fas fa-check-square"></i> Select Users:
+                </label>
+                {% for user in all_users %}
+                    {% if user.is_approved and user.is_active %}
+                    <label style="display: flex; align-items: center; gap: 8px; padding: 6px; cursor: pointer; font-size: 13px;">
+                        <input type="checkbox" name="recipients[]" value="{{ user.email }}">
+                        {{ user.email }}
+                    </label>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <div style="margin-bottom: 22px;">
+                <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--surface-dim); border-radius: var(--border-radius-sm); cursor: pointer; font-weight: 500;">
+                    <input type="checkbox" name="send_email" value="true">
+                    <i class="fas fa-envelope"></i> Also send email notification
+                </label>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" onclick="closeComposeNotificationModal()"
+                        style="padding: 10px 20px; border: 1.5px solid var(--border); border-radius: var(--border-radius-sm); background: var(--surface); color: var(--text); font-weight: 600; cursor: pointer; font-size: 13px; font-family: inherit;">
+                    Cancel
+                </button>
+                <button type="submit"
+                        style="padding: 10px 20px; border: none; border-radius: var(--border-radius-sm); background: var(--primary); color: white; font-weight: 600; cursor: pointer; font-size: 13px; font-family: inherit;">
+                    <i class="fas fa-paper-plane"></i> Send Notification
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function() {
+        const logoPreview = document.getElementById('adminLogoPreview');
+        const logoPath = '/static/logo.png';
+        fetch(logoPath)
+            .then(response => {
+                if (response.ok) {
+                    const img = document.createElement('img');
+                    img.src = logoPath + '?' + new Date().getTime();
+                    img.alt = 'Current Logo';
+                    img.style.maxWidth = '100%';
+                    img.style.maxHeight = '100%';
+                    img.style.objectFit = 'contain';
+                    logoPreview.replaceWith(img);
+                    img.id = 'adminLogoPreview';
+                }
+            })
+            .catch(() => {});
+    })();
+
+    function updateFileName(input) {
+        const fileNameSpan = document.getElementById('fileName');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const logoPreview = document.getElementById('adminLogoPreview');
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            fileNameSpan.textContent = file.name;
+            uploadBtn.disabled = false;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (logoPreview.tagName === 'DIV') {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.alt = 'Preview';
+                    img.style.maxWidth = '100%';
+                    img.style.maxHeight = '100%';
+                    img.style.objectFit = 'contain';
+                    logoPreview.replaceWith(img);
+                    img.id = 'adminLogoPreview';
+                } else {
+                    logoPreview.src = e.target.result;
+                }
+            };
+            reader.readAsDataURL(file);
+        } else {
+            fileNameSpan.textContent = 'No file chosen';
+            uploadBtn.disabled = true;
+        }
+    }
+
+    function deleteLogo() {
+        if (confirm('Are you sure you want to delete the custom logo and revert to the default placeholder?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ url_for("admin.delete_logo") }}';
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+    function toggleDropdown(event, dropdownId) {
+        event.stopPropagation();
+        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+            if (menu.id !== dropdownId) {
+                menu.classList.remove('show');
+                menu.closest('.dropdown').classList.remove('show');
+            }
+        });
+        const dropdown = document.getElementById(dropdownId);
+        const container = dropdown.closest('.dropdown');
+        dropdown.classList.toggle('show');
+        container.classList.toggle('show');
+    }
+
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.dropdown')) {
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                menu.classList.remove('show');
+                menu.closest('.dropdown').classList.remove('show');
+            });
+        }
+    });
+
+    // ---- User Table Filtering & Pagination ----
+    let currentPage = 1;
+
+    function filterUsers() {
+        const search = (document.getElementById('userSearch').value || '').toLowerCase();
+        const approval = document.getElementById('filterApproval').value;
+        const status = document.getElementById('filterStatus').value;
+        const role = document.getElementById('filterRole').value;
+        const pageSize = parseInt(document.getElementById('pageSize').value);
+
+        const table = document.getElementById('usersTable');
+        if (!table) return;
+
+        const rows = Array.from(table.querySelectorAll('tbody tr'));
+        const filtered = [];
+
+        rows.forEach(row => {
+            const email = row.getAttribute('data-email') || '';
+            const rowApproval = row.getAttribute('data-approval') || '';
+            const rowStatus = row.getAttribute('data-status') || '';
+            const rowRole = row.getAttribute('data-role') || '';
+
+            const matchSearch = !search || email.includes(search);
+            const matchApproval = !approval || rowApproval === approval;
+            const matchStatus = !status || rowStatus === status;
+            const matchRole = !role || rowRole === role;
+
+            if (matchSearch && matchApproval && matchStatus && matchRole) {
+                filtered.push(row);
+            }
+        });
+
+        // Update active filters display
+        const filtersDiv = document.getElementById('activeFilters');
+        const activeFilters = [];
+        if (search) activeFilters.push('<span class="filter-badge"><i class="fas fa-search"></i> "' + search + '"</span>');
+        if (approval) activeFilters.push('<span class="filter-badge"><i class="fas fa-check-circle"></i> ' + approval + '</span>');
+        if (status) activeFilters.push('<span class="filter-badge"><i class="fas fa-circle"></i> ' + status + '</span>');
+        if (role) activeFilters.push('<span class="filter-badge"><i class="fas fa-user-tag"></i> ' + role + '</span>');
+
+        if (activeFilters.length > 0) {
+            filtersDiv.innerHTML = activeFilters.join(' ') + ' <span class="filter-badge" style="cursor:pointer;background:rgba(239,68,68,0.08);color:#ef4444;" onclick="clearFilters()"><i class="fas fa-times"></i> Clear all</span>';
+            filtersDiv.style.display = 'block';
+        } else {
+            filtersDiv.style.display = 'none';
         }
 
-        // Load notifications on page load
-        document.addEventListener('DOMContentLoaded', loadNotificationsList);
+        // Reset to page 1 when filters change (unless called from pagination)
+        const totalPages = Math.ceil(filtered.length / pageSize) || 1;
+        if (currentPage > totalPages) currentPage = 1;
 
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('resetPasswordModal');
-            const notifModal = document.getElementById('composeNotificationModal');
-            if (event.target == modal) {
-                closeResetPasswordModal();
-            }
-            if (event.target == notifModal) {
-                closeComposeNotificationModal();
-            }
+        // Paginate
+        const start = (currentPage - 1) * pageSize;
+        const end = start + pageSize;
+
+        // Hide all rows first
+        rows.forEach(row => row.style.display = 'none');
+
+        // Show only filtered + paginated rows
+        filtered.forEach((row, i) => {
+            row.style.display = (i >= start && i < end) ? '' : 'none';
+        });
+
+        // Show/hide table and no-results
+        const noResults = document.getElementById('noResults');
+        if (filtered.length === 0) {
+            table.style.display = 'none';
+            noResults.style.display = 'block';
+        } else {
+            table.style.display = '';
+            noResults.style.display = 'none';
         }
-    </script>
-</body>
-</html>
+
+        // Update pagination
+        renderPagination(filtered.length, pageSize, totalPages);
+    }
+
+    function renderPagination(total, pageSize, totalPages) {
+        const info = document.getElementById('paginationInfo');
+        const buttons = document.getElementById('paginationButtons');
+        const start = (currentPage - 1) * pageSize + 1;
+        const end = Math.min(currentPage * pageSize, total);
+
+        info.textContent = total > 0
+            ? 'Showing ' + start + '-' + end + ' of ' + total + ' users'
+            : 'No users found';
+
+        let html = '';
+        html += '<button class="page-btn" onclick="goToPage(' + (currentPage - 1) + ')" ' + (currentPage <= 1 ? 'disabled' : '') + '><i class="fas fa-chevron-left"></i></button>';
+
+        // Show max 7 page buttons with ellipsis
+        const maxButtons = 7;
+        let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+        let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+        if (endPage - startPage < maxButtons - 1) {
+            startPage = Math.max(1, endPage - maxButtons + 1);
+        }
+
+        if (startPage > 1) {
+            html += '<button class="page-btn" onclick="goToPage(1)">1</button>';
+            if (startPage > 2) html += '<span style="color:var(--text-muted);padding:0 4px;">...</span>';
+        }
+
+        for (let p = startPage; p <= endPage; p++) {
+            html += '<button class="page-btn' + (p === currentPage ? ' active' : '') + '" onclick="goToPage(' + p + ')">' + p + '</button>';
+        }
+
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) html += '<span style="color:var(--text-muted);padding:0 4px;">...</span>';
+            html += '<button class="page-btn" onclick="goToPage(' + totalPages + ')">' + totalPages + '</button>';
+        }
+
+        html += '<button class="page-btn" onclick="goToPage(' + (currentPage + 1) + ')" ' + (currentPage >= totalPages ? 'disabled' : '') + '><i class="fas fa-chevron-right"></i></button>';
+
+        buttons.innerHTML = html;
+    }
+
+    function goToPage(page) {
+        currentPage = page;
+        filterUsers();
+    }
+
+    function clearFilters() {
+        document.getElementById('userSearch').value = '';
+        document.getElementById('filterApproval').value = '';
+        document.getElementById('filterStatus').value = '';
+        document.getElementById('filterRole').value = '';
+        currentPage = 1;
+        filterUsers();
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById('usersTable')) {
+            filterUsers();
+        }
+    });
+
+    function showResetPasswordModal(userId, userEmail) {
+        const modal = document.getElementById('resetPasswordModal');
+        const form = document.getElementById('resetPasswordForm');
+        const emailSpan = document.getElementById('resetUserEmail');
+        emailSpan.textContent = userEmail;
+        form.action = `/admin/reset-password/${userId}`;
+        modal.style.display = 'flex';
+    }
+
+    function closeResetPasswordModal() {
+        const modal = document.getElementById('resetPasswordModal');
+        const form = document.getElementById('resetPasswordForm');
+        modal.style.display = 'none';
+        form.reset();
+    }
+
+    // Notification modal functions
+    function showComposeNotificationModal() {
+        document.getElementById('composeNotificationModal').style.display = 'flex';
+    }
+
+    function closeComposeNotificationModal() {
+        document.getElementById('composeNotificationModal').style.display = 'none';
+        document.getElementById('notif_title').value = '';
+        document.getElementById('notif_message').value = '';
+    }
+
+    function toggleUserSelect() {
+        const specificRadio = document.querySelector('input[name="recipient_type"][value="specific"]');
+        const userSelectList = document.getElementById('userSelectList');
+        userSelectList.style.display = specificRadio.checked ? 'block' : 'none';
+    }
+
+    // Load notifications list
+    function loadNotificationsList() {
+        fetch('{{ url_for("admin.list_all_notifications") }}')
+            .then(r => r.json())
+            .then(data => {
+                const container = document.getElementById('notificationsList');
+                if (data.success && data.notifications.length > 0) {
+                    container.innerHTML = data.notifications.map(n => {
+                        const typeIcons = {
+                            info: '📘',
+                            warning: '⚠️',
+                            important: '🚨',
+                            success: '✅'
+                        };
+                        const typeColors = {
+                            info: '#3b82f6',
+                            warning: '#f59e0b',
+                            important: '#ef4444',
+                            success: '#10b981'
+                        };
+                        const date = new Date(n.created_at).toLocaleString();
+                        const recipients = n.recipients.includes('all') ? 'All Users' : n.recipients.join(', ');
+                        const readCount = n.read_by ? n.read_by.length : 0;
+
+                        return `
+                            <div style="background: var(--surface); border: 1px solid var(--border); border-left: 3px solid ${typeColors[n.type]}; border-radius: var(--border-radius-sm); padding: 16px; margin-bottom: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                    <div style="flex: 1;">
+                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                            <span style="font-size: 16px;">${typeIcons[n.type]}</span>
+                                            <strong style="font-size: 15px;">${n.title}</strong>
+                                        </div>
+                                        <p style="margin: 8px 0; color: var(--text-secondary); font-size: 13px; line-height: 1.5;">${n.message}</p>
+                                    </div>
+                                    <form method="POST" action="/admin/notifications/delete/${n.id}" style="margin: 0;" onsubmit="return confirm('Delete this notification?');">
+                                        <button type="submit" style="background: var(--error); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                <div style="font-size: 11px; color: var(--text-muted); display: flex; gap: 16px; flex-wrap: wrap;">
+                                    <span><i class="fas fa-clock"></i> ${date}</span>
+                                    <span><i class="fas fa-user"></i> ${n.created_by}</span>
+                                    <span><i class="fas fa-users"></i> ${recipients}</span>
+                                    <span><i class="fas fa-check"></i> ${readCount} read</span>
+                                    ${n.send_email ? '<span><i class="fas fa-envelope"></i> Email sent</span>' : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 40px 0;">No notifications yet. Click "Compose Notification" to send one.</p>';
+                }
+            })
+            .catch(err => {
+                console.error('Error loading notifications:', err);
+            });
+    }
+
+    // Load notifications on page load
+    document.addEventListener('DOMContentLoaded', loadNotificationsList);
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('resetPasswordModal');
+        const notifModal = document.getElementById('composeNotificationModal');
+        if (event.target == modal) {
+            closeResetPasswordModal();
+        }
+        if (event.target == notifModal) {
+            closeComposeNotificationModal();
+        }
+    }
+</script>
+{% endblock %}

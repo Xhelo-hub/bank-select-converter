@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-from flask import Flask, render_template_string, request, redirect, url_for, flash, send_file, jsonify, make_response
+from flask import Flask, render_template, render_template_string, request, redirect, url_for, flash, send_file, jsonify, make_response
 from werkzeug.utils import secure_filename
 from flask_login import LoginManager, login_required, current_user
+from flask_migrate import Migrate
+from sqlalchemy import event
 import os
 import subprocess
 import tempfile
@@ -12,43 +14,12 @@ import time
 import threading
 import json
 from pathlib import Path
+from dotenv import load_dotenv
 
-# Cross-process file locking for multi-worker gunicorn
-if os.name == 'posix':
-    import fcntl
-    class FileLock:
-        """File-based lock using fcntl.flock - works across gunicorn workers"""
-        def __init__(self, lock_path):
-            self.lock_path = str(lock_path) + '.lock'
-        def __enter__(self):
-            self._fd = open(self.lock_path, 'w')
-            fcntl.flock(self._fd.fileno(), fcntl.LOCK_EX)
-            return self
-        def __exit__(self, *args):
-            fcntl.flock(self._fd.fileno(), fcntl.LOCK_UN)
-            self._fd.close()
-else:
-    class FileLock:
-        """Thread-based lock fallback for Windows development"""
-        _locks = {}
-        _meta_lock = threading.Lock()
-        def __init__(self, lock_path):
-            self.lock_path = str(lock_path)
-            with FileLock._meta_lock:
-                if self.lock_path not in FileLock._locks:
-                    FileLock._locks[self.lock_path] = threading.Lock()
-                self._lock = FileLock._locks[self.lock_path]
-        def __enter__(self):
-            self._lock.acquire()
-            return self
-        def __exit__(self, *args):
-            self._lock.release()
+# Load environment variables from .env file
+load_dotenv()
 
-# Import authentication components
-from auth import UserManager
-from auth_routes import auth_bp
-from admin_routes import admin_bp
-from notification_utils import get_user_notifications, mark_as_read, mark_all_as_read, get_unread_count
+from models import db, User, Job, Conversion, Download
 
 # App initialization
 app = Flask(__name__)
@@ -71,6 +42,32 @@ except ImportError:
         SESSION_COOKIE_SAMESITE='Lax',
     )
 
+# Enable template auto-reload for development
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.jinja_env.auto_reload = True
+
+# Initialize database
+db.init_app(app)
+migrate = Migrate(app, db)
+
+# Create tables on first run and set up WAL mode
+with app.app_context():
+    # Enable WAL mode for SQLite (critical for multi-worker gunicorn)
+    @event.listens_for(db.engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA busy_timeout=5000")
+        cursor.close()
+
+    db.create_all()
+
+# Import authentication components (after db init)
+from auth import UserManager
+from auth_routes import auth_bp
+from admin_routes import admin_bp
+from notification_utils import get_user_notifications, mark_as_read, mark_all_as_read, get_unread_count
+
 # Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -83,7 +80,15 @@ user_manager = UserManager()
 @login_manager.user_loader
 def load_user(user_id):
     """Load user by ID for Flask-Login"""
-    return user_manager.get_user_by_id(user_id)
+    return db.session.get(User, user_id)
+
+@app.context_processor
+def inject_globals():
+    """Inject global variables into all templates"""
+    logo_path = Path(__file__).parent / 'static' / 'logo.png'
+    return {
+        'logo_exists': logo_path.exists()
+    }
 
 # Register authentication blueprint
 app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -168,83 +173,32 @@ BANK_CONFIGS = {
     }
 }
 
-# Job status tracking (file-based for multi-worker gunicorn support)
-JOBS_FILE = BASE_DIR / 'jobs.json'
-jobs_lock = FileLock(JOBS_FILE)
-
-def load_jobs():
-    """Load jobs from JSON file (shared across gunicorn workers)"""
-    try:
-        if JOBS_FILE.exists():
-            with open(JOBS_FILE, 'r') as f:
-                return json.load(f)
-    except Exception as e:
-        print(f"Error loading jobs: {e}")
-    return {}
-
-def save_jobs(jobs):
-    """Save jobs to JSON file (shared across gunicorn workers) - atomic write"""
-    try:
-        tmp_path = str(JOBS_FILE) + '.tmp'
-        with open(tmp_path, 'w') as f:
-            json.dump(jobs, f)
-        os.replace(tmp_path, str(JOBS_FILE))
-    except Exception as e:
-        print(f"Error saving jobs: {e}")
-
-# Conversion stats tracking
-STATS_FILE = BASE_DIR / 'conversion_stats.json'
-stats_lock = FileLock(STATS_FILE)
-
-def load_stats():
-    """Load conversion stats from JSON file"""
-    try:
-        if STATS_FILE.exists():
-            with open(STATS_FILE, 'r') as f:
-                return json.load(f)
-    except Exception as e:
-        print(f"Error loading stats: {e}")
-    return {"total_conversions": 0, "total_downloads": 0, "conversions": [], "downloads": []}
-
-def save_stats(stats):
-    """Save conversion stats to JSON file - atomic write"""
-    try:
-        tmp_path = str(STATS_FILE) + '.tmp'
-        with open(tmp_path, 'w') as f:
-            json.dump(stats, f, indent=2)
-        os.replace(tmp_path, str(STATS_FILE))
-    except Exception as e:
-        print(f"Error saving stats: {e}")
-
 def log_conversion(user_email, user_id, bank, original_filename, output_filename, success):
-    """Log a conversion event"""
-    with stats_lock:
-        stats = load_stats()
-        stats["total_conversions"] += 1
-        stats["conversions"].append({
-            "user_email": user_email,
-            "user_id": user_id,
-            "bank": bank,
-            "original_filename": original_filename,
-            "output_filename": output_filename,
-            "timestamp": datetime.datetime.now().isoformat(),
-            "success": success
-        })
-        save_stats(stats)
+    """Log a conversion event to database"""
+    try:
+        conv = Conversion(
+            user_email=user_email, user_id=user_id, bank=bank,
+            original_filename=original_filename, output_filename=output_filename,
+            timestamp=datetime.datetime.now().isoformat(), success=success
+        )
+        db.session.add(conv)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error logging conversion: {e}")
 
 def log_download(user_email, user_id, job_id, filename):
-    """Log a download event"""
-    with stats_lock:
-        stats = load_stats()
-        stats["total_downloads"] += 1
-        stats["downloads"].append({
-            "user_email": user_email,
-            "user_id": user_id,
-            "job_id": job_id,
-            "filename": filename,
-            "timestamp": datetime.datetime.now().isoformat()
-        })
-        save_stats(stats)
+    """Log a download event to database"""
+    try:
+        dl = Download(
+            user_email=user_email, user_id=user_id, job_id=job_id,
+            filename=filename, timestamp=datetime.datetime.now().isoformat()
+        )
+        db.session.add(dl)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error logging download: {e}")
 
 def allowed_file(filename):
     """Check if file extension is allowed"""
@@ -311,16 +265,14 @@ def cleanup_old_files():
                     except Exception as e:
                         print(f"Error deleting file {item}: {e}")
             
-            # Clean old jobs from file
-            with jobs_lock:
-                jobs = load_jobs()
-                old_jobs = [job_id for job_id, job in jobs.items()
-                           if current_time - job.get('timestamp', current_time) > 7200]  # 2 hours
-                for job_id in old_jobs:
-                    del jobs[job_id]
-                    print(f"Cleaned up old job: {job_id}")
+            # Clean old jobs from database
+            with app.app_context():
+                old_jobs = Job.query.filter(Job.timestamp < cutoff_time).all()
+                for job in old_jobs:
+                    db.session.delete(job)
+                    print(f"Cleaned up old job: {job.id}")
                 if old_jobs:
-                    save_jobs(jobs)
+                    db.session.commit()
                     
         except Exception as e:
             print(f"Error in cleanup task: {e}")
@@ -333,6 +285,18 @@ cleanup_thread.start()
 @login_required
 def index():
     """Main converter page"""
+    # Check if logo exists
+    logo_exists = (Path(__file__).parent / 'static' / 'logo.png').exists()
+
+    return render_template('converter.html',
+                         user=current_user,
+                         banks=BANK_CONFIGS,
+                         logo_exists=logo_exists)
+
+@app.route('/_old_converter')
+@login_required
+def old_converter_backup():
+    """Backup of old inline HTML converter (for reference)"""
     html_content = """
     <!DOCTYPE html>
     <html lang="en">
@@ -1625,12 +1589,12 @@ def convert_file():
             filename = input_path.name  # Update filename to versioned name
         
         file.save(str(input_path))
-        
+
         # Get converter script
         bank_config = BANK_CONFIGS[bank_id]
         script_name = bank_config['script']
         script_path = get_script_path(script_name)
-        
+
         if not script_path:
             # Clean up uploaded file
             if input_path.exists():
@@ -1639,171 +1603,280 @@ def convert_file():
                 'success': False,
                 'error': f'Converter script not found: {script_name}'
             }), 500
-        
-        # Run converter script - output will go directly to export folder
+
+        # Run converter script synchronously - output goes directly to export folder
         try:
             import sys
-            print(f"[DEBUG] Running converter...")
-            print(f"[DEBUG] Script: {script_path}")
-            print(f"[DEBUG] Input: {input_path}")
-            print(f"[DEBUG] Output: {CONVERTED_FOLDER}")
-            
+            print(f"[DEBUG] Running converter...", flush=True)
+            print(f"[DEBUG] Script: {script_path}", flush=True)
+            print(f"[DEBUG] Input: {input_path}", flush=True)
+            print(f"[DEBUG] Output: {CONVERTED_FOLDER}", flush=True)
+
             result = subprocess.run(
                 [sys.executable, script_path, '--input', str(input_path), '--output', str(CONVERTED_FOLDER)],
                 capture_output=True,
                 text=True,
                 timeout=300  # 5 minute timeout
             )
-            
-            print(f"[DEBUG] Converter return code: {result.returncode}")
-            print(f"[DEBUG] Converter stdout: {result.stdout[:500] if result.stdout else 'None'}")
-            print(f"[DEBUG] Converter stderr: {result.stderr[:500] if result.stderr else 'None'}")
-            
+
+            print(f"[DEBUG] Converter return code: {result.returncode}", flush=True)
+            print(f"[DEBUG] Converter stdout: {result.stdout[:500] if result.stdout else 'None'}", flush=True)
+            print(f"[DEBUG] Converter stderr: {result.stderr[:500] if result.stderr else 'None'}", flush=True)
+
             # Check for errors
             if result.returncode != 0:
                 error_msg = result.stderr if result.stderr else result.stdout
+                if input_path.exists():
+                    input_path.unlink()
                 return jsonify({
                     'success': False,
                     'error': f'Conversion failed: {error_msg}'
                 }), 500
-            
-            # Find output file in export folder
-            # Converter creates files with " - 4qbo.csv" suffix based on input filename
-            # Output will be like "filename - 4qbo.csv" or "filename (v.1) - 4qbo.csv"
-            
-            # Get the base name without extension
+
+            # Find output file - search by timestamp (most recent in last 60 seconds)
             base_stem = Path(filename).stem
-            
-            # Try multiple search patterns
-            print(f"[DEBUG] Looking for output file...")
-            print(f"[DEBUG] Input filename: {filename}")
-            print(f"[DEBUG] Base stem: {base_stem}")
-            print(f"[DEBUG] Search folder: {CONVERTED_FOLDER}")
-            
-            # Pattern 1: Exact stem match
             output_files = list(CONVERTED_FOLDER.glob(f'*{base_stem}*4qbo.csv'))
-            print(f"[DEBUG] Pattern 1 found {len(output_files)} files")
-            
+
             if not output_files:
-                # Pattern 2: Remove version number and try again
-                base_name = base_stem.split(' (v.')[0]
-                output_files = list(CONVERTED_FOLDER.glob(f'{base_name}*4qbo.csv'))
-                print(f"[DEBUG] Pattern 2 found {len(output_files)} files")
-            
-            if not output_files:
-                # Pattern 3: List all 4qbo.csv files and find by timestamp
+                # Fallback: find any recent 4qbo file
                 all_output_files = list(CONVERTED_FOLDER.glob('*4qbo.csv'))
-                print(f"[DEBUG] Pattern 3: All 4qbo files in folder: {len(all_output_files)}")
-                if all_output_files:
-                    # Get the most recent one created in the last 60 seconds
-                    current_time = time.time()
-                    recent_files = [f for f in all_output_files if (current_time - f.stat().st_mtime) < 60]
-                    if recent_files:
-                        output_files = recent_files
-                        print(f"[DEBUG] Found {len(recent_files)} recent files")
-            
+                current_time = time.time()
+                output_files = [f for f in all_output_files if (current_time - f.stat().st_mtime) < 60]
+
             if not output_files:
-                # List what's actually in the folder for debugging
-                all_files = list(CONVERTED_FOLDER.glob('*'))
-                print(f"[DEBUG] All files in export folder: {[f.name for f in all_files]}")
-                return jsonify({
-                    'success': False,
-                    'error': f'Conversion completed but output file not found. Searched for: {base_stem}'
-                }), 500
-            
-            # Get the most recently created file if multiple matches
-            output_file = max(output_files, key=lambda p: p.stat().st_mtime)
-            print(f"[DEBUG] Selected output file: {output_file}")
-            print(f"[DEBUG] File exists: {output_file.exists()}")
-            print(f"[DEBUG] File size: {output_file.stat().st_size if output_file.exists() else 'N/A'}")
-            
-            # Verify the output file is fully written (not still being written)
-            # Wait up to 10 seconds for file to be stable (increased for slower conversions)
-            max_wait = 10
-            last_size = 0
-            stable_count = 0
-            for i in range(max_wait):
-                if not output_file.exists():
-                    print(f"[DEBUG] Waiting for output file to be created... ({i+1}/{max_wait})")
-                    time.sleep(1)
-                    continue
-                current_size = output_file.stat().st_size
-                if current_size > 0:
-                    if current_size == last_size:
-                        stable_count += 1
-                        if stable_count >= 2:  # File size stable for 2 consecutive checks
-                            print(f"[DEBUG] Output file is stable at {current_size} bytes")
-                            break
-                    else:
-                        stable_count = 0
-                last_size = current_size
-                if i < max_wait - 1:
-                    print(f"[DEBUG] Waiting for output file to stabilize... ({i+1}/{max_wait}, size: {current_size})")
-                    time.sleep(1)
-            
-            # Final verification
-            if not output_file.exists():
-                return jsonify({
-                    'success': False,
-                    'error': 'Output file was not created by converter script'
-                }), 500
-            
-            if output_file.stat().st_size == 0:
-                return jsonify({
-                    'success': False,
-                    'error': 'Output file is empty - conversion may have failed'
-                }), 500
-            
-            # Delete original uploaded file immediately after successful conversion
-            try:
                 if input_path.exists():
                     input_path.unlink()
-            except Exception as cleanup_error:
-                # Log but don't fail the conversion
-                print(f"Warning: Failed to delete uploaded file: {cleanup_error}")
-            
-            # Store job info (file-based for multi-worker support)
-            with jobs_lock:
-                jobs = load_jobs()
-                jobs[job_id] = {
-                    'bank': bank_id,
-                    'original_filename': original_filename,
-                    'output_filename': output_file.name,
-                    'output_path': str(output_file),
-                    'timestamp': time.time(),
-                    'user_id': current_user.id
-                }
-                save_jobs(jobs)
+                return jsonify({
+                    'success': False,
+                    'error': f'Conversion completed but output file not found'
+                }), 500
 
-            # Log successful conversion
+            # Get most recent file
+            output_file = max(output_files, key=lambda p: p.stat().st_mtime)
+            print(f"[DEBUG] Output file: {output_file.name}", flush=True)
+
+            # Delete uploaded file
+            if input_path.exists():
+                input_path.unlink()
+
+            # Save job to database
+            job = Job(
+                id=job_id,
+                bank=bank_id,
+                original_filename=original_filename,
+                output_filename=output_file.name,
+                output_path=str(output_file),
+                status='completed',
+                timestamp=time.time(),
+                user_id=current_user.id
+            )
+            db.session.add(job)
+            db.session.commit()
+
+            # Log conversion
             log_conversion(current_user.email, current_user.id, bank_id,
                           original_filename, output_file.name, True)
 
             return jsonify({
                 'success': True,
                 'job_id': job_id,
-                'original_filename': original_filename,  # Show original filename to user
+                'original_filename': original_filename,
                 'output_filename': output_file.name
             })
-            
+
         except subprocess.TimeoutExpired:
-            input_path.unlink()  # Clean up
+            if input_path.exists():
+                input_path.unlink()
             return jsonify({
                 'success': False,
                 'error': 'Conversion timed out. File may be too large or complex.'
             }), 500
         except Exception as e:
-            input_path.unlink()  # Clean up
+            if input_path.exists():
+                input_path.unlink()
+            print(f"[ERROR] Conversion error: {e}", flush=True)
+            import traceback
+            traceback.print_exc()
             return jsonify({
                 'success': False,
                 'error': f'Conversion error: {str(e)}'
             }), 500
-            
+
     except Exception as e:
         return jsonify({
             'success': False,
             'error': f'Server error: {str(e)}'
         }), 500
+
+def _update_job_status_with_retry(job_id, status, output_filename=None, output_path=None, error_message=None, max_retries=3):
+    """Update job status with retry logic for database locks"""
+    for attempt in range(max_retries):
+        try:
+            job = db.session.get(Job, job_id)
+            if job:
+                job.status = status
+                if output_filename:
+                    job.output_filename = output_filename
+                if output_path:
+                    job.output_path = output_path
+                if error_message:
+                    job.error_message = error_message
+                db.session.commit()
+                print(f"[DEBUG] Successfully updated job status to {status}")
+                return True
+        except Exception as db_error:
+            print(f"[WARNING] Database commit failed (attempt {attempt + 1}/{max_retries}): {db_error}")
+            db.session.rollback()
+            if attempt < max_retries - 1:
+                time.sleep(0.5)  # Wait before retry
+    print(f"[ERROR] Failed to update job status after {max_retries} attempts")
+    return False
+
+def _perform_conversion(job_id, input_path, script_path, filename, bank_id, original_filename, user_id, user_email):
+    """Perform the actual conversion in background"""
+    # Run converter script - output will go directly to export folder
+    try:
+        import sys
+        print(f"[DEBUG] Running converter...", flush=True)
+        print(f"[DEBUG] Script: {script_path}", flush=True)
+        print(f"[DEBUG] Input: {input_path}", flush=True)
+        print(f"[DEBUG] Output: {CONVERTED_FOLDER}", flush=True)
+        
+        result = subprocess.run(
+            [sys.executable, script_path, '--input', str(input_path), '--output', str(CONVERTED_FOLDER)],
+            capture_output=True,
+            text=True,
+            timeout=300  # 5 minute timeout
+        )
+        
+        print(f"[DEBUG] Converter return code: {result.returncode}", flush=True)
+        print(f"[DEBUG] Converter stdout: {result.stdout[:500] if result.stdout else 'None'}", flush=True)
+        print(f"[DEBUG] Converter stderr: {result.stderr[:500] if result.stderr else 'None'}", flush=True)
+        
+        # Check for errors
+        if result.returncode != 0:
+            error_msg = result.stderr if result.stderr else result.stdout
+            # Update job status to failed
+            _update_job_status_with_retry(job_id, 'failed', error_message=f'Conversion failed: {error_msg}')
+            return
+        
+        # Find output file in export folder
+        # Converter creates files with " - 4qbo.csv" suffix based on input filename
+        # Output will be like "filename - 4qbo.csv" or "filename (v.1) - 4qbo.csv"
+        
+        # Get the base name without extension
+        base_stem = Path(filename).stem
+        
+        # Try multiple search patterns
+        print(f"[DEBUG] Looking for output file...")
+        print(f"[DEBUG] Input filename: {filename}")
+        print(f"[DEBUG] Base stem: {base_stem}")
+        print(f"[DEBUG] Search folder: {CONVERTED_FOLDER}")
+        
+        # Pattern 1: Exact stem match
+        output_files = list(CONVERTED_FOLDER.glob(f'*{base_stem}*4qbo.csv'))
+        print(f"[DEBUG] Pattern 1 found {len(output_files)} files")
+        
+        if not output_files:
+            # Pattern 2: Remove version number and try again
+            base_name = base_stem.split(' (v.')[0]
+            output_files = list(CONVERTED_FOLDER.glob(f'{base_name}*4qbo.csv'))
+            print(f"[DEBUG] Pattern 2 found {len(output_files)} files")
+        
+        if not output_files:
+            # Pattern 3: List all 4qbo.csv files and find by timestamp
+            all_output_files = list(CONVERTED_FOLDER.glob('*4qbo.csv'))
+            print(f"[DEBUG] Pattern 3: All 4qbo files in folder: {len(all_output_files)}")
+            if all_output_files:
+                # Get the most recent one created in the last 60 seconds
+                current_time = time.time()
+                recent_files = [f for f in all_output_files if (current_time - f.stat().st_mtime) < 60]
+                if recent_files:
+                    output_files = recent_files
+                    print(f"[DEBUG] Found {len(recent_files)} recent files")
+        
+        if not output_files:
+            # List what's actually in the folder for debugging
+            all_files = list(CONVERTED_FOLDER.glob('*'))
+            print(f"[DEBUG] All files in export folder: {[f.name for f in all_files]}")
+            # Update job status to failed
+            _update_job_status_with_retry(job_id, 'failed', error_message=f'Conversion completed but output file not found. Searched for: {base_stem}')
+            return
+        
+        # Get the most recently created file if multiple matches
+        output_file = max(output_files, key=lambda p: p.stat().st_mtime)
+        print(f"[DEBUG] Selected output file: {output_file}")
+        print(f"[DEBUG] File exists: {output_file.exists()}")
+        print(f"[DEBUG] File size: {output_file.stat().st_size if output_file.exists() else 'N/A'}")
+        
+        # Verify the output file is fully written (not still being written)
+        # Wait up to 10 seconds for file to be stable (increased for slower conversions)
+        max_wait = 10
+        last_size = 0
+        stable_count = 0
+        for i in range(max_wait):
+            if not output_file.exists():
+                print(f"[DEBUG] Waiting for output file to be created... ({i+1}/{max_wait})")
+                time.sleep(1)
+                continue
+            current_size = output_file.stat().st_size
+            if current_size > 0:
+                if current_size == last_size:
+                    stable_count += 1
+                    if stable_count >= 2:  # File size stable for 2 consecutive checks
+                        print(f"[DEBUG] Output file is stable at {current_size} bytes")
+                        break
+                else:
+                    stable_count = 0
+            last_size = current_size
+            if i < max_wait - 1:
+                print(f"[DEBUG] Waiting for output file to stabilize... ({i+1}/{max_wait}, size: {current_size})")
+                time.sleep(1)
+        
+        # Final verification
+        if not output_file.exists():
+            _update_job_status_with_retry(job_id, 'failed', error_message='Output file was not created by converter script')
+            return
+
+        if output_file.stat().st_size == 0:
+            _update_job_status_with_retry(job_id, 'failed', error_message='Output file is empty - conversion may have failed')
+            return
+        
+        # Delete original uploaded file immediately after successful conversion
+        try:
+            if input_path.exists():
+                input_path.unlink()
+        except Exception as cleanup_error:
+            # Log but don't fail the conversion
+            print(f"Warning: Failed to delete uploaded file: {cleanup_error}")
+        
+        # Update job info with completed status (with retry for database locks)
+        _update_job_status_with_retry(job_id, 'completed',
+                                      output_filename=output_file.name,
+                                      output_path=str(output_file))
+
+        # Log successful conversion
+        try:
+            log_conversion(user_email, user_id, bank_id,
+                          original_filename, output_file.name, True)
+        except Exception as log_error:
+            print(f"[WARNING] Failed to log conversion: {log_error}")
+        
+    except subprocess.TimeoutExpired:
+        if input_path.exists():
+            input_path.unlink()  # Clean up
+        # Update job status to failed
+        _update_job_status_with_retry(job_id, 'failed',
+                                      error_message='Conversion timed out. File may be too large or complex.')
+    except Exception as e:
+        if input_path.exists():
+            input_path.unlink()  # Clean up
+        # Update job status to failed
+        print(f"[ERROR] Conversion exception: {e}")
+        import traceback
+        traceback.print_exc()
+        _update_job_status_with_retry(job_id, 'failed',
+                                      error_message=f'Conversion error: {str(e)}')
 
 
 # ============ Notification Routes (User-facing) ============
@@ -1853,28 +1926,26 @@ def unread_count():
 
 
 @app.route('/download/<job_id>')
+@app.route('/download/<job_id>/<path:filename>')
 @login_required
-def download_file(job_id):
+def download_file(job_id, filename=None):
     """Download converted file"""
     try:
         print(f"[DEBUG] Download request for job_id: {job_id}")
-        with jobs_lock:
-            jobs = load_jobs()
-            if job_id not in jobs:
-                print(f"[DEBUG] Job {job_id} not found in jobs file")
-                print(f"[DEBUG] Available jobs: {list(jobs.keys())}")
-                return "File not found or has expired", 404
+        job = db.session.get(Job, job_id)
+        if not job:
+            print(f"[DEBUG] Job {job_id} not found in database")
+            return "File not found or has expired", 404
 
-            job = jobs[job_id]
-            print(f"[DEBUG] Job found: {job}")
+        print(f"[DEBUG] Job found: {job.id}")
 
-            # Verify user owns this job
-            if job['user_id'] != current_user.id:
-                print(f"[DEBUG] Unauthorized access - job user_id: {job['user_id']}, current user: {current_user.id}")
-                return "Unauthorized access to file", 403
+        # Verify user owns this job
+        if job.user_id != current_user.id:
+            print(f"[DEBUG] Unauthorized access - job user_id: {job.user_id}, current user: {current_user.id}")
+            return "Unauthorized access to file", 403
 
-            output_path = job['output_path']
-            output_filename = job['output_filename']
+        output_path = job.output_path
+        output_filename = job.output_filename
         
         print(f"[DEBUG] Checking file exists: {output_path}")
         if not Path(output_path).exists():
@@ -1906,18 +1977,27 @@ def download_file(job_id):
 @login_required
 def check_status(job_id):
     """Check conversion status"""
-    with jobs_lock:
-        jobs = load_jobs()
-        if job_id not in jobs:
-            return jsonify({'success': False, 'error': 'Job not found'}), 404
+    job = db.session.get(Job, job_id)
+    if not job:
+        return jsonify({'success': False, 'error': 'Job not found'}), 404
 
-        job = jobs[job_id]
+    # Verify user owns this job
+    if job.user_id != current_user.id:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
 
-        # Verify user owns this job
-        if job['user_id'] != current_user.id:
-            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    response = {
+        'status': job.status,
+        'bank': job.bank,
+        'original_filename': job.original_filename,
+    }
 
-        return jsonify({'success': True, 'job': job})
+    if job.status == 'completed':
+        response['files'] = [job.output_filename] if job.output_filename and job.output_filename.strip() else []
+        response['output_path'] = job.output_path
+    elif job.status == 'failed':
+        response['error'] = job.error_message or 'Conversion failed'
+
+    return jsonify(response)
 
 @app.route('/cleanup')
 @login_required

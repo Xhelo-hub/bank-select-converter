@@ -1,0 +1,432 @@
+{% extends "base.html" %}
+
+{% block title %}Converter - Albanian Bank Statement Converter{% endblock %}
+
+{% block page_title %}Bank Statement Converter{% endblock %}
+
+{% block extra_css %}
+<style>
+    .converter-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .converter-card {
+        background: white;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--gray-200);
+        box-shadow: var(--shadow-md);
+        padding: var(--spacing-xl);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .upload-area {
+        border: 2px dashed var(--gray-300);
+        border-radius: var(--border-radius);
+        padding: 3rem;
+        text-align: center;
+        transition: all var(--transition-fast);
+        cursor: pointer;
+    }
+
+    .upload-area:hover,
+    .upload-area.drag-over {
+        border-color: var(--primary-color);
+        background: var(--primary-light);
+    }
+
+    .upload-icon {
+        font-size: 3rem;
+        color: var(--gray-400);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .bank-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: var(--spacing-md);
+        margin-top: var(--spacing-lg);
+    }
+
+    .bank-card {
+        border: 2px solid var(--gray-200);
+        border-radius: var(--border-radius-sm);
+        padding: var(--spacing-lg);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        text-align: center;
+    }
+
+    .bank-card:hover {
+        border-color: var(--primary-color);
+        background: var(--primary-light);
+        transform: translateY(-2px);
+    }
+
+    .bank-card.selected {
+        border-color: var(--primary-color);
+        background: var(--primary-light);
+        box-shadow: var(--shadow-md);
+    }
+
+    .bank-name {
+        font-weight: 600;
+        color: var(--gray-900);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .bank-formats {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+    }
+
+    .progress-container {
+        display: none;
+        margin-top: var(--spacing-lg);
+    }
+
+    .progress-bar {
+        height: 8px;
+        background: var(--gray-200);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: var(--primary-color);
+        transition: width 0.3s ease;
+    }
+
+    .progress-text {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        text-align: center;
+    }
+
+    .result-container {
+        display: none;
+        margin-top: var(--spacing-lg);
+    }
+
+    .result-success {
+        background: var(--success-color);
+        color: white;
+        padding: var(--spacing-lg);
+        border-radius: var(--border-radius-sm);
+        text-align: center;
+    }
+
+    .result-error {
+        background: var(--danger-color);
+        color: white;
+        padding: var(--spacing-lg);
+        border-radius: var(--border-radius-sm);
+        text-align: center;
+    }
+
+    .file-info {
+        display: none;
+        background: var(--gray-100);
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius-sm);
+        margin-top: var(--spacing-md);
+    }
+
+    .file-name {
+        font-weight: 500;
+        color: var(--gray-900);
+    }
+
+    .file-size {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+    }
+
+    .convert-btn {
+        width: 100%;
+        margin-top: var(--spacing-lg);
+        padding: 1rem;
+        font-size: 1rem;
+    }
+
+    .convert-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .download-btn {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1rem;
+    }
+
+    .info-section {
+        background: var(--gray-50);
+        border-left: 4px solid var(--info-color);
+        padding: var(--spacing-lg);
+        border-radius: var(--border-radius-sm);
+        margin-top: var(--spacing-xl);
+    }
+
+    .info-title {
+        font-weight: 600;
+        color: var(--gray-900);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .info-list {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    .info-list li {
+        padding: var(--spacing-xs) 0;
+        color: var(--gray-700);
+    }
+
+    .info-list li:before {
+        content: "✓";
+        color: var(--success-color);
+        font-weight: bold;
+        margin-right: var(--spacing-sm);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="converter-container">
+    <!-- Upload Card -->
+    <div class="converter-card">
+        <h2 style="margin-bottom: var(--spacing-lg); color: var(--gray-900);">Upload Statement</h2>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📄</div>
+            <h3 style="margin-bottom: var(--spacing-sm);">Drop your file here</h3>
+            <p style="color: var(--gray-600); margin-bottom: var(--spacing-md);">or click to browse</p>
+            <input type="file" id="fileInput" accept=".pdf,.csv,.xls,.xlsx" style="display: none;">
+            <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                Choose File
+            </button>
+        </div>
+
+        <div class="file-info" id="fileInfo">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-size" id="fileSize"></div>
+        </div>
+    </div>
+
+    <!-- Bank Selection Card -->
+    <div class="converter-card">
+        <h2 style="margin-bottom: var(--spacing-lg); color: var(--gray-900);">Select Bank</h2>
+
+        <div class="bank-grid" id="bankGrid">
+            {% for bank_id, bank_info in banks.items() %}
+            <div class="bank-card" data-bank="{{ bank_id }}" onclick="selectBank('{{ bank_id }}')">
+                <div class="bank-name">{{ bank_info.name }}</div>
+                <div class="bank-formats">{{ bank_info.formats|join(', ') }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <button class="btn btn-primary convert-btn" id="convertBtn" disabled onclick="convertFile()">
+            Convert Statement
+        </button>
+
+        <!-- Progress -->
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Converting...</div>
+        </div>
+
+        <!-- Result -->
+        <div class="result-container" id="resultContainer"></div>
+    </div>
+
+    <!-- Info Section -->
+    <div class="info-section">
+        <div class="info-title">Supported Features:</div>
+        <ul class="info-list">
+            <li>Convert PDF and CSV bank statements to QuickBooks format</li>
+            <li>Support for major Albanian banks (Raiffeisen, Intesa, ProCredit, etc.)</li>
+            <li>Fast and secure conversion process</li>
+            <li>Download converted files instantly</li>
+        </ul>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedFile = null;
+let selectedBank = null;
+let currentJobId = null;
+
+// File upload handling
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+const fileInfo = document.getElementById('fileInfo');
+const fileName = document.getElementById('fileName');
+const fileSize = document.getElementById('fileSize');
+const convertBtn = document.getElementById('convertBtn');
+
+// Drag and drop
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('drag-over');
+});
+
+uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('drag-over');
+});
+
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('drag-over');
+
+    if (e.dataTransfer.files.length > 0) {
+        handleFileSelect(e.dataTransfer.files[0]);
+    }
+});
+
+// File input change
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        handleFileSelect(e.target.files[0]);
+    }
+});
+
+function handleFileSelect(file) {
+    selectedFile = file;
+
+    // Display file info
+    fileName.textContent = file.name;
+    fileSize.textContent = formatFileSize(file.size);
+    fileInfo.style.display = 'block';
+
+    // Update convert button state
+    updateConvertButton();
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+// Bank selection
+function selectBank(bankId) {
+    // Remove previous selection
+    document.querySelectorAll('.bank-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+
+    // Add selection to clicked bank
+    event.target.closest('.bank-card').classList.add('selected');
+    selectedBank = bankId;
+
+    // Update convert button state
+    updateConvertButton();
+}
+
+function updateConvertButton() {
+    convertBtn.disabled = !(selectedFile && selectedBank);
+}
+
+// Convert file
+async function convertFile() {
+    if (!selectedFile || !selectedBank) {
+        alert('Please select both a file and a bank');
+        return;
+    }
+
+    // Show progress
+    document.getElementById('progressContainer').style.display = 'block';
+    document.getElementById('resultContainer').style.display = 'none';
+    convertBtn.disabled = true;
+
+    // Create form data
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('bank', selectedBank);
+
+    try {
+        // Upload and convert
+        const response = await fetch('/convert', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            currentJobId = result.job_id;
+            pollConversionStatus();
+        } else {
+            showError(result.error || 'Conversion failed');
+        }
+    } catch (error) {
+        showError('Network error: ' + error.message);
+    }
+}
+
+// Poll conversion status
+async function pollConversionStatus() {
+    try {
+        const response = await fetch(`/status/${currentJobId}`);
+        const result = await response.json();
+
+        if (result.status === 'completed') {
+            showSuccess('Conversion completed!', result.files);
+        } else if (result.status === 'failed') {
+            showError(result.error || 'Conversion failed');
+        } else {
+            // Still processing, poll again
+            setTimeout(pollConversionStatus, 1000);
+        }
+    } catch (error) {
+        showError('Error checking status: ' + error.message);
+    }
+}
+
+function showSuccess(message, files) {
+    document.getElementById('progressContainer').style.display = 'none';
+
+    const resultContainer = document.getElementById('resultContainer');
+    resultContainer.style.display = 'block';
+    resultContainer.innerHTML = `
+        <div class="result-success">
+            <h3 style="margin-bottom: var(--spacing-md);">✓ ${message}</h3>
+            ${files.map(file => `
+                <a href="/download/${currentJobId}/${file}" class="btn download-btn" style="margin-top: var(--spacing-sm); background: white; color: var(--success-color);">
+                    Download ${file}
+                </a>
+            `).join('')}
+        </div>
+    `;
+
+    convertBtn.disabled = false;
+}
+
+function showError(message) {
+    document.getElementById('progressContainer').style.display = 'none';
+
+    const resultContainer = document.getElementById('resultContainer');
+    resultContainer.style.display = 'block';
+    resultContainer.innerHTML = `
+        <div class="result-error">
+            <h3 style="margin-bottom: var(--spacing-md);">✗ Error</h3>
+            <p>${message}</p>
+        </div>
+    `;
+
+    convertBtn.disabled = false;
+}
+</script>
+{% endblock %}

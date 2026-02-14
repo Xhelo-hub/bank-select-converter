@@ -18,14 +18,10 @@
             --text-secondary: #64748b;
             --text-muted: #94a3b8;
             --border: #e2e8f0;
-            --border-light: #f1f5f9;
             --success: #10b981;
             --error: #ef4444;
-            --warning: #f59e0b;
             --radius: 16px;
-            --radius-sm: 10px;
             --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 6px 24px rgba(0,0,0,0.06);
-            --shadow-lg: 0 4px 12px rgba(0,0,0,0.05), 0 20px 48px rgba(0,0,0,0.1);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -34,187 +30,315 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: var(--surface-dim);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 24px;
             color: var(--text);
-        }
-
-        .page-bg {
-            position: fixed;
-            inset: 0;
-            background:
-                radial-gradient(ellipse at 20% 50%, rgba(79, 70, 229, 0.06) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.05) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 100%, rgba(79, 70, 229, 0.03) 0%, transparent 50%);
-            z-index: 0;
         }
 
         .login-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Left Side - Marketing Announcements */
+        .marketing-side {
+            flex: 1;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .marketing-side::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .marketing-header {
             position: relative;
             z-index: 1;
-            background: var(--surface);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-lg);
-            padding: 48px 40px;
-            width: 100%;
-            max-width: 440px;
-            border: 1px solid var(--border-light);
         }
 
-        .logo {
-            text-align: center;
-            margin-bottom: 36px;
+        .marketing-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 48px;
         }
 
-        .logo-icon {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 20px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-            border-radius: 18px;
+        .marketing-logo-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            font-size: 24px;
+        }
+
+        .marketing-logo-text {
             font-size: 24px;
             font-weight: 700;
-            box-shadow: 0 4px 16px rgba(79, 70, 229, 0.25);
         }
 
-        .logo h1 {
-            color: var(--text);
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            letter-spacing: -0.3px;
+        .marketing-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+            position: relative;
+            z-index: 1;
         }
 
-        .logo p {
-            color: var(--text-secondary);
-            font-size: 14px;
-            line-height: 1.5;
-            font-weight: 400;
+        .announcement-card {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius);
+            padding: 32px;
+            border: 1px solid rgba(255,255,255,0.2);
+            animation: fadeInUp 0.6s ease-out;
         }
 
-        .form-group {
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .announcement-card h2 {
+            font-size: 28px;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .announcement-card p {
+            font-size: 16px;
+            line-height: 1.6;
+            opacity: 0.95;
             margin-bottom: 20px;
         }
 
-        label {
-            display: block;
-            margin-bottom: 6px;
-            color: var(--text);
+        .announcement-card a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            text-decoration: none;
             font-weight: 500;
-            font-size: 13px;
-            letter-spacing: 0.01em;
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            transition: all 0.3s ease;
         }
 
-        .input-wrapper {
-            position: relative;
+        .announcement-card a:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateX(4px);
         }
 
-        .input-wrapper i {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-            font-size: 15px;
-            transition: color 0.2s;
+        .default-marketing {
+            text-align: center;
         }
 
-        input[type="text"],
-        input[type="password"],
-        input[type="email"] {
+        .default-marketing-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+            opacity: 0.9;
+        }
+
+        .default-marketing h2 {
+            font-size: 36px;
+            margin-bottom: 16px;
+        }
+
+        .default-marketing p {
+            font-size: 18px;
+            opacity: 0.9;
+            margin-bottom: 12px;
+        }
+
+        .features-list {
+            display: grid;
+            gap: 16px;
+            margin-top: 32px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 16px;
+        }
+
+        .feature-item i {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+        }
+
+        /* Right Side - Login Form */
+        .login-side {
+            flex: 1;
+            background: white;
+            padding: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-form-container {
             width: 100%;
-            padding: 12px 14px 12px 42px;
-            border: 1.5px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 14px;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.2s ease;
-            background: var(--surface);
-            color: var(--text);
+            max-width: 440px;
         }
 
-        input:focus {
+        .login-header {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .login-header h1 {
+            font-size: 32px;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .login-header p {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 15px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
 
-        input:focus + i,
-        .input-wrapper:focus-within i {
-            color: var(--primary);
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
         }
 
-        .btn {
-            width: 100%;
-            padding: 12px 20px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-size: 14px;
-            font-weight: 600;
-            font-family: 'Inter', sans-serif;
-            cursor: pointer;
-            transition: all 0.2s ease;
+        .checkbox-group {
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 8px;
         }
 
-        .btn:hover {
-            background: var(--primary-dark);
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-            transform: translateY(-1px);
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
         }
 
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .links {
-            text-align: center;
-            margin-top: 28px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border-light);
-        }
-
-        .links p {
-            margin: 10px 0;
-            font-size: 13px;
+        .checkbox-group label {
+            font-size: 14px;
             color: var(--text-secondary);
+            cursor: pointer;
         }
 
-        .links a {
+        .forgot-link {
+            font-size: 14px;
             color: var(--primary);
             text-decoration: none;
             font-weight: 500;
-            transition: color 0.2s;
         }
 
-        .links a:hover {
-            color: var(--primary-dark);
+        .forgot-link:hover {
+            text-decoration: underline;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .signup-link {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .signup-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
         }
 
         .alert {
-            padding: 12px 14px;
-            border-radius: var(--radius-sm);
-            margin-bottom: 20px;
-            font-size: 13px;
-            font-weight: 500;
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            font-size: 14px;
             display: flex;
             align-items: center;
             gap: 10px;
-            animation: slideIn 0.3s ease;
         }
 
-        .alert i { font-size: 16px; flex-shrink: 0; }
+        .alert-error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
 
         .alert-success {
             background: #ecfdf5;
@@ -222,123 +346,150 @@
             border: 1px solid #a7f3d0;
         }
 
-        .alert-danger, .alert-error {
-            background: #fef2f2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .login-container {
+                flex-direction: column;
+            }
+
+            .marketing-side {
+                min-height: 300px;
+                padding: 40px 24px;
+            }
+
+            .login-side {
+                padding: 40px 24px;
+            }
+
+            .announcement-card {
+                padding: 24px;
+            }
         }
 
-        .alert-warning {
-            background: #fffbeb;
-            color: #92400e;
-            border: 1px solid #fde68a;
-        }
+        @media (max-width: 768px) {
+            .marketing-side {
+                display: none;
+            }
 
-        .alert-info {
-            background: #eff6ff;
-            color: #1e40af;
-            border: 1px solid #bfdbfe;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateY(-8px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        @media (max-width: 480px) {
-            body { padding: 16px; }
-            .login-container { padding: 32px 24px; }
-            .logo-icon { width: 56px; height: 56px; font-size: 20px; }
-            .logo h1 { font-size: 20px; }
-            input[type="text"],
-            input[type="password"],
-            input[type="email"] {
-                padding: 12px 14px 12px 42px;
-                font-size: 16px;
+            .login-side {
+                padding: 24px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="page-bg"></div>
     <div class="login-container">
-        <div class="logo">
-            <div class="logo-icon" id="loginLogo">BS</div>
-            <h1>Bank Statement Converter</h1>
-            <p>Convert Albanian bank statements to QuickBooks Online CSV format.</p>
+        <!-- Left Side: Marketing Announcements -->
+        <div class="marketing-side">
+            <div class="marketing-header">
+                <div class="marketing-logo">
+                    <div class="marketing-logo-icon">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <div class="marketing-logo-text">Bank Converter</div>
+                </div>
+            </div>
+
+            <div class="marketing-content">
+                {% if marketing_messages %}
+                    {% for message in marketing_messages %}
+                    <div class="announcement-card" style="animation-delay: {{ loop.index0 * 0.1 }}s">
+                        {% if message.image_url %}
+                        <img src="{{ message.image_url }}" alt="{{ message.title }}" style="width: 100%; border-radius: 12px; margin-bottom: 20px;">
+                        {% endif %}
+                        <h2>{{ message.title }}</h2>
+                        <p>{{ message.content }}</p>
+                        {% if message.link_url %}
+                        <a href="{{ message.link_url }}" target="_blank">
+                            {{ message.link_text or 'Learn More' }}
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="announcement-card default-marketing">
+                        <div class="default-marketing-icon">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <h2>Welcome Back!</h2>
+                        <p>Convert your Albanian bank statements to QuickBooks format instantly</p>
+
+                        <div class="features-list">
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span>Support for all major Albanian banks</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span>Fast & secure conversion</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span>Download instantly</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span>Admin approval for security</span>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
         </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">
-                        {% if category == 'success' %}
-                            <i class="fas fa-check-circle"></i>
-                        {% elif category == 'error' or category == 'danger' %}
-                            <i class="fas fa-exclamation-circle"></i>
-                        {% elif category == 'warning' %}
-                            <i class="fas fa-exclamation-triangle"></i>
-                        {% else %}
-                            <i class="fas fa-info-circle"></i>
-                        {% endif %}
-                        <span>{{ message }}</span>
+        <!-- Right Side: Login Form -->
+        <div class="login-side">
+            <div class="login-form-container">
+                <div class="login-header">
+                    <h1>Sign In</h1>
+                    <p>Enter your credentials to access your account</p>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                        <div class="alert alert-{{ 'error' if category == 'error' else 'success' }}">
+                            <i class="fas fa-{{ 'exclamation-circle' if category == 'error' else 'check-circle' }}"></i>
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST" action="{{ url_for('auth.login') }}">
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" id="email" name="email" class="form-input"
+                               placeholder="your@email.com" required autofocus>
                     </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
 
-        <form method="POST" action="{{ url_for('auth.login') }}">
-            <div class="form-group">
-                <label for="email">Email</label>
-                <div class="input-wrapper">
-                    <input type="email" id="email" name="email" required autofocus placeholder="you@company.com">
-                    <i class="fas fa-envelope"></i>
-                </div>
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" id="password" name="password" class="form-input"
+                               placeholder="Enter your password" required>
+                    </div>
+
+                    <div class="form-options">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="remember" name="remember" value="true">
+                            <label for="remember">Remember me</label>
+                        </div>
+                        <a href="{{ url_for('auth.forgot_password') }}" class="forgot-link">
+                            Forgot password?
+                        </a>
+                    </div>
+
+                    <button type="submit" class="btn-primary">
+                        Sign In
+                    </button>
+
+                    <div class="signup-link">
+                        Don't have an account? <a href="{{ url_for('auth.register') }}">Sign up</a>
+                    </div>
+                </form>
             </div>
-
-            <div class="form-group">
-                <label for="password">Password</label>
-                <div class="input-wrapper">
-                    <input type="password" id="password" name="password" required placeholder="Enter your password">
-                    <i class="fas fa-lock"></i>
-                </div>
-            </div>
-
-            <button type="submit" class="btn">
-                Sign in
-                <i class="fas fa-arrow-right"></i>
-            </button>
-        </form>
-
-        <div class="links">
-            <p><a href="{{ url_for('auth.forgot_password') }}">Forgot your password?</a></p>
-            <p>Don't have an account? <a href="{{ url_for('auth.register') }}">Create one</a></p>
         </div>
     </div>
-
-    <script>
-        (function() {
-            const logoContainer = document.getElementById('loginLogo');
-            const logoPath = '/static/logo.png';
-            fetch(logoPath)
-                .then(response => {
-                    if (response.ok) {
-                        logoContainer.style.background = 'white';
-                        logoContainer.style.padding = '10px';
-                        logoContainer.innerHTML = '<img src="' + logoPath + '?' + new Date().getTime() + '" alt="Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">';
-                    }
-                })
-                .catch(() => {});
-        })();
-
-        setTimeout(function() {
-            const successAlerts = document.querySelectorAll('.alert-success');
-            successAlerts.forEach(alert => {
-                alert.style.transition = 'opacity 0.5s';
-                alert.style.opacity = '0';
-                setTimeout(() => alert.remove(), 500);
-            });
-        }, 3000);
-    </script>
 </body>
 </html>

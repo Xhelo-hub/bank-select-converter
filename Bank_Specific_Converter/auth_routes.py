@@ -7,6 +7,7 @@ Routes for login, logout, and registration
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, login_required
 from auth import UserManager
+from models import User, MarketingMessage
 from email_utils import send_password_reset_email, send_new_user_registration_notification
 import re
 
@@ -21,48 +22,59 @@ def is_valid_email(email):
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
 
+def get_marketing_messages():
+    """Get active marketing messages for login page"""
+    try:
+        messages = MarketingMessage.query.filter_by(is_active=True).order_by(MarketingMessage.display_order).all()
+        return messages
+    except Exception as e:
+        print(f"Error fetching marketing messages: {e}")
+        return []
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """Login page"""
+    marketing_messages = get_marketing_messages()
+
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '')
         remember = request.form.get('remember', False)
-        
+
         if not email or not password:
             flash('Please provide both email and password', 'error')
-            return render_template('login.html')
-        
+            return render_template('login.html', marketing_messages=marketing_messages)
+
         # Get user
         user = user_manager.get_user_by_email(email)
         if not user:
             flash('Invalid email or password', 'error')
-            return render_template('login.html')
-        
+            return render_template('login.html', marketing_messages=marketing_messages)
+
         # Verify password
         if not user_manager.verify_password(user, password):
             flash('Invalid email or password', 'error')
-            return render_template('login.html')
-        
+            return render_template('login.html', marketing_messages=marketing_messages)
+
         # Check if user is approved
         if not user.is_approved:
             flash('Your account is pending admin approval. Please wait for approval before logging in.', 'error')
-            return render_template('login.html')
-        
+            return render_template('login.html', marketing_messages=marketing_messages)
+
         # Check if user is active
         if not user.is_active:
             flash('Your user is inactive. Contact customer service at kontakt@konsulence.al or +355692064518.', 'error')
-            return render_template('login.html')
-        
+            return render_template('login.html', marketing_messages=marketing_messages)
+
         # Login user
         login_user(user, remember=remember)
         flash('Logged in successfully!', 'success')
-        
+
         # Redirect to next page or home
         next_page = request.args.get('next')
         return redirect(next_page) if next_page else redirect(url_for('index'))
-    
-    return render_template('login.html')
+
+    return render_template('login.html', marketing_messages=marketing_messages)
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -97,20 +109,10 @@ def register():
         
         # Send notification to admins about new registration
         try:
-            import json
-            users_file = os.path.join(os.path.dirname(__file__), 'users.json')
-            if os.path.exists(users_file):
-                with open(users_file, 'r') as f:
-                    users = json.load(f)
-                    # users.json is a list, not a dict
-                    if isinstance(users, list):
-                        admin_emails = [u['email'] for u in users if u.get('is_admin', False)]
-                    else:
-                        admin_emails = [u['email'] for u in users.values() if u.get('is_admin', False)]
-                    if admin_emails:
-                        send_new_user_registration_notification(admin_emails, email, email.split('@')[0])
-        except Exception as e:
-            # Log error but don't expose details
+            admin_emails = [u.email for u in User.query.filter_by(is_admin=True).all()]
+            if admin_emails:
+                send_new_user_registration_notification(admin_emails, email, email.split('@')[0])
+        except Exception:
             pass
         
         flash('Registration successful! Please log in.', 'success')
