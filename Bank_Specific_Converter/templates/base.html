@@ -130,6 +130,11 @@
                 <!-- User Profile Section -->
                 {% if current_user.is_authenticated %}
                 <div class="header-user-section">
+                    <!-- Theme Switcher -->
+                    <button class="header-theme-btn" aria-label="Toggle theme" title="Dark Mode">
+                        <i class="fas fa-moon"></i>
+                    </button>
+
                     <!-- Notification Bell -->
                     <div class="notification-wrapper">
                         <button class="header-notification-btn" onclick="toggleNotifications()" title="Njoftimet">

@@ -335,6 +335,44 @@
     }
 
     // ============================================
+    // Theme Switcher (Dark/Light Mode)
+    // ============================================
+    function initThemeSwitcher() {
+        const themeBtn = document.querySelector('.header-theme-btn');
+        if (!themeBtn) return;
+
+        // Load saved theme from localStorage
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            updateThemeIcon(true);
+        }
+
+        // Toggle theme on button click
+        themeBtn.addEventListener('click', function() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeIcon(isDark);
+        });
+    }
+
+    function updateThemeIcon(isDark) {
+        const themeBtn = document.querySelector('.header-theme-btn');
+        if (!themeBtn) return;
+
+        const icon = themeBtn.querySelector('i');
+        if (isDark) {
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+            themeBtn.title = 'Light Mode';
+        } else {
+            icon.classList.remove('fa-sun');
+            icon.classList.add('fa-moon');
+            themeBtn.title = 'Dark Mode';
+        }
+    }
+
+    // ============================================
     // Initialize All Features
     // ============================================
     function init() {
@@ -352,6 +390,7 @@
         initTooltips();
         initAdminSectionToggle();
         initNotifications();
+        initThemeSwitcher();
     }
 
     // Start initialization
