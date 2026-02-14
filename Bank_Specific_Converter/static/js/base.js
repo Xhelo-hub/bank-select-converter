@@ -151,7 +151,7 @@
     // Logout Confirmation
     // ============================================
     function initLogoutConfirmation() {
-        const logoutBtn = document.querySelector('.sidebar-logout');
+        const logoutBtn = document.querySelector('.header-logout-btn');
 
         if (logoutBtn) {
             logoutBtn.addEventListener('click', function(e) {

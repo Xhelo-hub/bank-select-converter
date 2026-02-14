@@ -98,6 +98,7 @@ body {
 }
 
 .sidebar-header {
+    position: relative;
     height: var(--header-height);
     display: flex;
     align-items: center;
@@ -128,23 +129,41 @@ body {
 }
 
 .sidebar-toggle {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: var(--spacing-sm);
+    position: absolute;
+    bottom: 20px;
+    right: 10px;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    width: 36px;
+    height: 36px;
     border-radius: var(--border-radius-sm);
-    color: var(--gray-600);
+    cursor: pointer;
+    color: var(--gray-700);
     transition: all var(--transition-fast);
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 101;
 }
 
 .sidebar-toggle:hover {
     background: var(--gray-100);
     color: var(--gray-900);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-toggle i {
+    transition: transform var(--transition-fast);
 }
 
 .sidebar.collapsed .sidebar-toggle {
-    margin-left: auto;
-    margin-right: auto;
+    right: 50%;
+    transform: translateX(50%);
+}
+
+.sidebar.collapsed .sidebar-toggle i {
+    transform: rotate(180deg);
 }
 
 .sidebar-menu {
@@ -254,80 +273,6 @@ body {
     padding-left: var(--spacing-lg);
 }
 
-.sidebar-footer {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    border-top: 1px solid var(--gray-200);
-    padding: var(--spacing-md) var(--spacing-lg);
-    background: white;
-}
-
-.sidebar-user {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-}
-
-.sidebar-user-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: var(--primary-color);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    flex-shrink: 0;
-}
-
-.sidebar-user-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.sidebar-user-name {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--gray-900);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.sidebar-user-email {
-    font-size: 0.75rem;
-    color: var(--gray-500);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.sidebar.collapsed .sidebar-user-info {
-    display: none;
-}
-
-.sidebar-logout {
-    background: none;
-    border: none;
-    color: var(--gray-500);
-    cursor: pointer;
-    padding: var(--spacing-sm);
-    border-radius: var(--border-radius-sm);
-    transition: all var(--transition-fast);
-}
-
-.sidebar-logout:hover {
-    background: var(--gray-100);
-    color: var(--danger-color);
-}
-
-.sidebar.collapsed .sidebar-logout {
-    margin-left: auto;
-    margin-right: auto;
-}
-
 /* ============================================
    Main Content Area
    ============================================ */
@@ -355,6 +300,69 @@ body {
 .content-title {
     font-size: 1.5rem;
     font-weight: 600;
+    color: var(--gray-900);
+}
+
+/* Header User Section */
+.header-user-section {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.header-user-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.header-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--gray-700);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.header-user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.header-user-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.header-user-email {
+    font-size: 0.75rem;
+    color: var(--gray-600);
+}
+
+.header-logout-btn {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-sm);
+    cursor: pointer;
+    color: var(--gray-700);
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+}
+
+.header-logout-btn:hover {
+    background: var(--gray-200);
     color: var(--gray-900);
 }
 
@@ -564,10 +572,6 @@ body {
         justify-content: center;
     }
 
-    .sidebar-toggle {
-        display: none;
-    }
-
     .content-header {
         padding: 0 var(--spacing-md);
     }
@@ -578,5 +582,20 @@ body {
 
     .content-body {
         padding: var(--spacing-md);
+    }
+
+    /* Hide user details on mobile, show only avatar and logout */
+    .header-user-details {
+        display: none;
+    }
+
+    .header-user-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 0.875rem;
+    }
+
+    .header-user-section {
+        gap: var(--spacing-sm);
     }
 }

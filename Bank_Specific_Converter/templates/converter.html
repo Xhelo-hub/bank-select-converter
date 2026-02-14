@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}Converter - Albanian Bank Statement Converter{% endblock %}
+{% block title %}Konvertuesi - Konvertuesi i Ekstrakteve Bankare Shqiptare{% endblock %}
 
-{% block page_title %}Bank Statement Converter{% endblock %}
+{% block page_title %}Konvertuesi i Ekstrakteve Bankare{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -17,16 +17,26 @@
         border: 1px solid var(--gray-200);
         box-shadow: var(--shadow-md);
         padding: var(--spacing-xl);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--gray-900);
         margin-bottom: var(--spacing-lg);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 2px solid var(--gray-100);
     }
 
     .upload-area {
         border: 2px dashed var(--gray-300);
         border-radius: var(--border-radius);
-        padding: 1.5rem;
+        padding: 2rem;
         text-align: center;
         transition: all var(--transition-fast);
         cursor: pointer;
+        background: var(--gray-50);
     }
 
     .upload-area:hover,
@@ -51,7 +61,6 @@
         color: var(--gray-900);
         cursor: pointer;
         transition: all var(--transition-fast);
-        margin-bottom: var(--spacing-lg);
     }
 
     .bank-select:hover {
@@ -66,48 +75,64 @@
 
     .progress-container {
         display: none;
-        margin-top: var(--spacing-lg);
+        margin-top: var(--spacing-xl);
+        padding: var(--spacing-lg);
+        background: var(--gray-50);
+        border-radius: var(--border-radius-sm);
+        border: 1px solid var(--gray-200);
     }
 
     .progress-bar {
-        height: 8px;
+        height: 10px;
         background: var(--gray-200);
-        border-radius: 4px;
+        border-radius: 5px;
         overflow: hidden;
-        margin-bottom: var(--spacing-sm);
+        margin-bottom: var(--spacing-md);
     }
 
     .progress-fill {
         height: 100%;
-        background: var(--primary-color);
+        background: linear-gradient(90deg, var(--gray-700), var(--gray-900));
         transition: width 0.3s ease;
+        border-radius: 5px;
     }
 
     .progress-text {
         font-size: 0.875rem;
-        color: var(--gray-600);
+        color: var(--gray-700);
         text-align: center;
+        font-weight: 500;
     }
 
     .result-container {
         display: none;
-        margin-top: var(--spacing-lg);
+        margin-top: var(--spacing-xl);
+        padding-top: var(--spacing-xl);
+        border-top: 2px solid var(--gray-200);
     }
 
     .result-success {
-        background: var(--success-color);
+        background: linear-gradient(135deg, var(--gray-800), var(--gray-700));
         color: white;
-        padding: var(--spacing-lg);
-        border-radius: var(--border-radius-sm);
+        padding: var(--spacing-xl);
+        border-radius: var(--border-radius);
         text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .result-success h3 {
+        font-size: 1.5rem;
+        margin-bottom: var(--spacing-lg);
+        font-weight: 600;
     }
 
     .result-error {
-        background: var(--danger-color);
+        background: linear-gradient(135deg, var(--gray-700), var(--gray-600));
         color: white;
-        padding: var(--spacing-lg);
-        border-radius: var(--border-radius-sm);
+        padding: var(--spacing-xl);
+        border-radius: var(--border-radius);
         text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
     .file-info {
@@ -130,9 +155,9 @@
 
     .convert-btn {
         width: 100%;
-        margin-top: var(--spacing-lg);
         padding: 1rem;
         font-size: 1rem;
+        font-weight: 600;
     }
 
     .convert-btn:disabled {
@@ -140,10 +165,44 @@
         cursor: not-allowed;
     }
 
+    .action-section {
+        padding-top: var(--spacing-lg);
+        margin-top: var(--spacing-lg);
+        border-top: 1px solid var(--gray-200);
+    }
+
     .download-btn {
-        width: 100%;
-        padding: 1rem;
+        display: inline-block;
+        padding: 0.875rem 2rem;
         font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        border-radius: var(--border-radius-sm);
+        transition: all var(--transition-fast);
+        margin: var(--spacing-md);
+    }
+
+    .btn-download-primary {
+        background: white;
+        color: var(--gray-900);
+        border: 2px solid white;
+    }
+
+    .btn-download-primary:hover {
+        background: var(--gray-100);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-reset {
+        background: var(--gray-200);
+        color: var(--gray-700);
+        border: 2px solid var(--gray-300);
+    }
+
+    .btn-reset:hover {
+        background: var(--gray-300);
+        color: var(--gray-900);
     }
 
     .info-section {
@@ -176,6 +235,25 @@
         font-weight: bold;
         margin-right: var(--spacing-sm);
     }
+
+    .privacy-notice {
+        background: var(--gray-100);
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-sm);
+        padding: var(--spacing-md);
+        margin-top: var(--spacing-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        font-size: 0.875rem;
+        color: var(--gray-700);
+    }
+
+    .privacy-notice i {
+        color: var(--gray-600);
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
 </style>
 {% endblock %}
 
@@ -183,15 +261,15 @@
 <div class="converter-container">
     <!-- Upload Card -->
     <div class="converter-card">
-        <h2 style="margin-bottom: var(--spacing-lg); color: var(--gray-900);">Upload Statement</h2>
+        <h2 class="section-title">Ngarko Statement</h2>
 
         <div class="upload-area" id="uploadArea">
             <div class="upload-icon">📄</div>
-            <h3 style="margin-bottom: var(--spacing-sm);">Drop your file here</h3>
-            <p style="color: var(--gray-600); margin-bottom: var(--spacing-md);">or click to browse</p>
+            <h3 style="margin-bottom: var(--spacing-sm);">Vendos dokumentin këtu</h3>
+            <p style="color: var(--gray-600); margin-bottom: var(--spacing-md);">ose kliko për të zgjedhur</p>
             <input type="file" id="fileInput" accept=".pdf,.csv,.xls,.xlsx" style="display: none;">
             <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
-                Choose File
+                Zgjidh Skedarin
             </button>
         </div>
 
@@ -203,40 +281,49 @@
 
     <!-- Bank Selection Card -->
     <div class="converter-card">
-        <h2 style="margin-bottom: var(--spacing-md); color: var(--gray-900);">Select Bank</h2>
+        <h2 class="section-title">Zgjidh Bankën</h2>
 
         <select id="bankSelect" class="bank-select" onchange="selectBank(this.value)">
-            <option value="">Choose a bank...</option>
+            <option value="">Zgjidh një bankë...</option>
             {% for bank_id, bank_info in banks.items() %}
             <option value="{{ bank_id }}">{{ bank_info.name }} ({{ bank_info.formats|join(', ') }})</option>
             {% endfor %}
         </select>
 
-        <button class="btn btn-primary convert-btn" id="convertBtn" disabled onclick="convertFile()">
-            Convert Statement
-        </button>
+        <!-- Convert Action -->
+        <div class="action-section">
+            <button class="btn btn-primary convert-btn" id="convertBtn" disabled onclick="convertFile()">
+                Konverto Statement
+            </button>
 
-        <!-- Progress -->
-        <div class="progress-container" id="progressContainer">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
+            <!-- Progress -->
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Duke konvertuar...</div>
             </div>
-            <div class="progress-text" id="progressText">Converting...</div>
-        </div>
 
-        <!-- Result -->
-        <div class="result-container" id="resultContainer"></div>
+            <!-- Result -->
+            <div class="result-container" id="resultContainer"></div>
+        </div>
     </div>
 
     <!-- Info Section -->
     <div class="info-section">
-        <div class="info-title">Supported Features:</div>
+        <div class="info-title">Veçoritë e Mbështetura:</div>
         <ul class="info-list">
-            <li>Convert PDF and CSV bank statements to QuickBooks format</li>
-            <li>Support for major Albanian banks (Raiffeisen, Intesa, ProCredit, etc.)</li>
-            <li>Fast and secure conversion process</li>
-            <li>Download converted files instantly</li>
+            <li>Konverto ekstraktet bankare PDF dhe CSV në formatin QuickBooks dhe Wave Accounting</li>
+            <li>Mbështetje për bankat kryesore shqiptare (Raiffeisen, Intesa, ProCredit, etj.)</li>
+            <li>Proces konvertimi i shpejtë dhe i sigurt</li>
+            <li>Shkarko skedarët e konvertuar menjëherë</li>
         </ul>
+    </div>
+
+    <!-- Privacy Notice -->
+    <div class="privacy-notice">
+        <i class="fas fa-shield-alt"></i>
+        <span>Sistemi nuk ruan kopje të statement-eve tuaj. Të gjitha skedarët fshihen automatikisht pasi të jenë shkarkuar.</span>
     </div>
 </div>
 
@@ -345,7 +432,7 @@ function resetForm() {
 // Convert file
 async function convertFile() {
     if (!selectedFile || !selectedBank) {
-        alert('Please select both a file and a bank');
+        alert('Ju lutem zgjidhni një skedar dhe një bankë');
         return;
     }
 
@@ -372,10 +459,10 @@ async function convertFile() {
             currentJobId = result.job_id;
             pollConversionStatus();
         } else {
-            showError(result.error || 'Conversion failed');
+            showError(result.error || 'Konvertimi dështoi');
         }
     } catch (error) {
-        showError('Network error: ' + error.message);
+        showError('Gabim në rrjet: ' + error.message);
     }
 }
 
@@ -386,15 +473,15 @@ async function pollConversionStatus() {
         const result = await response.json();
 
         if (result.status === 'completed') {
-            showSuccess('Conversion completed!', result.files);
+            showSuccess('Konvertimi përfundoi!', result.files);
         } else if (result.status === 'failed') {
-            showError(result.error || 'Conversion failed');
+            showError(result.error || 'Konvertimi dështoi');
         } else {
             // Still processing, poll again
             setTimeout(pollConversionStatus, 1000);
         }
     } catch (error) {
-        showError('Error checking status: ' + error.message);
+        showError('Gabim në kontroll të statusit: ' + error.message);
     }
 }
 
@@ -405,15 +492,15 @@ function showSuccess(message, files) {
     resultContainer.style.display = 'block';
     resultContainer.innerHTML = `
         <div class="result-success">
-            <h3 style="margin-bottom: var(--spacing-md);">✓ ${message}</h3>
-            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
+            <h3>✓ ${message}</h3>
+            <div style="display: flex; gap: var(--spacing-md); justify-content: center; flex-wrap: wrap; align-items: center;">
                 ${files.map(file => `
-                    <a href="/download/${currentJobId}/${file}" class="btn download-btn">
-                        <i class="fas fa-download"></i> Download CSV
+                    <a href="/download/${currentJobId}/${file}" class="download-btn btn-download-primary">
+                        <i class="fas fa-download"></i> Shkarko CSV
                     </a>
                 `).join('')}
-                <button onclick="resetForm()" class="btn" style="background: var(--gray-200); color: var(--gray-700);">
-                    <i class="fas fa-arrow-rotate-right"></i> Convert Another
+                <button onclick="resetForm()" class="download-btn btn-reset">
+                    <i class="fas fa-arrow-rotate-right"></i> Konverto Tjetër
                 </button>
             </div>
         </div>
@@ -429,7 +516,7 @@ function showError(message) {
     resultContainer.style.display = 'block';
     resultContainer.innerHTML = `
         <div class="result-error">
-            <h3 style="margin-bottom: var(--spacing-md);">✗ Error</h3>
+            <h3 style="margin-bottom: var(--spacing-md);">✗ Gabim</h3>
             <p>${message}</p>
         </div>
     `;

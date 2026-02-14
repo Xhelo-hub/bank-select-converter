@@ -21,6 +21,11 @@
     <div class="app-container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
+            <!-- Sidebar Toggle Button -->
+            <button class="sidebar-toggle" aria-label="Toggle sidebar" title="Collapse sidebar">
+                <i class="fas fa-angle-left"></i>
+            </button>
+
             <!-- Sidebar Header -->
             <div class="sidebar-header">
                 <a href="{{ url_for('index') }}" class="sidebar-logo">
@@ -31,11 +36,6 @@
                     {% endif %}
                     <span class="sidebar-logo-text">Bank Converter</span>
                 </a>
-                <button class="sidebar-toggle" aria-label="Toggle sidebar">
-                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
-                    </svg>
-                </button>
             </div>
 
             <!-- Sidebar Menu -->
@@ -88,30 +88,6 @@
                     {% endif %}
                 </ul>
             </nav>
-
-            <!-- Sidebar Footer (User Info) -->
-            {% if current_user.is_authenticated %}
-            <div class="sidebar-footer">
-                <div class="sidebar-user">
-                    <div class="sidebar-user-avatar">
-                        {{ current_user.email[0]|upper }}
-                    </div>
-                    <div class="sidebar-user-info">
-                        <div class="sidebar-user-name">
-                            {{ current_user.email.split('@')[0][:15] }}
-                        </div>
-                        <div class="sidebar-user-email">
-                            {{ current_user.email[:20] }}{% if current_user.email|length > 20 %}...{% endif %}
-                        </div>
-                    </div>
-                    <button class="sidebar-logout" data-logout-url="{{ url_for('auth.logout') }}" aria-label="Logout">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            {% endif %}
         </aside>
 
         <!-- Main Content Area -->
@@ -124,9 +100,28 @@
                     </svg>
                 </button>
                 <h1 class="content-title">{% block page_title %}Dashboard{% endblock %}</h1>
+
+                <!-- User Profile Section -->
+                {% if current_user.is_authenticated %}
+                <div class="header-user-section">
+                    <div class="header-user-info">
+                        <div class="header-user-avatar">
+                            {{ current_user.email[0]|upper }}
+                        </div>
+                        <div class="header-user-details">
+                            <div class="header-user-name">{{ current_user.email.split('@')[0] }}</div>
+                            <div class="header-user-email">{{ current_user.email }}</div>
+                        </div>
+                    </div>
+                    <button class="header-logout-btn" data-logout-url="{{ url_for('auth.logout') }}" aria-label="Logout" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+                {% else %}
                 <div>
                     {% block header_actions %}{% endblock %}
                 </div>
+                {% endif %}
             </header>
 
             <!-- Flash Messages -->
