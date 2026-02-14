@@ -23,7 +23,7 @@
     .upload-area {
         border: 2px dashed var(--gray-300);
         border-radius: var(--border-radius);
-        padding: 3rem;
+        padding: 1.5rem;
         text-align: center;
         transition: all var(--transition-fast);
         cursor: pointer;
@@ -36,48 +36,32 @@
     }
 
     .upload-icon {
-        font-size: 3rem;
+        font-size: 2rem;
         color: var(--gray-400);
-        margin-bottom: var(--spacing-md);
-    }
-
-    .bank-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: var(--spacing-md);
-        margin-top: var(--spacing-lg);
-    }
-
-    .bank-card {
-        border: 2px solid var(--gray-200);
-        border-radius: var(--border-radius-sm);
-        padding: var(--spacing-lg);
-        cursor: pointer;
-        transition: all var(--transition-fast);
-        text-align: center;
-    }
-
-    .bank-card:hover {
-        border-color: var(--primary-color);
-        background: var(--primary-light);
-        transform: translateY(-2px);
-    }
-
-    .bank-card.selected {
-        border-color: var(--primary-color);
-        background: var(--primary-light);
-        box-shadow: var(--shadow-md);
-    }
-
-    .bank-name {
-        font-weight: 600;
-        color: var(--gray-900);
         margin-bottom: var(--spacing-sm);
     }
 
-    .bank-formats {
-        font-size: 0.75rem;
-        color: var(--gray-500);
+    .bank-select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        border: 2px solid var(--gray-300);
+        border-radius: var(--border-radius);
+        background: white;
+        color: var(--gray-900);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .bank-select:hover {
+        border-color: var(--primary-color);
+    }
+
+    .bank-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px var(--primary-light);
     }
 
     .progress-container {
@@ -219,16 +203,14 @@
 
     <!-- Bank Selection Card -->
     <div class="converter-card">
-        <h2 style="margin-bottom: var(--spacing-lg); color: var(--gray-900);">Select Bank</h2>
+        <h2 style="margin-bottom: var(--spacing-md); color: var(--gray-900);">Select Bank</h2>
 
-        <div class="bank-grid" id="bankGrid">
+        <select id="bankSelect" class="bank-select" onchange="selectBank(this.value)">
+            <option value="">Choose a bank...</option>
             {% for bank_id, bank_info in banks.items() %}
-            <div class="bank-card" data-bank="{{ bank_id }}" onclick="selectBank('{{ bank_id }}')">
-                <div class="bank-name">{{ bank_info.name }}</div>
-                <div class="bank-formats">{{ bank_info.formats|join(', ') }}</div>
-            </div>
+            <option value="{{ bank_id }}">{{ bank_info.name }} ({{ bank_info.formats|join(', ') }})</option>
             {% endfor %}
-        </div>
+        </select>
 
         <button class="btn btn-primary convert-btn" id="convertBtn" disabled onclick="convertFile()">
             Convert Statement
@@ -322,13 +304,6 @@ function formatFileSize(bytes) {
 
 // Bank selection
 function selectBank(bankId) {
-    // Remove previous selection
-    document.querySelectorAll('.bank-card').forEach(card => {
-        card.classList.remove('selected');
-    });
-
-    // Add selection to clicked bank
-    event.target.closest('.bank-card').classList.add('selected');
     selectedBank = bankId;
 
     // Update convert button state
@@ -337,6 +312,34 @@ function selectBank(bankId) {
 
 function updateConvertButton() {
     convertBtn.disabled = !(selectedFile && selectedBank);
+}
+
+// Reset form for new conversion
+function resetForm() {
+    // Clear file input
+    fileInput.value = '';
+    selectedFile = null;
+
+    // Hide file info
+    fileInfo.style.display = 'none';
+
+    // Reset bank dropdown
+    document.getElementById('bankSelect').value = '';
+    selectedBank = null;
+
+    // Re-enable upload area
+    uploadArea.style.pointerEvents = '';
+    uploadArea.classList.remove('drag-over');
+
+    // Disable convert button
+    convertBtn.disabled = true;
+
+    // Hide result section
+    document.getElementById('resultContainer').style.display = 'none';
+    document.getElementById('progressContainer').style.display = 'none';
+
+    // Reset current job
+    currentJobId = null;
 }
 
 // Convert file
@@ -403,11 +406,16 @@ function showSuccess(message, files) {
     resultContainer.innerHTML = `
         <div class="result-success">
             <h3 style="margin-bottom: var(--spacing-md);">✓ ${message}</h3>
-            ${files.map(file => `
-                <a href="/download/${currentJobId}/${file}" class="btn download-btn" style="margin-top: var(--spacing-sm); background: white; color: var(--success-color);">
-                    Download ${file}
-                </a>
-            `).join('')}
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
+                ${files.map(file => `
+                    <a href="/download/${currentJobId}/${file}" class="btn download-btn">
+                        <i class="fas fa-download"></i> Download CSV
+                    </a>
+                `).join('')}
+                <button onclick="resetForm()" class="btn" style="background: var(--gray-200); color: var(--gray-700);">
+                    <i class="fas fa-arrow-rotate-right"></i> Convert Another
+                </button>
+            </div>
         </div>
     `;
 

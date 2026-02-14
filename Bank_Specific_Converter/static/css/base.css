@@ -7,15 +7,15 @@
    CSS Variables
    ============================================ */
 :root {
-    /* Colors */
-    --primary-color: #3b82f6;
-    --primary-hover: #2563eb;
-    --primary-light: #dbeafe;
-    --secondary-color: #64748b;
-    --success-color: #10b981;
-    --warning-color: #f59e0b;
-    --danger-color: #ef4444;
-    --info-color: #3b82f6;
+    /* Colors - Monochrome */
+    --primary-color: #1f2937;
+    --primary-hover: #111827;
+    --primary-light: #f3f4f6;
+    --secondary-color: #6b7280;
+    --success-color: #374151;
+    --warning-color: #6b7280;
+    --danger-color: #4b5563;
+    --info-color: #1f2937;
 
     /* Neutral colors */
     --gray-50: #f9fafb;
