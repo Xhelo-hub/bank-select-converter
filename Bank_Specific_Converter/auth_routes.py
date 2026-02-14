@@ -7,10 +7,11 @@ Routes for login, logout, and registration
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, login_required
 from auth import UserManager
-from models import User
+from models import User, MarketingMessage, db
 from email_utils import send_password_reset_email, send_new_user_registration_notification
 import os
 import re
+from datetime import datetime
 
 # Create blueprint
 auth_bp = Blueprint('auth', __name__)
@@ -18,30 +19,73 @@ auth_bp = Blueprint('auth', __name__)
 # Initialize UserManager
 user_manager = UserManager()
 
-def get_marketing_content():
-    """Read custom marketing content from file, returns (has_content, title, body) tuple"""
+def _read_marketing_file(content_file):
+    """Read marketing content from file for migration fallback."""
+    if not os.path.exists(content_file):
+        return None, None
+    try:
+        with open(content_file, 'r', encoding='utf-8') as f:
+            content = f.read().strip()
+        if not content:
+            return None, None
+        if '<!-- SIMPLE_MODE -->' in content:
+            title_match = re.search(r'<h2>(.*?)</h2>', content, re.DOTALL)
+            body_match = re.search(r'<p>(.*?)</p>', content, re.DOTALL)
+            title = title_match.group(1).strip() if title_match else ''
+            body = body_match.group(1).strip() if body_match else ''
+            if title or body:
+                return title, body
+            return None, None
+        return '', content
+    except Exception:
+        return None, None
+
+
+def _get_latest_marketing_message():
+    """Get latest active marketing message, migrating from file if needed."""
+    latest = (MarketingMessage.query
+              .filter_by(is_active=True)
+              .order_by(MarketingMessage.created_at.desc())
+              .first())
+    if latest:
+        return latest
+
     app_dir = os.path.dirname(os.path.abspath(__file__))
     content_file = os.path.join(app_dir, 'templates', 'marketing_content.html')
-    if os.path.exists(content_file):
-        try:
-            with open(content_file, 'r', encoding='utf-8') as f:
-                content = f.read().strip()
-            if not content:
-                return False, '', ''
-            # Parse simple mode content
-            if '<!-- SIMPLE_MODE -->' in content:
-                title_match = re.search(r'<h2>(.*?)</h2>', content, re.DOTALL)
-                body_match = re.search(r'<p>(.*?)</p>', content, re.DOTALL)
-                title = title_match.group(1).strip() if title_match else ''
-                body = body_match.group(1).strip() if body_match else ''
-                if title or body:
-                    return True, title, body
-                return False, '', ''
-            # HTML mode - return raw content
-            return True, '', content
-        except Exception:
+    title, body = _read_marketing_file(content_file)
+    if title is None and body is None:
+        return None
+
+    migrated = MarketingMessage(
+        title=title or '',
+        content=body or '',
+        image_url=None,
+        link_url=None,
+        link_text=None,
+        is_active=True,
+        display_order=0,
+        created_at=datetime.now().isoformat(),
+        created_by='file-migration'
+    )
+    db.session.add(migrated)
+    db.session.commit()
+    return migrated
+
+
+def get_marketing_content():
+    """Read custom marketing content from database, fallback to file migration."""
+    try:
+        latest = _get_latest_marketing_message()
+        if not latest:
             return False, '', ''
-    return False, '', ''
+
+        title = latest.title or ''
+        body = latest.content or ''
+        if not title and not body:
+            return False, '', ''
+        return True, title, body
+    except Exception:
+        return False, '', ''
 
 def _login_template_vars():
     """Build template variables for login page"""
