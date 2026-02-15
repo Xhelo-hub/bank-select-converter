@@ -53,14 +53,14 @@
 
     .settings-btn:hover { transform: translateY(-1px); }
 
-    .settings-btn.email { background: #0891b2; }
-    .settings-btn.email:hover { background: #0e7490; box-shadow: 0 4px 12px rgba(8,145,178,0.3); }
+    .settings-btn.email { background: var(--gray-700); }
+    .settings-btn.email:hover { background: var(--gray-900); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 
-    .settings-btn.marketing { background: #7c3aed; }
-    .settings-btn.marketing:hover { background: #6d28d9; box-shadow: 0 4px 12px rgba(124,58,237,0.3); }
+    .settings-btn.marketing { background: var(--gray-700); }
+    .settings-btn.marketing:hover { background: var(--gray-900); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 
-    .settings-btn.restart { background: var(--success); }
-    .settings-btn.restart:hover { background: #059669; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+    .settings-btn.restart { background: var(--gray-800); }
+    .settings-btn.restart:hover { background: var(--gray-900); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 
     /* Logo Management */
     .logo-management {
@@ -111,7 +111,7 @@
     .logo-placeholder-preview {
         width: 64px;
         height: 64px;
-        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        background: linear-gradient(135deg, var(--gray-700), var(--gray-900));
         border-radius: 14px;
         display: flex;
         align-items: center;
@@ -193,7 +193,7 @@
     .upload-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
     .delete-logo-btn { background: var(--error); }
-    .delete-logo-btn:hover { background: #dc2626; transform: translateY(-1px); }
+    .delete-logo-btn:hover { background: var(--gray-900); transform: translateY(-1px); }
 
     /* Stats */
     .stats {
@@ -307,11 +307,11 @@
 
     .btn:hover { transform: translateY(-1px); }
 
-    .btn-approve { background: var(--success); }
-    .btn-approve:hover { background: #059669; box-shadow: 0 2px 8px rgba(16,185,129,0.3); }
+    .btn-approve { background: var(--gray-700); }
+    .btn-approve:hover { background: var(--gray-900); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 
-    .btn-reject { background: var(--error); }
-    .btn-reject:hover { background: #dc2626; box-shadow: 0 2px 8px rgba(239,68,68,0.3); }
+    .btn-reject { background: var(--gray-800); }
+    .btn-reject:hover { background: var(--gray-900); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 
     /* Badges */
     .badge {
@@ -323,11 +323,11 @@
         letter-spacing: 0.02em;
     }
 
-    .badge-pending { background: #fef3c7; color: #92400e; }
-    .badge-approved { background: #d1fae5; color: #065f46; }
-    .badge-admin { background: #e0e7ff; color: #3730a3; }
-    .badge-active { background: #d1fae5; color: #065f46; }
-    .badge-inactive { background: #f1f5f9; color: #475569; }
+    .badge-pending { background: var(--gray-100); color: var(--gray-700); }
+    .badge-approved { background: var(--gray-200); color: var(--gray-800); }
+    .badge-admin { background: var(--gray-200); color: var(--gray-800); }
+    .badge-active { background: var(--gray-200); color: var(--gray-800); }
+    .badge-inactive { background: var(--gray-100); color: var(--gray-600); }
 
     /* Dropdown */
     .dropdown {
@@ -427,12 +427,12 @@
 
     .dropdown-item.danger { color: var(--error); }
     .dropdown-item.danger:hover { background: var(--error-light); }
-    .dropdown-item.warning { color: #d97706; }
+    .dropdown-item.warning { color: var(--gray-700); }
     .dropdown-item.warning:hover { background: var(--warning-light); }
-    .dropdown-item.success { color: #059669; }
+    .dropdown-item.success { color: var(--gray-700); }
     .dropdown-item.success:hover { background: var(--success-light); }
     .dropdown-item.info { color: var(--info); }
-    .dropdown-item.info:hover { background: #eff6ff; }
+    .dropdown-item.info:hover { background: var(--gray-100); }
 
     .no-users {
         text-align: center;
@@ -801,7 +801,7 @@
         <div class="section-title" style="display: flex; align-items: center; gap: 12px;">
             <i class="fas fa-envelope" style="color: var(--primary); font-size: 20px;"></i>
             <h2 style="margin: 0; font-size: 20px; font-weight: 700;">Mesazhet e Përdoruesve</h2>
-            <span id="userMsgBadge" style="background: #ef4444; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: none;">0 të palexuara</span>
+            <span id="userMsgBadge" style="background: var(--gray-900); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: none;">0 të palexuara</span>
         </div>
     </div>
 
@@ -1084,8 +1084,8 @@
             </button>
         </div>
         <form id="resetPasswordForm" method="POST" style="padding: 28px;">
-            <div style="background: #eff6ff; padding: 14px; border-radius: var(--border-radius-sm); margin-bottom: 22px; border: 1px solid #bfdbfe;">
-                <p style="margin: 0; color: #1e40af; font-size: 13px;">
+            <div style="background: var(--gray-100); padding: 14px; border-radius: var(--border-radius-sm); margin-bottom: 22px; border: 1px solid var(--gray-200);">
+                <p style="margin: 0; color: var(--gray-700); font-size: 13px;">
                     <i class="fas fa-info-circle"></i>
                     Resetting password for: <strong id="resetUserEmail" style="color: var(--primary);"></strong>
                 </p>
@@ -1346,7 +1346,7 @@
         if (role) activeFilters.push('<span class="filter-badge"><i class="fas fa-user-tag"></i> ' + role + '</span>');
 
         if (activeFilters.length > 0) {
-            filtersDiv.innerHTML = activeFilters.join(' ') + ' <span class="filter-badge" style="cursor:pointer;background:rgba(239,68,68,0.08);color:#ef4444;" onclick="clearFilters()"><i class="fas fa-times"></i> Clear all</span>';
+            filtersDiv.innerHTML = activeFilters.join(' ') + ' <span class="filter-badge" style="cursor:pointer;background:var(--gray-100);color:var(--gray-700);" onclick="clearFilters()"><i class="fas fa-times"></i> Clear all</span>';
             filtersDiv.style.display = 'block';
         } else {
             filtersDiv.style.display = 'none';
@@ -1491,10 +1491,10 @@
                             success: '✅'
                         };
                         const typeColors = {
-                            info: '#3b82f6',
-                            warning: '#f59e0b',
-                            important: '#ef4444',
-                            success: '#10b981'
+                            info: '#6b7280',
+                            warning: '#4b5563',
+                            important: '#111827',
+                            success: '#374151'
                         };
                         const date = new Date(n.created_at).toLocaleString();
                         const recipients = n.recipients.includes('all') ? 'All Users' : n.recipients.join(', ');
@@ -1571,7 +1571,7 @@
                 messages.forEach(function(m) {
                     const isUnread = !m.is_read;
                     const time = m.created_at ? m.created_at.substring(0, 16).replace('T', ' ') : '';
-                    html += '<div style="padding:16px; border-bottom:1px solid var(--border); ' + (isUnread ? 'background:#f8f9ff; border-left:3px solid var(--primary);' : '') + '">';
+                    html += '<div style="padding:16px; border-bottom:1px solid var(--border); ' + (isUnread ? 'background:var(--gray-100); border-left:3px solid var(--gray-700);' : '') + '">';
                     html += '<div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:8px;">';
                     html += '<div>';
                     html += '<div style="font-weight:600; font-size:14px; color:var(--text);">' + escapeHtmlAdmin(m.subject) + '</div>';

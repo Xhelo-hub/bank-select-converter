@@ -8,20 +8,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #4f46e5;
-            --primary-light: #6366f1;
-            --primary-dark: #4338ca;
+            --primary: #1f2937;
+            --primary-light: #374151;
+            --primary-dark: #111827;
             --surface: #ffffff;
-            --surface-dim: #f8fafc;
-            --text: #0f172a;
-            --text-secondary: #64748b;
-            --text-muted: #94a3b8;
-            --border: #e2e8f0;
-            --border-light: #f1f5f9;
-            --error: #ef4444;
-            --warning-bg: #fffbeb;
-            --warning-border: #fde68a;
-            --warning-text: #92400e;
+            --surface-dim: #f3f4f6;
+            --text: #111827;
+            --text-secondary: #6b7280;
+            --text-muted: #9ca3af;
+            --border: #e5e7eb;
+            --border-light: #f3f4f6;
+            --error: #4b5563;
+            --warning-bg: #f3f4f6;
+            --warning-border: #e5e7eb;
+            --warning-text: #374151;
             --radius: 16px;
             --radius-sm: 10px;
             --shadow-lg: 0 4px 12px rgba(0,0,0,0.05), 0 20px 48px rgba(0,0,0,0.1);
@@ -44,8 +44,8 @@
             position: fixed;
             inset: 0;
             background:
-                radial-gradient(ellipse at 20% 50%, rgba(239, 68, 68, 0.04) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 20%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
+                radial-gradient(ellipse at 20% 50%, rgba(0, 0, 0, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(0, 0, 0, 0.05) 0%, transparent 50%);
             z-index: 0;
         }
 
@@ -70,14 +70,14 @@
             width: 64px;
             height: 64px;
             margin: 0 auto 20px;
-            background: linear-gradient(135deg, #f59e0b, #d97706);
+            background: linear-gradient(135deg, #374151, #111827);
             border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-size: 24px;
-            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.25);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
         }
 
         .logo h1 {
@@ -120,8 +120,8 @@
         .warning-box strong { color: var(--primary); }
 
         .info-box {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
             padding: 14px 16px;
             margin-bottom: 24px;
             border-radius: var(--radius-sm);
@@ -131,14 +131,14 @@
         }
 
         .info-box > i {
-            color: #3b82f6;
+            color: #6b7280;
             font-size: 16px;
             margin-top: 2px;
             flex-shrink: 0;
         }
 
         .info-box p {
-            color: #1e40af;
+            color: #374151;
             font-size: 13px;
             line-height: 1.6;
         }
@@ -196,11 +196,11 @@
         .btn:active { transform: translateY(0); }
 
         .btn-danger {
-            background: #ef4444;
+            background: #374151;
         }
 
         .btn-danger:hover {
-            background: #dc2626;
+            background: #111827;
             box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
         }
 
@@ -211,7 +211,7 @@
         }
 
         .btn-secondary:hover {
-            background: #475569;
+            background: #6b7280;
             box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
         }
 
@@ -237,10 +237,10 @@
         }
 
         .alert i { font-size: 16px; flex-shrink: 0; }
-        .alert-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
-        .alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-        .alert-warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
-        .alert-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .alert-success { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+        .alert-error { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+        .alert-warning { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+        .alert-info { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
 
         @keyframes slideIn {
             from { transform: translateY(-8px); opacity: 0; }

@@ -7,36 +7,36 @@
 {% block extra_css %}
 <style>
     .converter-container {
-        max-width: 900px;
+        max-width: 760px;
         margin: 0 auto;
     }
 
     .converter-card {
-        background: white;
+        background: var(--bg-primary);
         border-radius: var(--border-radius);
-        border: 1px solid var(--gray-200);
-        box-shadow: var(--shadow-md);
-        padding: var(--spacing-xl);
-        margin-bottom: var(--spacing-xl);
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
     }
 
     .section-title {
-        font-size: 1.25rem;
+        font-size: 1rem;
         font-weight: 600;
-        color: var(--gray-900);
-        margin-bottom: var(--spacing-lg);
-        padding-bottom: var(--spacing-sm);
-        border-bottom: 2px solid var(--gray-100);
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border-color);
     }
 
     .upload-area {
-        border: 2px dashed var(--gray-300);
+        border: 2px dashed var(--border-color);
         border-radius: var(--border-radius);
         padding: 2rem;
         text-align: center;
         transition: all var(--transition-fast);
         cursor: pointer;
-        background: var(--gray-50);
+        background: var(--bg-secondary);
     }
 
     .upload-area:hover,
@@ -55,10 +55,10 @@
         width: 100%;
         padding: 0.75rem 1rem;
         font-size: 1rem;
-        border: 2px solid var(--gray-300);
+        border: 2px solid var(--border-color);
         border-radius: var(--border-radius);
-        background: white;
-        color: var(--gray-900);
+        background: var(--bg-primary);
+        color: var(--text-primary);
         cursor: pointer;
         transition: all var(--transition-fast);
     }
@@ -75,11 +75,11 @@
 
     .progress-container {
         display: none;
-        margin-top: var(--spacing-xl);
-        padding: var(--spacing-lg);
-        background: var(--gray-50);
+        margin-top: 1.5rem;
+        padding: 1.25rem;
+        background: var(--bg-secondary);
         border-radius: var(--border-radius-sm);
-        border: 1px solid var(--gray-200);
+        border: 1px solid var(--border-color);
     }
 
     .progress-bar {
@@ -106,9 +106,9 @@
 
     .result-container {
         display: none;
-        margin-top: var(--spacing-xl);
-        padding-top: var(--spacing-xl);
-        border-top: 2px solid var(--gray-200);
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
     }
 
     .result-success {
@@ -141,6 +141,28 @@
         padding: var(--spacing-md);
         border-radius: var(--border-radius-sm);
         margin-top: var(--spacing-md);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .file-info-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 6px;
+        background: var(--gray-200);
+        color: var(--gray-700);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .file-info-text {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
     }
 
     .file-name {
@@ -205,6 +227,30 @@
         color: var(--gray-900);
     }
 
+    body.dark-mode .result-success,
+    body.dark-mode .result-error {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+    }
+
+    body.dark-mode .btn-download-primary {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+    }
+
+    body.dark-mode .btn-download-primary:hover {
+        background: var(--gray-200);
+        color: var(--gray-900);
+    }
+
+    body.dark-mode .btn-reset {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+    }
+
     .info-section {
         background: var(--gray-50);
         border-left: 4px solid var(--info-color);
@@ -265,17 +311,22 @@
 
         <div class="upload-area" id="uploadArea">
             <div class="upload-icon">📄</div>
-            <h3 style="margin-bottom: var(--spacing-sm);">Vendos dokumentin këtu</h3>
-            <p style="color: var(--gray-600); margin-bottom: var(--spacing-md);">ose kliko për të zgjedhur</p>
+            <h3 style="margin-bottom: var(--spacing-sm);">Tërhiq dokumentin këtu...</h3>
+            <p style="color: var(--gray-600); margin-bottom: var(--spacing-md);">Zgjidh dokument për të ngarkuar</p>
             <input type="file" id="fileInput" accept=".pdf,.csv,.xls,.xlsx" style="display: none;">
             <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
-                Zgjidh Skedarin
+                Ngarko
             </button>
         </div>
 
         <div class="file-info" id="fileInfo">
-            <div class="file-name" id="fileName"></div>
-            <div class="file-size" id="fileSize"></div>
+            <div class="file-info-icon" id="fileIcon">
+                <i class="fas fa-file"></i>
+            </div>
+            <div class="file-info-text">
+                <div class="file-name" id="fileName"></div>
+                <div class="file-size" id="fileSize"></div>
+            </div>
         </div>
     </div>
 
@@ -293,7 +344,7 @@
         <!-- Convert Action -->
         <div class="action-section">
             <button class="btn btn-primary convert-btn" id="convertBtn" disabled onclick="convertFile()">
-                Konverto Statement
+                Konverto
             </button>
 
             <!-- Progress -->
@@ -341,6 +392,7 @@ const fileInput = document.getElementById('fileInput');
 const fileInfo = document.getElementById('fileInfo');
 const fileName = document.getElementById('fileName');
 const fileSize = document.getElementById('fileSize');
+const fileIcon = document.getElementById('fileIcon');
 const convertBtn = document.getElementById('convertBtn');
 
 // Drag and drop
@@ -372,10 +424,22 @@ fileInput.addEventListener('change', (e) => {
 function handleFileSelect(file) {
     selectedFile = file;
 
+    const extension = (file.name.split('.').pop() || '').toLowerCase();
+    if (extension === 'pdf') {
+        fileIcon.innerHTML = '<i class="fas fa-file-pdf"></i>';
+    } else if (extension === 'xls' || extension === 'xlsx') {
+        fileIcon.innerHTML = '<i class="fas fa-file-excel"></i>';
+    } else if (extension === 'csv') {
+        fileIcon.innerHTML = '<i class="fas fa-file-csv"></i>';
+    } else {
+        fileIcon.innerHTML = '<i class="fas fa-file"></i>';
+        alert('Dokument i Panjohur (Zgjidh formatin e duhur)');
+    }
+
     // Display file info
     fileName.textContent = file.name;
     fileSize.textContent = formatFileSize(file.size);
-    fileInfo.style.display = 'block';
+    fileInfo.style.display = 'flex';
 
     // Update convert button state
     updateConvertButton();
@@ -409,6 +473,7 @@ function resetForm() {
 
     // Hide file info
     fileInfo.style.display = 'none';
+    fileIcon.innerHTML = '<i class="fas fa-file"></i>';
 
     // Reset bank dropdown
     document.getElementById('bankSelect').value = '';

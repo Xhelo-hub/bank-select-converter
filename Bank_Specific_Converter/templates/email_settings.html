@@ -121,7 +121,7 @@
 
     .btn-primary:hover {
         background: var(--primary-dark);
-        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     .btn-secondary {
@@ -130,17 +130,17 @@
     }
 
     .btn-secondary:hover {
-        background: #475569;
+        background: var(--gray-700);
     }
 
     .btn-test {
-        background: #0891b2;
+        background: var(--gray-700);
         color: white;
     }
 
     .btn-test:hover {
-        background: #0e7490;
-        box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+        background: var(--gray-900);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     .test-result {
@@ -158,8 +158,8 @@
         to { transform: translateY(0); opacity: 1; }
     }
 
-    .test-result.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
-    .test-result.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .test-result.success { background: var(--gray-100); color: var(--gray-800); border: 1px solid var(--gray-200); }
+    .test-result.error { background: var(--gray-100); color: var(--gray-800); border: 1px solid var(--gray-200); }
 
     .provider-presets {
         display: flex;
@@ -196,8 +196,8 @@
     }
 
     .info-box {
-        background: #fffbeb;
-        border: 1px solid #fde68a;
+        background: var(--gray-100);
+        border: 1px solid var(--gray-200);
         border-radius: var(--border-radius-sm);
         padding: 14px 16px;
         margin-top: 20px;
@@ -207,7 +207,7 @@
     }
 
     .info-box i {
-        color: #92400e;
+        color: var(--gray-700);
         font-size: 18px;
         margin-top: 2px;
         flex-shrink: 0;
@@ -218,13 +218,13 @@
     .info-box h4 {
         font-size: 14px;
         margin-bottom: 6px;
-        color: #92400e;
+        color: var(--gray-800);
         font-weight: 600;
     }
 
     .info-box p {
         font-size: 13px;
-        color: #92400e;
+        color: var(--gray-700);
         line-height: 1.5;
         margin: 0;
     }
