@@ -262,17 +262,9 @@
         </div>
 
         <div class="provider-presets">
-            <button type="button" class="preset-btn" onclick="setPreset('office365')">
-                <i class="fab fa-microsoft"></i>
-                Office 365
-            </button>
-            <button type="button" class="preset-btn" onclick="setPreset('gmail')">
-                <i class="fab fa-google"></i>
-                Gmail
-            </button>
-            <button type="button" class="preset-btn" onclick="setPreset('custom')">
+            <button type="button" class="preset-btn active" onclick="setPreset('custom')">
                 <i class="fas fa-server"></i>
-                Custom
+                Custom SMTP
             </button>
         </div>
 
@@ -320,25 +312,6 @@
             <div class="help-text">When disabled, email sending is turned off</div>
         </div>
 
-        {% if config.smtp_server == 'smtp.office365.com' %}
-        <div class="info-box">
-            <i class="fas fa-info-circle"></i>
-            <div class="content">
-                <h4>Office 365 Setup Required</h4>
-                <p>For Office 365 accounts, you must enable SMTP AUTH in the Microsoft 365 admin center. Go to Exchange Admin Center → Recipients → Mailboxes → select your mailbox → enable "Authenticated SMTP".</p>
-            </div>
-        </div>
-        {% endif %}
-
-        {% if config.smtp_server == 'smtp.gmail.com' %}
-        <div class="info-box">
-            <i class="fas fa-info-circle"></i>
-            <div class="content">
-                <h4>Gmail Setup Required</h4>
-                <p>Gmail requires 2-Step Verification and an App Password. Generate one at <a href="https://myaccount.google.com/apppasswords" target="_blank">myaccount.google.com/apppasswords</a></p>
-            </div>
-        </div>
-        {% endif %}
     </div>
 
     <div class="section">
@@ -378,18 +351,9 @@
 {% block extra_js %}
 <script>
     function setPreset(provider) {
-        const presets = {
-            'office365': { server: 'smtp.office365.com', port: 587 },
-            'gmail': { server: 'smtp.gmail.com', port: 587 },
-            'custom': { server: '', port: 587 }
-        };
-
-        const preset = presets[provider];
-        if (preset) {
-            document.getElementById('smtp_server').value = preset.server;
-            document.getElementById('smtp_port').value = preset.port;
+        if (provider !== 'custom') {
+            return;
         }
-
         document.querySelectorAll('.preset-btn').forEach(btn => {
             btn.classList.remove('active');
         });
