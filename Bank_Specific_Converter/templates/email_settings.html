@@ -317,7 +317,7 @@
                 <input type="checkbox" id="enabled" name="enabled" {% if config.enabled %}checked{% endif %}>
                 <label for="enabled">Enable email notifications</label>
             </div>
-            <div class="help-text">When disabled, the system will use environment variables instead</div>
+            <div class="help-text">When disabled, email sending is turned off</div>
         </div>
 
         {% if config.smtp_server == 'smtp.office365.com' %}

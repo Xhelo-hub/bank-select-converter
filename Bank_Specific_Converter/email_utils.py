@@ -11,30 +11,29 @@ import os
 from datetime import datetime
 
 def load_email_config():
-    """Load email configuration from database or environment variables"""
+    """Load email configuration from database"""
     try:
         from models import db, EmailConfig
         config = db.session.get(EmailConfig, 1)
-        if config and config.enabled:
+        if config:
             return {
                 'smtp_server': config.smtp_server,
                 'smtp_port': config.smtp_port,
                 'smtp_username': config.smtp_username,
                 'smtp_password': config.smtp_password,
                 'from_email': config.from_email,
-                'enabled': True
+                'enabled': bool(config.enabled)
             }
     except Exception as e:
         print(f"Error loading email config from database: {e}")
 
-    # Fallback to environment variables
     return {
-        'smtp_server': os.environ.get('SMTP_SERVER', 'smtp.gmail.com'),
-        'smtp_port': int(os.environ.get('SMTP_PORT', 587)),
-        'smtp_username': os.environ.get('SMTP_USERNAME', ''),
-        'smtp_password': os.environ.get('SMTP_PASSWORD', ''),
-        'from_email': os.environ.get('FROM_EMAIL', os.environ.get('SMTP_USERNAME', '')),
-        'enabled': True
+        'smtp_server': '',
+        'smtp_port': 587,
+        'smtp_username': '',
+        'smtp_password': '',
+        'from_email': '',
+        'enabled': False
     }
 
 def _get_config():
@@ -45,7 +44,8 @@ def _get_config():
         config['smtp_port'],
         config['smtp_username'],
         config['smtp_password'],
-        config['from_email']
+        config['from_email'],
+        config['enabled']
     )
 
 def send_email(to_email, subject, html_body, text_body=None):
@@ -62,7 +62,13 @@ def send_email(to_email, subject, html_body, text_body=None):
         tuple: (success, message)
     """
     # Get current config
-    SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, FROM_EMAIL = _get_config()
+    SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, FROM_EMAIL, EMAIL_ENABLED = _get_config()
+
+    if not EMAIL_ENABLED:
+        print("Warning: Email sending is disabled. Email would have been sent to:", to_email)
+        print("Subject:", subject)
+        print("Body:", html_body)
+        return True, "Email sending disabled"
 
     # Check if email is configured
     if not SMTP_USERNAME or not SMTP_PASSWORD:
