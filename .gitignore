@@ -8,6 +8,10 @@ build/
 develop-eggs/
 dist/
 downloads/
+
+# SQLite databases (keep data local)
+Bank_Specific_Converter/data/*.db
+Bank_Specific_Converter/data/*.db-*
 eggs/
 .eggs/
 lib/
