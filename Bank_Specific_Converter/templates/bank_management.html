@@ -169,11 +169,11 @@
                     </span>
                 </div>
             </div>
-            <form method="POST" action="{{ url_for('admin.toggle_bank', bank_id=bank.bank_id) }}">
-                <label class="bank-toggle">
-                    <input type="checkbox" {{ 'checked' if bank.is_active }} onchange="this.form.submit()">
+            <form method="POST" action="{{ url_for('admin.toggle_bank', bank_id=bank.bank_id) }}" id="form-{{ bank.bank_id }}">
+                <div class="bank-toggle" onclick="document.getElementById('form-{{ bank.bank_id }}').submit()">
+                    <input type="checkbox" {{ 'checked' if bank.is_active }} tabindex="-1" style="pointer-events:none">
                     <span class="toggle-slider"></span>
-                </label>
+                </div>
             </form>
         </div>
         {% endfor %}

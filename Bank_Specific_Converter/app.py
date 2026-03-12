@@ -37,7 +37,7 @@ except ImportError:
         SECRET_KEY=secret_key,
         MAX_CONTENT_LENGTH=50 * 1024 * 1024,  # 50MB max
         PERMANENT_SESSION_LIFETIME=3600,
-        SESSION_COOKIE_SECURE=True,
+        SESSION_COOKIE_SECURE=os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() == 'true',
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE='Lax',
     )
@@ -318,9 +318,13 @@ def index():
     # Filter banks: Layer 1 (admin) + Layer 2 (user preferences)
     available_banks = get_available_banks_for_user(current_user.id)
 
+    # Get user's default bank (only if it's in the available list)
+    default_bank_id = current_user.default_bank_id if current_user.default_bank_id in available_banks else ''
+
     return render_template('converter.html',
                          user=current_user,
                          banks=available_banks,
+                         default_bank_id=default_bank_id,
                          logo_exists=logo_exists)
 
 @app.route('/settings', methods=['GET', 'POST'])
@@ -390,6 +394,11 @@ def bank_preferences():
             )
             db.session.add(pref)
 
+        # Save default bank preference
+        default_bank = request.form.get('default_bank', '')
+        user = db.session.get(User, current_user.id)
+        user.default_bank_id = default_bank if default_bank in selected_banks else None
+
         db.session.commit()
         flash('Preferencat e bankave u ruajtën me sukses!', 'success')
         return redirect(url_for('bank_preferences'))
@@ -407,7 +416,8 @@ def bank_preferences():
     return render_template('bank_preferences.html',
                          banks=active_banks,
                          user_prefs=user_prefs,
-                         has_preferences=has_preferences)
+                         has_preferences=has_preferences,
+                         default_bank_id=current_user.default_bank_id or '')
 
 @app.route('/notifications')
 @login_required

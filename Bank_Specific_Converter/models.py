@@ -26,6 +26,7 @@ class User(UserMixin, db.Model):
     _is_active = db.Column('is_active', db.Boolean, default=True)
     reset_token = db.Column(db.String(255), nullable=True)
     reset_token_expiry = db.Column(db.String(50), nullable=True)
+    default_bank_id = db.Column(db.String(50), nullable=True)
 
     @property
     def is_active(self):

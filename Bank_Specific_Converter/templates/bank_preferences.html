@@ -136,6 +136,44 @@
     .btn-save:hover {
         background: var(--primary-hover);
     }
+
+    .default-bank-section {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1.25rem 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .default-bank-section h2 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--gray-900);
+        margin: 0 0 0.25rem 0;
+    }
+
+    .default-bank-section p {
+        font-size: 0.8125rem;
+        color: var(--gray-500);
+        margin: 0 0 1rem 0;
+    }
+
+    .default-bank-select {
+        width: 100%;
+        padding: 0.625rem 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-sm);
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        font-family: inherit;
+        cursor: pointer;
+    }
+
+    .default-bank-select:focus {
+        outline: none;
+        border-color: var(--gray-500);
+    }
 </style>
 {% endblock %}
 
@@ -182,11 +220,29 @@
                         {{ banks|length }} nga {{ banks|length }} banka të zgjedhura
                     {% endif %}
                 </span>
-                <button type="submit" class="btn-save">
-                    <i class="fas fa-save"></i>
-                    Ruaj Preferencat
-                </button>
             </div>
+        </div>
+
+        <div class="default-bank-section">
+            <h2><i class="fas fa-star" style="color: var(--gray-500); margin-right: 0.5rem;"></i>Banka e Parazgjedhur</h2>
+            <p>Kjo bankë do të jetë e zgjedhur automatikisht kur hap konvertuesin.</p>
+            <select name="default_bank" class="default-bank-select" id="defaultBankSelect">
+                <option value="">Asnjë (zgjidh manualisht)</option>
+                {% for bank_id, bank_info in banks.items() %}
+                <option value="{{ bank_id }}"
+                    {{ 'selected' if bank_id == default_bank_id }}
+                    {{ 'disabled' if has_preferences and not user_prefs.get(bank_id, False) }}>
+                    {{ bank_info.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="margin-top: 1.5rem; text-align: right;">
+            <button type="submit" class="btn-save">
+                <i class="fas fa-save"></i>
+                Ruaj Preferencat
+            </button>
         </div>
     </form>
     {% endif %}
@@ -197,11 +253,28 @@
 <script>
     const checkboxes = document.querySelectorAll('.pref-checkbox');
     const countEl = document.getElementById('selectedCount');
+    const defaultSelect = document.getElementById('defaultBankSelect');
     const total = checkboxes.length;
 
     function updateCount() {
         const checked = document.querySelectorAll('.pref-checkbox:checked').length;
         countEl.textContent = checked + ' nga ' + total + ' banka të zgjedhura';
+        updateDefaultOptions();
+    }
+
+    function updateDefaultOptions() {
+        const checkedIds = new Set();
+        checkboxes.forEach(cb => { if (cb.checked) checkedIds.add(cb.value); });
+
+        // Enable/disable options in default bank dropdown
+        Array.from(defaultSelect.options).forEach(opt => {
+            if (opt.value === '') return; // skip "none" option
+            opt.disabled = !checkedIds.has(opt.value);
+            // Reset selection if current default got unchecked
+            if (opt.selected && opt.disabled) {
+                defaultSelect.value = '';
+            }
+        });
     }
 
     checkboxes.forEach(cb => cb.addEventListener('change', updateCount));

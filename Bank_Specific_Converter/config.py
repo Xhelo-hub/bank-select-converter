@@ -15,7 +15,7 @@ class Config:
         raise RuntimeError("SECRET_KEY environment variable is required. Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\"")
 
     # Secure session settings
-    SESSION_COOKIE_SECURE = True  # Only send cookie over HTTPS
+    SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() == 'true'
     SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access
     SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
     PERMANENT_SESSION_LIFETIME = 3600  # 1 hour

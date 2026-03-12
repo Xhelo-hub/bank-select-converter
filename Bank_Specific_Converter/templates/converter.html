@@ -337,7 +337,7 @@
         <select id="bankSelect" class="bank-select" onchange="selectBank(this.value)">
             <option value="">Zgjidh një bankë...</option>
             {% for bank_id, bank_info in banks.items() %}
-            <option value="{{ bank_id }}">{{ bank_info.name }} ({{ bank_info.formats|join(', ') }})</option>
+            <option value="{{ bank_id }}" {{ 'selected' if bank_id == default_bank_id }}>{{ bank_info.name }} ({{ bank_info.formats|join(', ') }})</option>
             {% endfor %}
         </select>
 
@@ -383,7 +383,7 @@
 {% block extra_js %}
 <script>
 let selectedFile = null;
-let selectedBank = null;
+let selectedBank = '{{ default_bank_id }}' || null;
 let currentJobId = null;
 
 // File upload handling
