@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Menaxhimi i Bankave - Bank Statement Converter{% endblock %}
+{% block page_title %}Menaxhimi i Bankave{% endblock %}
+
+{% block extra_css %}
+<style>
+    .bank-mgmt-container {
+        max-width: 760px;
+    }
+
+    .bank-mgmt-header {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .bank-mgmt-header p {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+        margin: 0;
+    }
+
+    .bank-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .bank-item {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.15s ease;
+    }
+
+    .bank-item.inactive {
+        opacity: 0.6;
+    }
+
+    .bank-info {
+        flex: 1;
+    }
+
+    .bank-name {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .bank-meta {
+        font-size: 0.8125rem;
+        color: var(--gray-500);
+    }
+
+    .bank-formats {
+        display: inline-flex;
+        gap: 0.375rem;
+        margin-left: 0.5rem;
+    }
+
+    .format-tag {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        padding: 0.125rem 0.5rem;
+        border-radius: 999px;
+        background: var(--bg-secondary);
+        color: var(--gray-600);
+        border: 1px solid var(--border-color);
+    }
+
+    .bank-toggle {
+        position: relative;
+        width: 44px;
+        height: 24px;
+        flex-shrink: 0;
+        margin-left: 1rem;
+    }
+
+    .bank-toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--gray-300);
+        border-radius: 24px;
+        transition: 0.2s;
+    }
+
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        border-radius: 50%;
+        transition: 0.2s;
+    }
+
+    .bank-toggle input:checked + .toggle-slider {
+        background-color: var(--gray-800);
+    }
+
+    .bank-toggle input:checked + .toggle-slider:before {
+        transform: translateX(20px);
+    }
+
+    .status-badge {
+        font-size: 0.75rem;
+        font-weight: 500;
+        padding: 0.25rem 0.625rem;
+        border-radius: 999px;
+        margin-left: 0.75rem;
+    }
+
+    .status-active {
+        background: var(--bg-secondary);
+        color: var(--gray-700);
+        border: 1px solid var(--gray-300);
+    }
+
+    .status-inactive {
+        background: var(--bg-secondary);
+        color: var(--gray-400);
+        border: 1px solid var(--border-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bank-mgmt-container">
+    <div class="bank-mgmt-header">
+        <p>Aktivizo ose çaktivizo bankat që janë të disponueshme për konvertim. Bankat e çaktivizuara nuk do të shfaqen në listën e përdoruesve.</p>
+    </div>
+
+    <div class="bank-list">
+        {% for bank in banks %}
+        <div class="bank-item {{ 'inactive' if not bank.is_active }}">
+            <div class="bank-info">
+                <div class="bank-name">
+                    {{ bank.name }}
+                    <span class="status-badge {{ 'status-active' if bank.is_active else 'status-inactive' }}">
+                        {{ 'Aktive' if bank.is_active else 'Joaktive' }}
+                    </span>
+                </div>
+                <div class="bank-meta">
+                    {{ bank.description }}
+                    <span class="bank-formats">
+                        {% for fmt in bank.formats %}
+                        <span class="format-tag">{{ fmt }}</span>
+                        {% endfor %}
+                    </span>
+                </div>
+            </div>
+            <form method="POST" action="{{ url_for('admin.toggle_bank', bank_id=bank.bank_id) }}">
+                <label class="bank-toggle">
+                    <input type="checkbox" {{ 'checked' if bank.is_active }} onchange="this.form.submit()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

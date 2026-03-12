@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from functools import wraps
 from auth import UserManager
-from models import db, User, Conversion, Download, EmailConfig, ContactMessage, MarketingMessage
+from models import db, User, Conversion, Download, EmailConfig, ContactMessage, MarketingMessage, BankConfig
 from email_utils import send_admin_promotion_notification, send_admin_removal_verification, send_notification_email
 from notification_utils import (
     create_notification, get_all_notifications, delete_notification,
@@ -918,4 +918,53 @@ def reply_to_message(message_id):
         return jsonify({'success': True, 'message': 'Përgjigja u dërgua si njoftim'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
+
+
+# ============ Bank Management Routes ============
+
+@admin_bp.route('/bank-management')
+@login_required
+@admin_required
+def bank_management():
+    """Bank management page - activate/deactivate banks"""
+    # Import BANK_CONFIGS from app to get bank metadata
+    from app import BANK_CONFIGS
+
+    bank_configs = BankConfig.query.all()
+    banks = []
+    for bc in bank_configs:
+        info = BANK_CONFIGS.get(bc.bank_id, {})
+        banks.append({
+            'bank_id': bc.bank_id,
+            'name': info.get('name', bc.bank_id),
+            'formats': info.get('formats', []),
+            'description': info.get('description', ''),
+            'is_active': bc.is_active
+        })
+
+    # Sort: active first, then alphabetical
+    banks.sort(key=lambda b: (not b['is_active'], b['name']))
+
+    return render_template('bank_management.html', banks=banks)
+
+
+@admin_bp.route('/bank-management/toggle/<bank_id>', methods=['POST'])
+@login_required
+@admin_required
+def toggle_bank(bank_id):
+    """Toggle a bank's active status"""
+    bc = db.session.get(BankConfig, bank_id)
+    if not bc:
+        flash('Banka nuk u gjet', 'error')
+        return redirect(url_for('admin.bank_management'))
+
+    bc.is_active = not bc.is_active
+    db.session.commit()
+
+    from app import BANK_CONFIGS
+    bank_name = BANK_CONFIGS.get(bank_id, {}).get('name', bank_id)
+    status = 'aktivizua' if bc.is_active else 'çaktivizua'
+    flash(f'{bank_name} u {status} me sukses', 'success')
+
+    return redirect(url_for('admin.bank_management'))
 

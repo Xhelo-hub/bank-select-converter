@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from models import db, User, Job, Conversion, Download, ContactMessage
+from models import db, User, Job, Conversion, Download, ContactMessage, BankConfig, UserBankPreference
 
 # App initialization
 app = Flask(__name__)
@@ -173,6 +173,33 @@ BANK_CONFIGS = {
     }
 }
 
+# Seed BankConfig rows for any new banks
+with app.app_context():
+    for bank_id in BANK_CONFIGS:
+        if not db.session.get(BankConfig, bank_id):
+            db.session.add(BankConfig(bank_id=bank_id, is_active=True))
+    db.session.commit()
+
+
+def get_available_banks_for_user(user_id):
+    """Get banks available to a specific user (Layer 1 admin + Layer 2 user prefs)"""
+    # Get admin-enabled banks
+    active_bank_ids = {b.bank_id for b in BankConfig.query.filter_by(is_active=True).all()}
+
+    # Get user preferences (if any exist)
+    user_prefs = UserBankPreference.query.filter_by(user_id=user_id).all()
+
+    if user_prefs:
+        # User has set preferences — show only their enabled banks that are also admin-enabled
+        user_active_ids = {p.bank_id for p in user_prefs if p.is_active}
+        visible_ids = active_bank_ids & user_active_ids
+    else:
+        # No preferences set yet — show all admin-enabled banks
+        visible_ids = active_bank_ids
+
+    return {bid: BANK_CONFIGS[bid] for bid in BANK_CONFIGS if bid in visible_ids}
+
+
 def log_conversion(user_email, user_id, bank, original_filename, output_filename, success):
     """Log a conversion event to database"""
     try:
@@ -288,9 +315,12 @@ def index():
     # Check if logo exists
     logo_exists = (Path(__file__).parent / 'static' / 'logo.png').exists()
 
+    # Filter banks: Layer 1 (admin) + Layer 2 (user preferences)
+    available_banks = get_available_banks_for_user(current_user.id)
+
     return render_template('converter.html',
                          user=current_user,
-                         banks=BANK_CONFIGS,
+                         banks=available_banks,
                          logo_exists=logo_exists)
 
 @app.route('/settings', methods=['GET', 'POST'])
@@ -339,6 +369,45 @@ def user_settings():
             return redirect(url_for('user_settings'))
 
     return render_template('user_settings.html')
+
+@app.route('/bank-preferences', methods=['GET', 'POST'])
+@login_required
+def bank_preferences():
+    """User bank preferences page - toggle which banks appear in dropdown"""
+    if request.method == 'POST':
+        # Get admin-enabled banks
+        active_bank_ids = {b.bank_id for b in BankConfig.query.filter_by(is_active=True).all()}
+
+        # Delete existing preferences and recreate
+        UserBankPreference.query.filter_by(user_id=current_user.id).delete()
+
+        selected_banks = request.form.getlist('banks')
+        for bank_id in active_bank_ids:
+            pref = UserBankPreference(
+                user_id=current_user.id,
+                bank_id=bank_id,
+                is_active=(bank_id in selected_banks)
+            )
+            db.session.add(pref)
+
+        db.session.commit()
+        flash('Preferencat e bankave u ruajtën me sukses!', 'success')
+        return redirect(url_for('bank_preferences'))
+
+    # GET: show admin-enabled banks with user's current preferences
+    active_bank_ids = {b.bank_id for b in BankConfig.query.filter_by(is_active=True).all()}
+    active_banks = {bid: BANK_CONFIGS[bid] for bid in BANK_CONFIGS if bid in active_bank_ids}
+
+    user_prefs = {p.bank_id: p.is_active for p in
+                  UserBankPreference.query.filter_by(user_id=current_user.id).all()}
+
+    # If no preferences set, all are considered active
+    has_preferences = len(user_prefs) > 0
+
+    return render_template('bank_preferences.html',
+                         banks=active_banks,
+                         user_prefs=user_prefs,
+                         has_preferences=has_preferences)
 
 @app.route('/notifications')
 @login_required
@@ -1624,7 +1693,8 @@ def old_converter_backup():
     </body>
     </html>
     """
-    response = make_response(render_template_string(html_content, banks=BANK_CONFIGS, current_user=current_user))
+    available_banks = get_available_banks_for_user(current_user.id)
+    response = make_response(render_template_string(html_content, banks=available_banks, current_user=current_user))
     # Prevent caching to ensure users always get the latest version
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
     response.headers['Pragma'] = 'no-cache'
@@ -1640,6 +1710,11 @@ def convert_file():
         bank_id = request.form.get('bank')
         if not bank_id or bank_id not in BANK_CONFIGS:
             return jsonify({'success': False, 'error': 'Invalid bank selection'}), 400
+
+        # Verify bank is available to this user (admin-enabled + user preferences)
+        available = get_available_banks_for_user(current_user.id)
+        if bank_id not in available:
+            return jsonify({'success': False, 'error': 'This bank is not available for your account'}), 403
         
         # Check if file is present
         if 'file' not in request.files:

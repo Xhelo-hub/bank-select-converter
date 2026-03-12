@@ -182,6 +182,31 @@ class MarketingMessage(db.Model):
         }
 
 
+class BankConfig(db.Model):
+    """Admin-managed bank availability (Layer 1)"""
+    __tablename__ = 'bank_configs'
+
+    bank_id = db.Column(db.String(50), primary_key=True)  # e.g. 'BKT', 'OTP'
+    is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
+
+    user_preferences = db.relationship('UserBankPreference', backref='bank_config',
+                                        lazy='dynamic', cascade='all, delete-orphan')
+
+
+class UserBankPreference(db.Model):
+    """User-managed bank preferences (Layer 2) - which of admin-enabled banks the user wants"""
+    __tablename__ = 'user_bank_preferences'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False, index=True)
+    bank_id = db.Column(db.String(50), db.ForeignKey('bank_configs.bank_id'), nullable=False, index=True)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'bank_id', name='uq_user_bank_pref'),
+    )
+
+
 class ContactMessage(db.Model):
     """User-to-admin contact messages"""
     __tablename__ = 'contact_messages'

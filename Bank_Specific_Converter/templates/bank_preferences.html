@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Preferencat e Bankave - Bank Statement Converter{% endblock %}
+{% block page_title %}Preferencat e Bankave{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pref-container {
+        max-width: 760px;
+    }
+
+    .pref-header {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .pref-header p {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+        margin: 0;
+    }
+
+    .pref-section {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+    }
+
+    .pref-section-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .pref-section-header h2 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--gray-900);
+        margin: 0;
+    }
+
+    .select-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .select-actions button {
+        font-size: 0.8125rem;
+        color: var(--gray-500);
+        background: none;
+        border: none;
+        cursor: pointer;
+        text-decoration: underline;
+        font-family: inherit;
+    }
+
+    .select-actions button:hover {
+        color: var(--text-primary);
+    }
+
+    .pref-list {
+        padding: 0.5rem 0;
+    }
+
+    .pref-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        transition: background 0.1s;
+    }
+
+    .pref-item:hover {
+        background: var(--bg-secondary);
+    }
+
+    .pref-checkbox {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--gray-800);
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .pref-label {
+        margin-left: 0.75rem;
+        cursor: pointer;
+        flex: 1;
+    }
+
+    .pref-bank-name {
+        font-size: 0.9375rem;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .pref-bank-formats {
+        font-size: 0.8125rem;
+        color: var(--gray-500);
+        margin-top: 0.125rem;
+    }
+
+    .pref-footer {
+        padding: 1.25rem 1.5rem;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .pref-count {
+        font-size: 0.8125rem;
+        color: var(--gray-500);
+    }
+
+    .btn-save {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.625rem 1.5rem;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.875rem;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-save:hover {
+        background: var(--primary-hover);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pref-container">
+    <div class="pref-header">
+        <p>Zgjidh cilat banka dëshiron të shfaqen në listën tënde të konvertimit. Vetëm bankat e aktivizuara nga administratori janë të disponueshme.</p>
+    </div>
+
+    {% if banks|length == 0 %}
+    <div class="pref-header">
+        <p>Asnjë bankë nuk është e aktivizuar nga administratori për momentin.</p>
+    </div>
+    {% else %}
+    <form method="POST" action="{{ url_for('bank_preferences') }}">
+        <div class="pref-section">
+            <div class="pref-section-header">
+                <h2><i class="fas fa-university" style="color: var(--gray-500); margin-right: 0.5rem;"></i>Bankat e Disponueshme</h2>
+                <div class="select-actions">
+                    <button type="button" onclick="selectAll()">Zgjidh të gjitha</button>
+                    <button type="button" onclick="deselectAll()">Hiq të gjitha</button>
+                </div>
+            </div>
+
+            <div class="pref-list">
+                {% for bank_id, bank_info in banks.items() %}
+                <div class="pref-item">
+                    <input type="checkbox" class="pref-checkbox" name="banks" value="{{ bank_id }}"
+                           id="bank_{{ bank_id }}"
+                           {{ 'checked' if (not has_preferences) or user_prefs.get(bank_id, False) }}>
+                    <label for="bank_{{ bank_id }}" class="pref-label">
+                        <div class="pref-bank-name">{{ bank_info.name }}</div>
+                        <div class="pref-bank-formats">{{ bank_info.formats|join(', ') }} — {{ bank_info.description }}</div>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="pref-footer">
+                <span class="pref-count" id="selectedCount">
+                    {% if has_preferences %}
+                        {{ user_prefs.values()|select|list|length }} nga {{ banks|length }} banka të zgjedhura
+                    {% else %}
+                        {{ banks|length }} nga {{ banks|length }} banka të zgjedhura
+                    {% endif %}
+                </span>
+                <button type="submit" class="btn-save">
+                    <i class="fas fa-save"></i>
+                    Ruaj Preferencat
+                </button>
+            </div>
+        </div>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const checkboxes = document.querySelectorAll('.pref-checkbox');
+    const countEl = document.getElementById('selectedCount');
+    const total = checkboxes.length;
+
+    function updateCount() {
+        const checked = document.querySelectorAll('.pref-checkbox:checked').length;
+        countEl.textContent = checked + ' nga ' + total + ' banka të zgjedhura';
+    }
+
+    checkboxes.forEach(cb => cb.addEventListener('change', updateCount));
+
+    function selectAll() {
+        checkboxes.forEach(cb => cb.checked = true);
+        updateCount();
+    }
+
+    function deselectAll() {
+        checkboxes.forEach(cb => cb.checked = false);
+        updateCount();
+    }
+</script>
+{% endblock %}
