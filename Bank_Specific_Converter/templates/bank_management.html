@@ -98,6 +98,7 @@
         right: 0;
         bottom: 0;
         background-color: var(--gray-300);
+        border: 1px solid var(--border-color);
         border-radius: 24px;
         transition: 0.2s;
     }
@@ -107,19 +108,22 @@
         content: "";
         height: 18px;
         width: 18px;
-        left: 3px;
-        bottom: 3px;
-        background-color: white;
+        left: 2px;
+        bottom: 2px;
+        background-color: var(--bg-primary);
         border-radius: 50%;
         transition: 0.2s;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     }
 
     .bank-toggle input:checked + .toggle-slider {
         background-color: var(--gray-800);
+        border-color: var(--gray-800);
     }
 
     .bank-toggle input:checked + .toggle-slider:before {
         transform: translateX(20px);
+        background-color: white;
     }
 
     .status-badge {
